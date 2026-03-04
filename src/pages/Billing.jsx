@@ -43,7 +43,7 @@ const Billing = () => {
             const qtyToAdd = parseInt(quantity);
 
             // Validate stock for original and udhaar bills (both are real sales)
-            if (billType !== 'dummy' && product.remaining_quantity < qtyToAdd) {
+            if (billType !== 'quotation' && product.remaining_quantity < qtyToAdd) {
                 setError(`Notification: Cannot add ${qtyToAdd} items. Only ${product.remaining_quantity} in stock.`);
                 return;
             }
@@ -51,7 +51,7 @@ const Billing = () => {
             const existingItem = cart.find(item => item.id === product.id);
             if (existingItem) {
                 const newTotalQty = existingItem.quantity + qtyToAdd;
-                if (billType !== 'dummy' && product.remaining_quantity < newTotalQty) {
+                if (billType !== 'quotation' && product.remaining_quantity < newTotalQty) {
                     setError(`Notification: Cannot add more. Exceeds stock limit of ${product.remaining_quantity}.`);
                     return;
                 }
@@ -76,9 +76,9 @@ const Billing = () => {
             return;
         }
 
-        // ===== DUMMY BILL =====
-        if (billType === 'dummy') {
-            alert("Dummy Bill Generated! (No database changes)");
+        // ===== QUOTATION BILL =====
+        if (billType === 'quotation') {
+            alert("Quotation Generated! (No database changes)");
             window.print();
             return;
         }
@@ -173,7 +173,7 @@ const Billing = () => {
                                 onChange={(e) => setBillType(e.target.value)}
                             >
                                 <option value="original">Original (Deducts Stock)</option>
-                                <option value="dummy">Dummy (Estimate Only — No DB Changes)</option>
+                                <option value="quotation">Quotation (Estimate Only — No DB Changes)</option>
                                 <option value="udhaar">Udhaar (Credit Sale — Saves to Buyers)</option>
                             </select>
                         </div>
@@ -230,9 +230,9 @@ const Billing = () => {
                                 onChange={(e) => setSelectedProduct(e.target.value)}
                             >
                                 <option value="">Select a product...</option>
-                                {products.filter(p => billType === 'dummy' || (p.remaining_quantity && p.remaining_quantity >= 1)).map(p => (
+                                {products.filter(p => billType === 'quotation' || (p.remaining_quantity && p.remaining_quantity >= 1)).map(p => (
                                     <option key={p.id} value={p.id}>
-                                        [{p.category || 'NA'}] {p.name} - Rs. {p.price} {billType !== 'dummy' ? `(Stock: ${p.remaining_quantity})` : ''}
+                                        [{p.category || 'NA'}] {p.name} - Rs. {p.price} {billType !== 'quotation' ? `(Stock: ${p.remaining_quantity})` : ''}
                                     </option>
                                 ))}
                             </select>
@@ -242,12 +242,12 @@ const Billing = () => {
                                 type="number"
                                 className="input-field"
                                 min="1"
-                                max={billType !== 'dummy' && selectedProduct ? (products.find(p => String(p.id) === String(selectedProduct))?.remaining_quantity || '') : ''}
+                                max={billType !== 'quotation' && selectedProduct ? (products.find(p => String(p.id) === String(selectedProduct))?.remaining_quantity || '') : ''}
                                 value={quantity}
                                 onChange={(e) => {
                                     const val = parseInt(e.target.value) || 1;
                                     const selected = products.find(p => String(p.id) === String(selectedProduct));
-                                    if (billType !== 'dummy' && selected && val > selected.remaining_quantity) {
+                                    if (billType !== 'quotation' && selected && val > selected.remaining_quantity) {
                                         setQuantity(selected.remaining_quantity);
                                     } else {
                                         setQuantity(e.target.value);
@@ -259,7 +259,7 @@ const Billing = () => {
                             <Plus size={20} />
                         </button>
                     </div>
-                    {selectedProduct && billType !== 'dummy' && (() => {
+                    {selectedProduct && billType !== 'quotation' && (() => {
                         const sel = products.find(p => String(p.id) === String(selectedProduct));
                         return sel ? (
                             <p className="stock-hint" style={{
@@ -318,7 +318,7 @@ const Billing = () => {
                         <p className="receipt-contact">Ph: +92 300 0000000</p>
 
                         <div className="receipt-type-badge">
-                            {billType === 'dummy' ? 'ESTIMATE / DUMMY BILL' : billType === 'udhaar' ? 'UDHAAR / CREDIT INVOICE' : 'TAX INVOICE'}
+                            {billType === 'quotation' ? 'QUOTATION / ESTIMATE' : billType === 'udhaar' ? 'UDHAAR / CREDIT INVOICE' : 'TAX INVOICE'}
                         </div>
                     </div>
 
@@ -380,7 +380,7 @@ const Billing = () => {
                             <Printer size={18} />
                             <span>Print</span>
                         </button>
-                        {billType !== 'dummy' && (
+                        {billType !== 'quotation' && (
                             <button
                                 className="btn-primary flex-1"
                                 style={{ background: '#22c55e', borderColor: '#22c55e' }}
