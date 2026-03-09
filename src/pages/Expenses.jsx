@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Plus, Edit2, Trash2, Search, DollarSign } from 'lucide-react';
 import './Expenses.css'; // We'll create a generic css or reuse styles
 
-const API_URL = import.meta.env.VITE_API_URL + '/expenses';
+const API_URL = '/api/expenses';
 
 const Expenses = () => {
     const [expenses, setExpenses] = useState([]);

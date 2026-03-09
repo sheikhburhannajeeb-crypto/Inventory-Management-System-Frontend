@@ -3,7 +3,7 @@ import axios from 'axios';
 import { RefreshCw, TrendingUp, TrendingDown, DollarSign, Wallet, Users, Truck, AlertTriangle } from 'lucide-react';
 import './MonthlyReport.css'; // Optional generic modern styling
 
-const API_URL = import.meta.env.VITE_API_URL + '/reports/monthly';
+const API_URL = '/api/reports/monthly';
 
 const MonthlyReport = () => {
     const [reportData, setReportData] = useState(null);
