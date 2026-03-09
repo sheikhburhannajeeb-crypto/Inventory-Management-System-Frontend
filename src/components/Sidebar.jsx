@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Truck, FileText, Package, BarChart3, LogOut, Receipt, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, Truck, FileText, Package, BarChart3, LogOut, Receipt, CalendarDays, Building2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import './Sidebar.css';
@@ -28,6 +28,7 @@ const Sidebar = () => {
     const navItems = [
         { path: '/products', name: 'Products', icon: <Package size={20} /> },
         { path: '/buyers', name: 'Customers (Udhaar)', icon: <Users size={20} /> },
+        { path: '/companies', name: 'Companies Ledger', icon: <Building2 size={20} /> },
         { path: '/suppliers', name: 'Suppliers', icon: <Truck size={20} /> },
         { path: '/billing', name: 'Billing', icon: <FileText size={20} /> },
         { path: '/sales', name: 'Recent Sales', icon: <BarChart3 size={20} /> },

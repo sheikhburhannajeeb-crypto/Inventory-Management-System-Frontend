@@ -10,6 +10,7 @@ import Billing from './pages/Billing';
 import RecentSales from './pages/RecentSales';
 import Expenses from './pages/Expenses';
 import MonthlyReport from './pages/MonthlyReport';
+import Companies from './pages/Companies';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
             <Route path="sales" element={<RecentSales />} />
             <Route path="expenses" element={<Expenses />} />
             <Route path="monthly-report" element={<MonthlyReport />} />
+            <Route path="companies" element={<Companies />} />
           </Route>
         </Route>
       </Routes>
