@@ -11,7 +11,12 @@ const Expenses = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentExpense, setCurrentExpense] = useState({ id: null, category: 'Petrol', amount: '', description: '', date: new Date().toISOString().split('T')[0] });
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterMonth, setFilterMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+
+    // Separate state for Year and Month
+    const currentYearStr = new Date().getFullYear().toString();
+    const currentMonthStr = (new Date().getMonth() + 1).toString().padStart(2, '0');
+    const [filterYear, setFilterYear] = useState(currentYearStr);
+    const [filterMonth, setFilterMonth] = useState(currentMonthStr);
 
     // Auth token configuration
     const getConfig = () => ({
@@ -20,13 +25,12 @@ const Expenses = () => {
 
     useEffect(() => {
         fetchExpenses();
-    }, [filterMonth]);
+    }, [filterYear, filterMonth]);
 
     const fetchExpenses = async () => {
         setLoading(true);
         try {
-            const [year, month] = filterMonth.split('-');
-            const response = await axios.get(`${API_URL}?year=${year}&month=${month}`, getConfig());
+            const response = await axios.get(`${API_URL}?year=${filterYear}&month=${filterMonth}`, getConfig());
             setExpenses(response.data);
         } catch (error) {
             console.error('Failed to fetch expenses:', error);
@@ -115,15 +119,44 @@ const Expenses = () => {
                     />
                 </div>
 
-                <div className="month-filter">
-                    <label style={{ color: 'var(--text-secondary)', marginRight: '10px' }}>Filter Month:</label>
-                    <input
-                        type="month"
-                        value={filterMonth}
-                        onChange={(e) => setFilterMonth(e.target.value)}
-                        className="form-input"
-                        style={{ width: 'auto' }}
-                    />
+                <div className="filter-group" style={{ display: 'flex', gap: '10px' }}>
+                    <div className="month-filter">
+                        <label style={{ color: 'var(--text-secondary)', marginRight: '10px', fontSize: '0.9rem' }}>Year:</label>
+                        <select
+                            value={filterYear}
+                            onChange={(e) => setFilterYear(e.target.value)}
+                            className="form-input"
+                            style={{ width: '100px', padding: '8px 12px', background: 'var(--bg-primary)' }}
+                        >
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                    </div>
+
+                    <div className="month-filter">
+                        <label style={{ color: 'var(--text-secondary)', marginRight: '10px', fontSize: '0.9rem' }}>Month:</label>
+                        <select
+                            value={filterMonth}
+                            onChange={(e) => setFilterMonth(e.target.value)}
+                            className="form-input"
+                            style={{ width: '130px', padding: '8px 12px', background: 'var(--bg-primary)' }}
+                        >
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -133,7 +166,7 @@ const Expenses = () => {
                         <DollarSign size={28} />
                     </div>
                     <div>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '5px' }}>Total Expenses ({filterMonth})</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '5px' }}>Total Expenses ({filterMonth}-{filterYear})</p>
                         <h3 style={{ fontSize: '1.8rem', color: 'var(--text-primary)', margin: 0 }}>Rs. {totalExpenses.toLocaleString()}</h3>
                     </div>
                 </div>
@@ -191,51 +224,60 @@ const Expenses = () => {
                             <button className="close-btn" onClick={handleCloseModal}>&times;</button>
                         </div>
                         <form onSubmit={handleSubmit} className="modal-form">
-                            <div className="form-group">
-                                <label>Date</label>
-                                <input
-                                    type="date"
-                                    className="form-input"
-                                    value={currentExpense.date}
-                                    onChange={e => setCurrentExpense({ ...currentExpense, date: e.target.value })}
-                                    required
-                                />
-                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <div className="form-group">
+                                    <label>Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-input"
+                                        value={currentExpense.date}
+                                        onChange={e => setCurrentExpense({ ...currentExpense, date: e.target.value })}
+                                        required
+                                        style={{ background: 'var(--bg-primary)' }}
+                                    />
+                                </div>
 
-                            <div className="form-group">
-                                <label>Category</label>
-                                <select
-                                    className="form-input"
-                                    value={currentExpense.category}
-                                    onChange={e => setCurrentExpense({ ...currentExpense, category: e.target.value })}
-                                    required
-                                >
-                                    <option value="Petrol">Petrol</option>
-                                    <option value="Electric Bill">Electric Bill</option>
-                                    <option value="Food">Food / Meals</option>
-                                    <option value="Rent">Shop Rent</option>
-                                    <option value="Maintenance">Maintenance</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <div className="form-group">
+                                    <label>Category</label>
+                                    <select
+                                        className="form-input minimal-select"
+                                        value={currentExpense.category}
+                                        onChange={e => setCurrentExpense({ ...currentExpense, category: e.target.value })}
+                                        required
+                                        style={{ background: 'var(--bg-primary)' }}
+                                    >
+                                        <option value="Petrol">Petrol</option>
+                                        <option value="Electric Bill">Electric Bill</option>
+                                        <option value="Food">Food / Meals</option>
+                                        <option value="Rent">Shop Rent</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div className="form-group">
                                 <label>Amount (Rs)</label>
-                                <input
-                                    type="number"
-                                    className="form-input"
-                                    value={currentExpense.amount}
-                                    onChange={e => setCurrentExpense({ ...currentExpense, amount: e.target.value })}
-                                    required
-                                    min="0"
-                                />
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>Rs.</span>
+                                    <input
+                                        type="number"
+                                        className="form-input"
+                                        value={currentExpense.amount}
+                                        onChange={e => setCurrentExpense({ ...currentExpense, amount: e.target.value })}
+                                        required
+                                        min="0"
+                                        style={{ paddingLeft: '45px', background: 'var(--bg-primary)', fontSize: '1.1rem', fontWeight: '500' }}
+                                        placeholder="0"
+                                    />
+                                </div>
                             </div>
 
                             <div className="form-group">
                                 <label>Description (Optional)</label>
                                 <textarea
                                     className="form-input"
-                                    style={{ minHeight: '80px', resize: 'vertical' }}
+                                    style={{ minHeight: '80px', resize: 'vertical', background: 'var(--bg-primary)' }}
                                     value={currentExpense.description}
                                     onChange={e => setCurrentExpense({ ...currentExpense, description: e.target.value })}
                                     placeholder="e.g. Bought petrol for bike"

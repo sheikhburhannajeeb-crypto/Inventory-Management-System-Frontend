@@ -8,17 +8,20 @@ const API_URL = '/api/reports/monthly';
 const MonthlyReport = () => {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+    // Separate state for Year and Month
+    const currentYearStr = new Date().getFullYear().toString();
+    const currentMonthStr = (new Date().getMonth() + 1).toString().padStart(2, '0');
+    const [filterYear, setFilterYear] = useState(currentYearStr);
+    const [filterMonth, setFilterMonth] = useState(currentMonthStr);
 
     useEffect(() => {
         fetchReport();
-    }, [filterDate]);
+    }, [filterYear, filterMonth]);
 
     const fetchReport = async () => {
         setLoading(true);
         try {
-            const [year, month] = filterDate.split('-');
-            const response = await axios.get(`${API_URL}?year=${year}&month=${month}`, {
+            const response = await axios.get(`${API_URL}?year=${filterYear}&month=${filterMonth}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('inventory_token')}` }
             });
             setReportData(response.data);
@@ -50,14 +53,37 @@ const MonthlyReport = () => {
                     <p className="page-subtitle">Complete overview of your business health</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <label style={{ color: 'var(--text-secondary)' }}>Select Month:</label>
-                    <input
-                        type="month"
-                        value={filterDate}
-                        onChange={(e) => setFilterDate(e.target.value)}
-                        className="form-input"
-                        style={{ background: 'rgba(15, 23, 42, 0.6)', width: 'auto' }}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(15, 23, 42, 0.6)', padding: '5px 15px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                        <select
+                            value={filterMonth}
+                            onChange={(e) => setFilterMonth(e.target.value)}
+                            style={{ background: 'transparent', color: 'var(--text-primary)', border: 'none', outline: 'none', fontSize: '1rem', padding: '5px', cursor: 'pointer' }}
+                        >
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                        <span style={{ color: 'var(--text-muted)' }}>|</span>
+                        <select
+                            value={filterYear}
+                            onChange={(e) => setFilterYear(e.target.value)}
+                            style={{ background: 'transparent', color: 'var(--text-primary)', border: 'none', outline: 'none', fontSize: '1rem', padding: '5px', cursor: 'pointer' }}
+                        >
+                            <option value="2024">2024</option>
+                            <option value="2025">2025</option>
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                    </div>
                 </div>
             </header>
 
