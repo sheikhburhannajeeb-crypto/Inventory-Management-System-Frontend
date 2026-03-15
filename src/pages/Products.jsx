@@ -183,11 +183,22 @@ const Products = () => {
 
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = activeCategory === 'All' || product.category === activeCategory;
+        
+        let matchesCategory = true;
+        const remaining = Number(product.remaining_quantity || 0);
+
+        if (activeCategory === 'Low Stock') {
+            matchesCategory = remaining > 0 && remaining <= 10;
+        } else if (activeCategory === 'Out of Stock') {
+            matchesCategory = remaining === 0;
+        } else if (activeCategory !== 'All') {
+            matchesCategory = product.category === activeCategory;
+        }
+
         return matchesSearch && matchesCategory;
     });
 
-    const categories = ['All', 'Paint', 'Electric', 'Hardware'];
+    const categories = ['All', 'Paint', 'Electric', 'Hardware', 'Out of Stock'];
 
     return (
         <div className="page-container">
@@ -270,8 +281,17 @@ const Products = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredProducts.map(product => (
-                                <tr key={product.id} className="animate-fade-in">
+                            {filteredProducts.map(product => {
+                                const remaining = Number(product.remaining_quantity || 0);
+                                let rowStyle = {};
+                                if (remaining === 0) {
+                                    rowStyle = { borderLeft: '4px solid #ef4444' };
+                                } else if (remaining < 20) {
+                                    rowStyle = { borderLeft: '4px solid #eab308' };
+                                }
+                                
+                                return (
+                                <tr key={product.id} className="animate-fade-in" style={rowStyle}>
                                     <td>{product.id}</td>
                                     <td className="font-medium">{product.name}</td>
                                     <td>
@@ -291,8 +311,8 @@ const Products = () => {
                                     <td>{product.purchase_date ? new Date(product.purchase_date).toLocaleDateString() : '-'}</td>
                                     <td>{product.total_quantity}</td>
                                     <td>
-                                        <span className={`qty-badge ${product.remaining_quantity <= 10 ? 'low-stock' : 'in-stock'}`}>
-                                            {product.remaining_quantity}
+                                        <span className="qty-badge" style={{ backgroundColor: remaining === 0 ? 'rgba(239, 68, 68, 0.1)' : (remaining < 20 ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)'), color: remaining === 0 ? '#ef4444' : (remaining < 20 ? '#ca8a04' : '#22c55e'), padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                            {remaining}
                                         </span>
                                     </td>
                                     <td>
@@ -314,7 +334,8 @@ const Products = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                                );
+                            })}
                         </tbody>
                     </table>
                 )}
