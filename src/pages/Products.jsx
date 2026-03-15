@@ -16,6 +16,8 @@ const Products = () => {
     const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
     const [supplierSearch, setSupplierSearch] = useState('');
     const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+    const [supplierTxnInfo, setSupplierTxnInfo] = useState(null); // { txn_id, total_amount, paid_amount, remaining }
+    const [addPaymentAmount, setAddPaymentAmount] = useState('');
     const [formData, setFormData] = useState({
         id: null,
         name: '',
@@ -27,7 +29,8 @@ const Products = () => {
         purchase_date: '',
         total_quantity: '',
         add_quantity: '',
-        quantity_unit: 'Per Unit'
+        quantity_unit: 'Per Unit',
+        paid_amount: ''
     });
 
     useEffect(() => {
@@ -94,15 +97,17 @@ const Products = () => {
             purchase_date: new Date().toISOString().split('T')[0],
             total_quantity: '',
             add_quantity: '',
-            quantity_unit: 'Per Unit'
+            quantity_unit: 'Per Unit',
+            paid_amount: ''
         });
         setIsModalOpen(true);
     };
 
-    const openEditModal = (product) => {
+    const openEditModal = async (product) => {
         setModalMode('edit');
         setSupplierSearch(product.purchased_from || '');
         setShowSupplierDropdown(false);
+        setAddPaymentAmount('');
         setFormData({
             id: product.id,
             name: product.name,
@@ -114,14 +119,41 @@ const Products = () => {
             purchase_date: product.purchase_date ? new Date(product.purchase_date).toISOString().split('T')[0] : '',
             total_quantity: product.total_quantity,
             add_quantity: '',
-            quantity_unit: product.quantity_unit || 'Per Unit'
+            quantity_unit: product.quantity_unit || 'Per Unit',
+            paid_amount: ''
         });
+
+        // Fetch supplier transactions for this product
+        try {
+            const token = localStorage.getItem('inventory_token');
+            const txnRes = await axios.get('/api/purchases', { headers: { Authorization: `Bearer ${token}` } });
+            const productTxns = txnRes.data.filter(t => t.product_id === product.id);
+            if (productTxns.length > 0) {
+                const totalOwed = productTxns.reduce((s, t) => s + Number(t.total_amount || 0), 0);
+                const totalPaid = productTxns.reduce((s, t) => s + Number(t.paid_amount || 0), 0);
+                // Use the most recent transaction to update payments
+                const latestTxn = productTxns.sort((a, b) => b.id - a.id)[0];
+                setSupplierTxnInfo({
+                    txn_id: latestTxn.id,
+                    total_amount: totalOwed,
+                    paid_amount: totalPaid,
+                    remaining: totalOwed - totalPaid
+                });
+            } else {
+                setSupplierTxnInfo(null);
+            }
+        } catch (err) {
+            setSupplierTxnInfo(null);
+        }
+
         setIsModalOpen(true);
     };
 
     const closeModal = () => {
         setIsModalOpen(false);
         setShowSupplierDropdown(false);
+        setSupplierTxnInfo(null);
+        setAddPaymentAmount('');
     };
 
     const handleSupplierSelect = (supplierName) => {
@@ -158,20 +190,32 @@ const Products = () => {
                 price: parseFloat(formData.price),
                 purchase_rate: formData.purchase_rate ? parseFloat(formData.purchase_rate) : null,
                 max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
+                paid_amount: formData.paid_amount ? parseFloat(formData.paid_amount) : 0,
                 total_quantity: parseInt(formData.total_quantity, 10),
                 add_quantity: formData.add_quantity ? parseInt(formData.add_quantity, 10) : 0,
             };
 
             if (modalMode === 'add') {
-                const response = await axios.post('/api/products', dataToSubmit, {
+                await axios.post('/api/products', dataToSubmit, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
-                // Optimistically fetch again to get accurate remaining_quantity etc.
                 fetchProducts();
             } else {
-                const response = await axios.put(`/api/products/${formData.id}`, dataToSubmit, {
+                await axios.put(`/api/products/${formData.id}`, dataToSubmit, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
+
+                // If user entered a payment, call the purchases update API
+                if (addPaymentAmount && Number(addPaymentAmount) > 0 && supplierTxnInfo?.txn_id) {
+                    if (Number(addPaymentAmount) > supplierTxnInfo.remaining) {
+                        alert('Payment cannot exceed remaining amount: Rs. ' + supplierTxnInfo.remaining);
+                        return;
+                    }
+                    await axios.put(`/api/purchases/${supplierTxnInfo.txn_id}`, {
+                        add_payment: Number(addPaymentAmount)
+                    }, { headers: { Authorization: `Bearer ${token}` } });
+                }
+
                 fetchProducts();
             }
             closeModal();
@@ -435,6 +479,22 @@ const Products = () => {
                                     />
                                 </div>
                             </div>
+                            {modalMode === 'add' && (
+                                <div className="form-grid">
+                                    <div className="input-group">
+                                        <label>Paid Amount (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(0 = full udhaar from supplier)</span></label>
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            name="paid_amount"
+                                            value={formData.paid_amount}
+                                            onChange={handleFormChange}
+                                            min="0"
+                                            placeholder="How much paid now? (0 = udhaar)"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                             <div className="form-grid">
                                 <div className="input-group">
                                     <label>{modalMode === 'add' ? 'Total Quantity' : 'Current Total Quantity'}</label>
@@ -513,6 +573,68 @@ const Products = () => {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Supplier Payment Panel — Edit mode only */}
+                            {modalMode === 'edit' && supplierTxnInfo && (
+                                <>
+                                    <hr style={{ margin: '16px 0', borderColor: 'var(--border-color)' }} />
+                                    <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '12px' }}>
+                                        💰 Supplier Payment Ledger
+                                    </h3>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <label>Total Owed to Supplier (Rs)</label>
+                                            <input
+                                                type="text"
+                                                className="input-field"
+                                                value={`Rs. ${supplierTxnInfo.total_amount.toLocaleString()}`}
+                                                readOnly
+                                                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }}
+                                            />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Total Paid (Rs)</label>
+                                            <input
+                                                type="text"
+                                                className="input-field"
+                                                value={`Rs. ${supplierTxnInfo.paid_amount.toLocaleString()}`}
+                                                readOnly
+                                                style={{ backgroundColor: 'var(--bg-secondary)', color: '#4ade80' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <label>Remaining (Udhaar) (Rs)</label>
+                                            <input
+                                                type="text"
+                                                className="input-field"
+                                                value={`Rs. ${supplierTxnInfo.remaining.toLocaleString()}`}
+                                                readOnly
+                                                style={{ backgroundColor: 'var(--bg-secondary)', color: supplierTxnInfo.remaining > 0 ? '#f87171' : '#4ade80', fontWeight: 'bold' }}
+                                            />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Add New Payment (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max: {supplierTxnInfo.remaining})</span></label>
+                                            <input
+                                                type="number"
+                                                className="input-field"
+                                                value={addPaymentAmount}
+                                                onChange={e => setAddPaymentAmount(e.target.value)}
+                                                min="0"
+                                                max={supplierTxnInfo.remaining}
+                                                placeholder="Amount to pay now..."
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+
+                            {modalMode === 'edit' && !supplierTxnInfo && formData.purchased_from && (
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                                    ℹ️ No supplier transactions found for this product.
+                                </p>
+                            )}
 
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
