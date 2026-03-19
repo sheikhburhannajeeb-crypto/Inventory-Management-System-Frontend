@@ -21,6 +21,8 @@ const Suppliers = () => {
         name: '',
         phone: '',
         company_name: '',
+        payment_amount: '',
+        txn_due: 0,
         product_id: '',
         product_name: '',
         quantity: '',
@@ -106,6 +108,8 @@ const Suppliers = () => {
             name: '',
             phone: '',
             company_name: '',
+            payment_amount: '',
+            txn_due: 0,
             product_id: '',
             product_name: '',
             quantity: '',
@@ -130,11 +134,14 @@ const Suppliers = () => {
         setModalMode('edit');
         setProductSearch('');
         setShowProductDropdown(false);
+        const txnDue = (row.supplier_transactions || []).reduce((acc, t) => acc + (Number(t.total_amount || 0) - Number(t.paid_amount || 0)), 0);
         setFormData({
             id: row.id,
             name: row.name,
             phone: row.phone || '',
             company_name: row.company_name || '',
+            payment_amount: '',
+            txn_due: txnDue,
 
             // For adding new txn if none existed
             product_id: '',
@@ -212,6 +219,19 @@ const Suppliers = () => {
                 phone: formData.phone,
                 company_name: formData.company_name
             };
+
+            if (formData.id && formData.payment_amount) {
+                const payAmt = Number(formData.payment_amount);
+                if (payAmt > formData.txn_due) {
+                    alert(`Payment cannot exceed remaining total due: Rs. ${formData.txn_due}`);
+                    return;
+                }
+                if (payAmt < 0) {
+                    alert('Payment cannot be negative.');
+                    return;
+                }
+                payload.payment_amount = payAmt;
+            }
 
             const finalProductName = formData.product_name || productSearch;
 
@@ -524,6 +544,25 @@ const Suppliers = () => {
                                     required
                                 />
                             </div>
+                            
+                            {/* Generic Supplier Payment logic */}
+                            {modalMode === 'edit' && formData.txn_due > 0 && (
+                                <>
+                                    <hr className="my-4 border-gray-700" />
+                                    <div className="input-group">
+                                        <label style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>Make Payment (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max: Rs. {formData.txn_due})</span></label>
+                                        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Pay off the oldest outstanding bills alphabetically.</p>
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            name="payment_amount"
+                                            value={formData.payment_amount}
+                                            onChange={handleFormChange}
+                                            placeholder="Enter generic payment..."
+                                        />
+                                    </div>
+                                </>
+                            )}
 
                             {/* Show transaction fields for Add Mode OR Edit Mode when no previous transaction exists */}
                             {(modalMode === 'add' || (modalMode === 'edit' && !formData.txn_id)) && (

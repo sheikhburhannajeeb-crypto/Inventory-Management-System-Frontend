@@ -256,6 +256,7 @@
     background: var(--bg-tertiary);
     width: 100%;
     max-width: 500px;
+    max-height: 85vh;
     border-radius: 16px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     display: flex;
@@ -278,10 +279,22 @@
 }
 
 .modal-body {
-    padding: 1.5rem;
+    padding: 1.25rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
+    overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+.modal-body::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+}
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .form-grid {

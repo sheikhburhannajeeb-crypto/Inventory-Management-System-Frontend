@@ -30,7 +30,9 @@ const Products = () => {
         total_quantity: '',
         add_quantity: '',
         quantity_unit: 'Per Unit',
-        paid_amount: ''
+        paid_amount: '',
+        supplier_phone: '',
+        supplier_company_name: ''
     });
 
     useEffect(() => {
@@ -98,7 +100,9 @@ const Products = () => {
             total_quantity: '',
             add_quantity: '',
             quantity_unit: 'Per Unit',
-            paid_amount: ''
+            paid_amount: '',
+            supplier_phone: '',
+            supplier_company_name: ''
         });
         setIsModalOpen(true);
     };
@@ -120,7 +124,9 @@ const Products = () => {
             total_quantity: product.total_quantity,
             add_quantity: '',
             quantity_unit: product.quantity_unit || 'Per Unit',
-            paid_amount: ''
+            paid_amount: '',
+            supplier_phone: '',
+            supplier_company_name: ''
         });
 
         // Fetch supplier transactions for this product
@@ -167,10 +173,10 @@ const Products = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Auto-derived: total amount to pay supplier = purchase_rate × total_quantity
+    // Auto-derived: total amount to pay supplier = purchase_rate × quantity
     const totalToPaySupplier = (() => {
         const rate = parseFloat(formData.purchase_rate);
-        const qty = parseInt(formData.total_quantity, 10);
+        const qty = modalMode === 'add' ? parseInt(formData.total_quantity, 10) : parseInt(formData.add_quantity, 10);
         if (!isNaN(rate) && rate > 0 && !isNaN(qty) && qty > 0) return rate * qty;
         return null;
     })();
@@ -404,37 +410,22 @@ const Products = () => {
                             </button>
                         </div>
                         <form onSubmit={handleFormSubmit} className="modal-body">
-                            <div className="form-grid">
-                                <div className="input-group">
-                                    <label>Name</label>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleFormChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="input-group">
-                                    <label>Category</label>
-                                    <select
-                                        className="input-field minimal-select"
-                                        name="category"
-                                        value={formData.category}
-                                        onChange={handleFormChange}
-                                        required
-                                    >
-                                        <option value="">-- Select Category --</option>
-                                        <option value="Paint">Paint</option>
-                                        <option value="Electric">Electric</option>
-                                        <option value="Hardware">Hardware</option>
-                                    </select>
-                                </div>
+                            <div className="input-group">
+                                <label>Product Name <span style={{ color: 'var(--danger-color, #ef4444)' }}>*</span></label>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleFormChange}
+                                    placeholder="Enter product name"
+                                    required
+                                />
                             </div>
+
                             <div className="form-grid">
                                 <div className="input-group">
-                                    <label>Sale Price (Rs)</label>
+                                    <label>Sale Price (Rs) <span style={{ color: 'var(--danger-color, #ef4444)' }}>*</span></label>
                                     <input
                                         type="number"
                                         className="input-field"
@@ -442,11 +433,12 @@ const Products = () => {
                                         value={formData.price}
                                         onChange={handleFormChange}
                                         min="0"
+                                        placeholder="0"
                                         required
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label>Purchase Rate (Rs)</label>
+                                    <label>Purchase Price (Rs)</label>
                                     <input
                                         type="number"
                                         className="input-field"
@@ -454,12 +446,27 @@ const Products = () => {
                                         value={formData.purchase_rate}
                                         onChange={handleFormChange}
                                         min="0"
+                                        placeholder="0"
                                     />
                                 </div>
                             </div>
+
                             <div className="form-grid">
                                 <div className="input-group">
-                                    <label>Quantity Unit</label>
+                                    <label>{modalMode === 'add' ? 'Total Qty (Stock)' : 'Add New Quantity'}</label>
+                                    <input
+                                        type="number"
+                                        className="input-field"
+                                        name={modalMode === 'add' ? 'total_quantity' : 'add_quantity'}
+                                        value={modalMode === 'add' ? formData.total_quantity : formData.add_quantity}
+                                        onChange={handleFormChange}
+                                        min={modalMode === 'add' ? "0" : "1"}
+                                        placeholder="0"
+                                        required={modalMode === 'add'}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Unit</label>
                                     <select
                                         className="input-field minimal-select"
                                         name="quantity_unit"
@@ -475,83 +482,29 @@ const Products = () => {
                                         <option value="Per Meter">Per Meter</option>
                                     </select>
                                 </div>
-                                <div className="input-group">
-                                    <label>Max Discount (Rs)</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        name="max_discount"
-                                        value={formData.max_discount}
-                                        onChange={handleFormChange}
-                                        min="0"
-                                    />
-                                </div>
                             </div>
-                            {modalMode === 'add' && (
-                                <>
-                                    {totalToPaySupplier !== null && (
-                                        <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>💳 Total to Pay Supplier</span>
-                                            <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '1rem' }}>Rs. {totalToPaySupplier.toLocaleString()}</span>
-                                        </div>
-                                    )}
-                                    <div className="form-grid">
-                                        <div className="input-group">
-                                            <label>Paid Amount (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(0 = full udhaar from supplier)</span></label>
-                                            <input
-                                                type="number"
-                                                className="input-field"
-                                                name="paid_amount"
-                                                value={formData.paid_amount}
-                                                onChange={handleFormChange}
-                                                min="0"
-                                                placeholder="How much paid now? (0 = udhaar)"
-                                            />
-                                        </div>
-                                    </div>
-                                </>
+
+                            {totalToPaySupplier !== null && modalMode === 'add' && (
+                                <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>💳 Total to Pay Supplier</span>
+                                    <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '1rem' }}>Rs. {totalToPaySupplier.toLocaleString()}</span>
+                                </div>
                             )}
-                            <div className="form-grid">
-                                <div className="input-group">
-                                    <label>{modalMode === 'add' ? 'Total Quantity' : 'Current Total Quantity'}</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        name="total_quantity"
-                                        value={formData.total_quantity}
-                                        onChange={handleFormChange}
-                                        min="1"
-                                        required
-                                        disabled={modalMode === 'edit'}
-                                        style={modalMode === 'edit' ? { backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' } : {}}
-                                    />
-                                </div>
-                                {modalMode === 'edit' && (
-                                    <div className="input-group">
-                                        <label>Add Quantity (+)</label>
-                                        <input
-                                            type="number"
-                                            className="input-field"
-                                            name="add_quantity"
-                                            value={formData.add_quantity}
-                                            onChange={handleFormChange}
-                                            min="0"
-                                            placeholder="Leave empty to not change"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                            <div className="form-grid">
-                                <div className="input-group">
-                                    <label>Purchase Date</label>
-                                    <input
-                                        type="date"
-                                        className="input-field"
-                                        name="purchase_date"
-                                        value={formData.purchase_date}
-                                        onChange={handleFormChange}
-                                    />
-                                </div>
+
+                            <div className="input-group">
+                                <label>Category</label>
+                                <select
+                                    className="input-field minimal-select"
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleFormChange}
+                                    required
+                                >
+                                    <option value="">-- Select Category --</option>
+                                    <option value="Paint">Paint</option>
+                                    <option value="Electric">Electric</option>
+                                    <option value="Hardware">Hardware</option>
+                                </select>
                             </div>
                             <div className="input-group">
                                 <label>Purchased From (Supplier)</label>
@@ -588,6 +541,76 @@ const Products = () => {
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                            
+                            {formData.purchased_from && !suppliersList.some(s => s.name.toLowerCase() === formData.purchased_from.toLowerCase()) && (
+                                <div style={{ backgroundColor: 'rgba(99, 102, 241, 0.05)', padding: '12px', borderRadius: '10px', marginTop: '16px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                                    <label style={{ color: 'var(--accent-primary)', fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>✨ Auto-Create New Supplier</label>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <label>Phone Number</label>
+                                            <input
+                                                type="tel"
+                                                className="input-field"
+                                                name="supplier_phone"
+                                                value={formData.supplier_phone}
+                                                onChange={handleFormChange}
+                                                placeholder="Enter phone number"
+                                            />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Company Name (Optional)</label>
+                                            <input
+                                                type="text"
+                                                className="input-field"
+                                                name="supplier_company_name"
+                                                value={formData.supplier_company_name}
+                                                onChange={handleFormChange}
+                                                placeholder="Enter company name"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="form-grid" style={{ marginTop: '16px' }}>
+                                <div className="input-group">
+                                    <label>Max Discount (Rs)</label>
+                                    <input
+                                        type="number"
+                                        className="input-field"
+                                        name="max_discount"
+                                        value={formData.max_discount}
+                                        onChange={handleFormChange}
+                                        min="0"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                {modalMode === 'add' && (
+                                    <div className="input-group">
+                                        <label>Paid Amount (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(0 = udhaar)</span></label>
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            name="paid_amount"
+                                            value={formData.paid_amount}
+                                            onChange={handleFormChange}
+                                            min="0"
+                                            placeholder="Paid down"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="input-group" style={{ marginBottom: '16px' }}>
+                                <label>Purchase Date</label>
+                                <input
+                                    type="date"
+                                    className="input-field"
+                                    name="purchase_date"
+                                    value={formData.purchase_date}
+                                    onChange={handleFormChange}
+                                />
                             </div>
 
                             {/* Supplier Payment Panel — Edit mode only */}
