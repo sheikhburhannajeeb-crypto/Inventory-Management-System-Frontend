@@ -36,7 +36,7 @@ const Products = () => {
         purchase_date: '',
         total_quantity: '',
         add_quantity: '',
-        quantity_unit: 'Per Unit',
+        quantity_unit: 'Per Piece',
         paid_amount: '',
         supplier_phone: '',
         supplier_company_name: ''
@@ -106,7 +106,7 @@ const Products = () => {
             purchase_date: new Date().toISOString().split('T')[0],
             total_quantity: '',
             add_quantity: '',
-            quantity_unit: 'Per Unit',
+            quantity_unit: 'Per Piece',
             paid_amount: '',
             supplier_phone: '',
             supplier_company_name: ''
@@ -130,7 +130,7 @@ const Products = () => {
             purchase_date: product.purchase_date ? new Date(product.purchase_date).toISOString().split('T')[0] : '',
             total_quantity: product.total_quantity,
             add_quantity: '',
-            quantity_unit: product.quantity_unit || 'Per Unit',
+            quantity_unit: product.quantity_unit || 'Per Piece',
             paid_amount: '',
             supplier_phone: '',
             supplier_company_name: ''
@@ -387,7 +387,7 @@ const Products = () => {
                                     <td>{product.max_discount ? `Rs. ${product.max_discount}` : '-'}</td>
                                     <td>
                                         <span className="badge" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
-                                            {product.quantity_unit || 'Per Unit'}
+                                            {product.quantity_unit || 'Per Piece'}
                                         </span>
                                     </td>
                                     <td>{product.purchased_from || '-'}</td>
@@ -491,18 +491,15 @@ const Products = () => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label>Unit</label>
-                                    <select
+                                    <label>Unit</label>                                    <select
                                         className="input-field minimal-select"
                                         name="quantity_unit"
                                         value={formData.quantity_unit}
                                         onChange={handleFormChange}
-                                        required
                                     >
-                                        <option value="Per Unit">Per Unit</option>
-                                        <option value="Per Kilo">Per Kilo</option>
+                                        <option value="Per Piece">Per Piece</option>
                                         <option value="Per Dozen">Per Dozen</option>
-                                        <option value="Per Liter">Per Liter</option>
+                                        <option value="Per Box">Per Box</option>
                                         <option value="Per Ft">Per Ft</option>
                                         <option value="Per Meter">Per Meter</option>
                                     </select>

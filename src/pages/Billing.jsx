@@ -9,6 +9,7 @@ const Billing = () => {
     const [cart, setCart] = useState([]);
     const [selectedProduct, setSelectedProduct] = useState('');
     const [quantity, setQuantity] = useState(1);
+    const [selectedUnit, setSelectedUnit] = useState('Per Piece');
     const [billType, setBillType] = useState('original');
     const [customerName, setCustomerName] = useState('');
     const [companyName, setCompanyName] = useState('');
@@ -77,13 +78,14 @@ const Billing = () => {
                     return;
                 }
                 setCart(cart.map(item =>
-                    item.id === product.id ? { ...item, quantity: newTotalQty } : item
+                    item.id === product.id ? { ...item, quantity: newTotalQty, cart_unit: selectedUnit } : item
                 ));
             } else {
-                setCart([...cart, { ...product, quantity: qtyToAdd }]);
+                setCart([...cart, { ...product, quantity: qtyToAdd, cart_unit: selectedUnit }]);
             }
             setSelectedProduct('');
             setQuantity(1);
+            setSelectedUnit('Per Piece');
         }
     };
 
@@ -142,7 +144,8 @@ const Billing = () => {
                     buyer_id: buyerId,
                     buyer_name: customerName || 'Cash Walk-in Customer',
                     company_name: companyName || null,
-                    paid_amount: billType === 'udhaar' ? userPaid : itemTotal
+                    paid_amount: billType === 'udhaar' ? userPaid : itemTotal,
+                    quantity_unit: item.cart_unit
                 };
 
                 await axios.post('/api/sales', saleData, {
@@ -334,7 +337,14 @@ const Billing = () => {
                             <select
                                 className="input-field minimal-select"
                                 value={selectedProduct}
-                                onChange={(e) => setSelectedProduct(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setSelectedProduct(val);
+                                    if(val) {
+                                        const prod = products.find(p => String(p.id) === String(val));
+                                        if (prod) setSelectedUnit(prod.quantity_unit || 'Per Piece');
+                                    }
+                                }}
                             >
                                 <option value="">Select a product...</option>
                                 {products.filter(p => billType === 'quotation' || (p.remaining_quantity && p.remaining_quantity >= 1)).map(p => (
@@ -361,6 +371,23 @@ const Billing = () => {
                                     }
                                 }}
                             />
+                        </div>
+                        <div className="input-group flex-1">
+                            <select
+                                className="input-field minimal-select"
+                                value={selectedUnit}
+                                onChange={(e) => setSelectedUnit(e.target.value)}
+                            >
+                                <option value="Per Piece">Per Piece</option>
+                                <option value="Per Dozen">Per Dozen</option>
+                                <option value="Per Box">Per Box</option>
+                                <option value="Per Kg">Per Kg</option>
+                                <option value="Per Liter">Per Liter</option>
+                                <option value="Per Meter">Per Meter</option>
+                                <option value="Per Roll">Per Roll</option>
+                                <option value="Per Pack">Per Pack</option>
+                                <option value="Per Case">Per Case</option>
+                            </select>
                         </div>
                         <button className="btn-primary add-btn" onClick={addToCart}>
                             <Plus size={20} />
@@ -400,7 +427,7 @@ const Billing = () => {
                                         <h4>{item.name}</h4>
                                         <p>
                                             <span style={{ fontSize: '0.85em', color: 'var(--accent-primary)', marginRight: '6px' }}>{formatProductId(item.id)}</span>
-                                            Rs. {item.price} x {item.quantity} {item.quantity_unit ? `(${item.quantity_unit})` : ''}
+                                            Rs. {item.price} x {item.quantity} {item.cart_unit ? `(${item.cart_unit})` : ''}
                                         </p>
                                     </div>
                                     <div className="item-total">
@@ -459,7 +486,7 @@ const Billing = () => {
                                     {item.name}
                                     <div style={{ fontSize: '0.7em', color: '#666', marginTop: '2px' }}>{formatProductId(item.id)}</div>
                                 </span>
-                                <span>{item.quantity} {item.quantity_unit ? `\n(${item.quantity_unit})` : ''}</span>
+                                <span>{item.quantity} {item.cart_unit ? `\n(${item.cart_unit})` : ''}</span>
                                 <span>Rs. {(item.price * item.quantity).toLocaleString()}</span>
                             </div>
                         ))}

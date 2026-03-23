@@ -58,6 +58,21 @@ const RecentSales = () => {
         }
     };
 
+    const handleUndoSale = async (id) => {
+        if (!window.confirm("Are you sure you want to undo this sale? This will restore the stock and clear associated debt and payments.")) return;
+        try {
+            const token = localStorage.getItem('inventory_token');
+            await axios.delete(`/api/sales/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert('Sale Reversed Successfully!');
+            fetchSales();
+        } catch (err) {
+            console.error('Error undoing sale:', err);
+            alert('Failed to undo sale. Please try again.');
+        }
+    };
+
     const threshold = getDateThreshold(activeFilter);
 
     const filteredSales = sales.filter(sale => {
@@ -177,6 +192,7 @@ const RecentSales = () => {
                                 <th>Paid</th>
                                 <th>Pending</th>
                                 <th>Salesman</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -204,6 +220,16 @@ const RecentSales = () => {
                                             {pending > 0 ? `Rs. ${pending.toLocaleString()}` : '✓ Paid'}
                                         </td>
                                         <td>{sale.users?.name || '-'}</td>
+                                        <td>
+                                            <button 
+                                                className="icon-btn-danger" 
+                                                style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'flex', gap: '4px', alignItems: 'center', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                                onClick={() => handleUndoSale(sale.id)}
+                                                title="Return items and clear debt"
+                                            >
+                                                Return
+                                            </button>
+                                        </td>
                                     </tr>
                                 );
                             })}
