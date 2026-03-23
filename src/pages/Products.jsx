@@ -18,6 +18,13 @@ const Products = () => {
     const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
     const [supplierTxnInfo, setSupplierTxnInfo] = useState(null); // { txn_id, total_amount, paid_amount, remaining }
     const [addPaymentAmount, setAddPaymentAmount] = useState('');
+    const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
+    const [showPurchaseRates, setShowPurchaseRates] = useState({});
+
+    const formatProductId = (id) => {
+        if (!id) return '';
+        return `AB${String(id).padStart(2, '0')}`;
+    };
     const [formData, setFormData] = useState({
         id: null,
         name: '',
@@ -160,6 +167,7 @@ const Products = () => {
         setShowSupplierDropdown(false);
         setSupplierTxnInfo(null);
         setAddPaymentAmount('');
+        setPaymentDate(new Date().toISOString().split('T')[0]);
     };
 
     const handleSupplierSelect = (supplierName) => {
@@ -226,7 +234,8 @@ const Products = () => {
                         return;
                     }
                     await axios.put(`/api/purchases/${supplierTxnInfo.txn_id}`, {
-                        add_payment: Number(addPaymentAmount)
+                        add_payment: Number(addPaymentAmount),
+                        date: paymentDate
                     }, { headers: { Authorization: `Bearer ${token}` } });
                 }
 
@@ -255,6 +264,13 @@ const Products = () => {
 
         return matchesSearch && matchesCategory;
     });
+
+    const togglePurchaseRate = (id) => {
+        setShowPurchaseRates(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
 
     const categories = ['All', 'Paint', 'Electric', 'Hardware', 'Out of Stock'];
 
@@ -350,7 +366,7 @@ const Products = () => {
                                 
                                 return (
                                 <tr key={product.id} className="animate-fade-in" style={rowStyle}>
-                                    <td>{product.id}</td>
+                                    <td className="font-bold text-accent">{formatProductId(product.id)}</td>
                                     <td className="font-medium">{product.name}</td>
                                     <td>
                                         <span className="badge" style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
@@ -358,7 +374,15 @@ const Products = () => {
                                         </span>
                                     </td>
                                     <td>Rs. {product.price}</td>
-                                    <td>{product.purchase_rate ? `Rs. ${product.purchase_rate}` : '-'}</td>
+                                    <td 
+                                        onClick={() => togglePurchaseRate(product.id)} 
+                                        style={{ cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold' }}
+                                        title="Click to toggle visibility"
+                                    >
+                                        {product.purchase_rate 
+                                            ? (showPurchaseRates[product.id] ? `Rs. ${product.purchase_rate}` : '***') 
+                                            : '-'}
+                                    </td>
                                     <td>{product.max_discount ? `Rs. ${product.max_discount}` : '-'}</td>
                                     <td>
                                         <span className="badge" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
@@ -655,15 +679,25 @@ const Products = () => {
                                         </div>
                                         <div className="input-group">
                                             <label>Add New Payment (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(max: {supplierTxnInfo.remaining})</span></label>
-                                            <input
-                                                type="number"
-                                                className="input-field"
-                                                value={addPaymentAmount}
-                                                onChange={e => setAddPaymentAmount(e.target.value)}
-                                                min="0"
-                                                max={supplierTxnInfo.remaining}
-                                                placeholder="Amount to pay now..."
-                                            />
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <input
+                                                    type="number"
+                                                    className="input-field"
+                                                    style={{ flex: 1 }}
+                                                    value={addPaymentAmount}
+                                                    onChange={e => setAddPaymentAmount(e.target.value)}
+                                                    min="0"
+                                                    max={supplierTxnInfo.remaining}
+                                                    placeholder="Amount to pay..."
+                                                />
+                                                <input
+                                                    type="date"
+                                                    className="input-field"
+                                                    style={{ width: '140px' }}
+                                                    value={paymentDate}
+                                                    onChange={e => setPaymentDate(e.target.value)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </>
