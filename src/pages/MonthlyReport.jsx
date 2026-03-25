@@ -26,18 +26,23 @@ const MonthlyReport = () => {
 
     const handleDownloadPdf = async () => {
         const element = reportRef.current;
-        
-        const widthPx = element.offsetWidth || 800;
-        const heightPx = element.scrollHeight || 1200;
-        const widthMm = widthPx * 0.264583;
-        const heightMm = heightPx * 0.264583;
+
+        // Landscape A4 = 297mm wide ≈ 1122px at 96dpi. Use 1060px to leave room for margins.
+        const originalWidth = element.style.width;
+        const originalMaxWidth = element.style.maxWidth;
+        element.style.width = '1060px';
+        element.style.maxWidth = '1060px';
+
+        await new Promise(r => setTimeout(r, 100));
+
+        const heightMm = element.scrollHeight * 0.264583;
 
         const opt = {
-            margin:       5,
+            margin:       [8, 8, 8, 8],
             filename:     `Monthly_Report_${filterYear}_${filterMonth}.pdf`,
-            image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: [widthMm + 10, heightMm + 15], orientation: 'portrait' }
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 1.8, useCORS: true, width: 1060, windowWidth: 1060 },
+            jsPDF:        { unit: 'mm', format: [297, heightMm + 16], orientation: 'landscape' }
         };
 
         element.classList.add('pdf-mode-active');
@@ -59,6 +64,8 @@ const MonthlyReport = () => {
         element.classList.remove('pdf-mode-active');
         element.style.background = '';
         element.style.color = '';
+        element.style.width = originalWidth;
+        element.style.maxWidth = originalMaxWidth;
     };
 
     const fetchReport = async () => {

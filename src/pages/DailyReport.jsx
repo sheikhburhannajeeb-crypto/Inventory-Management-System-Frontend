@@ -99,23 +99,27 @@ const DailyReport = () => {
     const handleDownloadPdf = async () => {
         const element = reportRef.current;
         
-        const widthPx = element.offsetWidth || 800;
-        const heightPx = element.scrollHeight || 1200;
-        const widthMm = widthPx * 0.264583;
-        const heightMm = heightPx * 0.264583;
+        // Landscape A4 = 297mm wide ≈ 1122px at 96dpi. Use 1060px to leave room for margins.
+        const originalWidth = element.style.width;
+        const originalMaxWidth = element.style.maxWidth;
+        element.style.width = '1060px';
+        element.style.maxWidth = '1060px';
+
+        // Wait a tick so the browser reflows at the clamped width
+        await new Promise(r => setTimeout(r, 100));
+
+        const heightMm = element.scrollHeight * 0.264583;
 
         const opt = {
-            margin:       5,
+            margin:       [8, 8, 8, 8],
             filename:     `Daily_Report_${reportDate}.pdf`,
-            image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: [widthMm + 10, heightMm + 15], orientation: 'portrait' }
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 1.8, useCORS: true, width: 1060, windowWidth: 1060 },
+            jsPDF:        { unit: 'mm', format: [297, heightMm + 16], orientation: 'landscape' }
         };
 
-        // Ensure we temporarily style the print container for pure white background explicitly
         element.classList.add('pdf-mode-active');
         element.style.background = '#ffffff';
-        element.style.color = '#000000'; // Make text black for PDF purely
         
         const newWindow = window.open('', '_blank');
         if (newWindow) newWindow.document.write('<body><h2 style="font-family:sans-serif; text-align:center; margin-top: 20vh;">Generating Daily Report PDF...</h2></body>');
@@ -132,7 +136,10 @@ const DailyReport = () => {
         element.classList.remove('pdf-mode-active');
         element.style.background = '';
         element.style.color = '';
+        element.style.width = originalWidth;
+        element.style.maxWidth = originalMaxWidth;
     };
+
 
     // Calculations
     const totalSalesAmount = salesToday.reduce((sum, s) => sum + Number(s.total_amount || 0), 0);
