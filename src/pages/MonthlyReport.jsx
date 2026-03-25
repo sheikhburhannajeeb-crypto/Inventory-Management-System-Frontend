@@ -22,25 +22,41 @@ const MonthlyReport = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterYear, filterMonth]);
 
-    const handleDownloadPdf = () => {
+    const handleDownloadPdf = async () => {
         const element = reportRef.current;
+        
+        const widthPx = element.offsetWidth || 800;
+        const heightPx = element.scrollHeight || 1200;
+        const widthMm = widthPx * 0.264583;
+        const heightMm = heightPx * 0.264583;
+
         const opt = {
-            margin:       0.5,
+            margin:       5,
             filename:     `Monthly_Report_${filterYear}_${filterMonth}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
+            image:        { type: 'jpeg', quality: 1 },
             html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            jsPDF:        { unit: 'mm', format: [widthMm + 10, heightMm + 15], orientation: 'portrait' }
         };
 
-        const originalBg = element.style.background;
-        const originalColor = element.style.color;
+        element.classList.add('pdf-mode-active');
         element.style.background = '#ffffff';
         element.style.color = '#000000';
         
-        html2pdf().set(opt).from(element).save().then(() => {
-            element.style.background = originalBg;
-            element.style.color = originalColor;
+        const newWindow = window.open('', '_blank');
+        if (newWindow) newWindow.document.write('<body><h2 style="font-family:sans-serif; text-align:center; margin-top: 20vh;">Generating Monthly Report PDF...</h2></body>');
+        
+        await html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => {
+            const pdfUrl = pdf.output('bloburl');
+            if (newWindow) {
+                newWindow.location.href = pdfUrl;
+            } else {
+                window.open(pdfUrl, '_blank');
+            }
         });
+        
+        element.classList.remove('pdf-mode-active');
+        element.style.background = '';
+        element.style.color = '';
     };
 
     const fetchReport = async () => {

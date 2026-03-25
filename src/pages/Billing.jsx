@@ -51,10 +51,17 @@ const Billing = () => {
         element.style.background = '#ffffff';
         element.style.color = '#000000';
         
-        const actionsContainer = element.querySelector('.bill-actions-container');
-        if(actionsContainer) actionsContainer.style.display = 'none';
+        const newWindow = window.open('', '_blank');
+        if (newWindow) newWindow.document.write('<body><h2 style="font-family:sans-serif; text-align:center; margin-top: 20vh;">Generating PDF Receipt...</h2></body>');
         
-        await html2pdf().set(opt).from(element).save();
+        await html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => {
+            const pdfUrl = pdf.output('bloburl');
+            if (newWindow) {
+                newWindow.location.href = pdfUrl;
+            } else {
+                window.open(pdfUrl, '_blank');
+            }
+        });
         
         element.classList.remove('pdf-mode-active');
         element.style.background = '';
