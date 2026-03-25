@@ -11,6 +11,7 @@ const DailyReport = () => {
     
     // Data state
     const [salesToday, setSalesToday] = useState([]);
+    const [returnsToday, setReturnsToday] = useState([]);
     const [productsToday, setProductsToday] = useState([]);
     const [supplierTxns, setSupplierTxns] = useState([]);
     const [buyersToday, setBuyersToday] = useState([]);
@@ -31,11 +32,12 @@ const DailyReport = () => {
         setLoading(true);
         try {
             // Fetch everything and filter front-end for the selected date
-            const [salesRes, productsRes, suppliersRes, buyersRes] = await Promise.all([
+            const [salesRes, productsRes, suppliersRes, buyersRes, returnsRes] = await Promise.all([
                 axios.get('/api/sales', getConfig()),
                 axios.get('/api/products', getConfig()),
                 axios.get('/api/suppliers', getConfig()),
-                axios.get('/api/buyers', getConfig())
+                axios.get('/api/buyers', getConfig()),
+                axios.get('/api/sales/returns', getConfig()).catch(() => ({ data: [] }))
             ]);
 
             // Filter Sales
@@ -44,6 +46,13 @@ const DailyReport = () => {
                 return d.startsWith(reportDate);
             });
             setSalesToday(sToday);
+
+            // Filter Returns
+            const retToday = (returnsRes.data || []).filter(r => {
+                const dateOnly = r.returned_at ? r.returned_at.split('T')[0] : '';
+                return dateOnly === reportDate;
+            });
+            setReturnsToday(retToday);
 
             // Filter Products added today
             const pToday = (productsRes.data || []).filter(p => {
@@ -268,6 +277,26 @@ const DailyReport = () => {
                                 )}
                             </div>
                         </div>
+
+                        {/* Returned Goods Section */}
+                        {returnsToday.length > 0 && (
+                            <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', marginBottom: '40px', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid rgba(239, 68, 68, 0.2)', paddingBottom: '8px' }}>
+                                    <h3 style={{ fontSize: '1.2rem', color: 'var(--danger)', margin: 0 }}>Goods Returned Today ({returnsToday.length})</h3>
+                                </div>
+                                <ul style={{ margin: 0, paddingLeft: '20px', color: 'var(--text-secondary)' }}>
+                                    {returnsToday.map((r, i) => (
+                                        <li key={i} style={{ marginBottom: '8px' }}>
+                                            <strong style={{ color: 'var(--danger)' }}>{r.product_name}</strong> - Qty: {r.quantity} 
+                                            <span style={{ color: 'var(--text-primary)', marginLeft: '8px' }}>
+                                                (Refunded: Rs.{Number(r.total_amount).toLocaleString()})
+                                            </span>
+                                            {r.buyer_name && <span style={{ marginLeft: '8px', fontStyle: 'italic', fontSize: '0.9rem' }}>from {r.buyer_name}</span>}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
 
                         {/* Recent Transactions Table */}
                         <div>
