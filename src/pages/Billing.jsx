@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, Printer, Search, Receipt, Calculator, Save, RefreshCw, Download } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
+import CustomDropdown from '../components/CustomDropdown';
 import './Billing.css';
 
 const Billing = () => {
@@ -243,21 +244,22 @@ const Billing = () => {
 
                 {error && <div className="error-message">{error}</div>}
 
-                <div className="form-section glass-panel">
+                <div className="form-section glass-panel" style={{ position: 'relative', zIndex: 10 }}>
                     <h3 className="section-title">Bill Details</h3>
 
                     <div className="form-grid">
                         <div className="input-group">
                             <label>Bill Type</label>
-                            <select
-                                className="input-field minimal-select"
+                            <CustomDropdown
+                                className="minimal-select"
                                 value={billType}
                                 onChange={(e) => setBillType(e.target.value)}
-                            >
-                                <option value="original">Original (Deducts Stock)</option>
-                                <option value="quotation">Quotation (Estimate Only — No DB Changes)</option>
-                                <option value="udhaar">Udhaar (Credit Sale — Saves to Buyers)</option>
-                            </select>
+                                options={[
+                                    { value: 'original', label: 'Original (Deducts Stock)' },
+                                    { value: 'quotation', label: 'Quotation (Estimate Only — No DB Changes)' },
+                                    { value: 'udhaar', label: 'Udhaar (Credit Sale — Saves to Buyers)' }
+                                ]}
+                            />
                         </div>
 
                         <div className="input-group">
@@ -388,8 +390,8 @@ const Billing = () => {
                     <h3 className="section-title">Add Items</h3>
                     <div className="add-item-row">
                         <div className="input-group flex-2">
-                            <select
-                                className="input-field minimal-select"
+                            <CustomDropdown
+                                className="minimal-select"
                                 value={selectedProduct}
                                 onChange={(e) => {
                                     const val = e.target.value;
@@ -399,14 +401,14 @@ const Billing = () => {
                                         if (prod) setSelectedUnit(prod.quantity_unit || 'Per Piece');
                                     }
                                 }}
-                            >
-                                <option value="">Select a product...</option>
-                                {products.filter(p => billType === 'quotation' || (p.remaining_quantity && p.remaining_quantity >= 1)).map(p => (
-                                    <option key={p.id} value={p.id}>
-                                        [{formatProductId(p.id)}] {p.name} - Rs. {p.price} {p.quantity_unit ? `(${p.quantity_unit})` : ''} {billType !== 'quotation' ? `(Stock: ${p.remaining_quantity})` : ''}
-                                    </option>
-                                ))}
-                            </select>
+                                options={[
+                                    { value: '', label: 'Select a product...' },
+                                    ...products.filter(p => billType === 'quotation' || (p.remaining_quantity && p.remaining_quantity >= 1)).map(p => ({
+                                        value: p.id,
+                                        label: `[${formatProductId(p.id)}] ${p.name} - Rs. ${p.price} ${p.quantity_unit ? `(${p.quantity_unit})` : ''} ${billType !== 'quotation' ? `(Stock: ${p.remaining_quantity})` : ''}`
+                                    }))
+                                ]}
+                            />
                         </div>
                         <div className="input-group flex-1">
                             <input
@@ -427,21 +429,22 @@ const Billing = () => {
                             />
                         </div>
                         <div className="input-group flex-1">
-                            <select
-                                className="input-field minimal-select"
+                            <CustomDropdown
+                                className="minimal-select"
                                 value={selectedUnit}
                                 onChange={(e) => setSelectedUnit(e.target.value)}
-                            >
-                                <option value="Per Piece">Per Piece</option>
-                                <option value="Per Dozen">Per Dozen</option>
-                                <option value="Per Box">Per Box</option>
-                                <option value="Per Kg">Per Kg</option>
-                                <option value="Per Liter">Per Liter</option>
-                                <option value="Per Meter">Per Meter</option>
-                                <option value="Per Roll">Per Roll</option>
-                                <option value="Per Pack">Per Pack</option>
-                                <option value="Per Case">Per Case</option>
-                            </select>
+                                options={[
+                                    { value: 'Per Piece', label: 'Per Piece' },
+                                    { value: 'Per Dozen', label: 'Per Dozen' },
+                                    { value: 'Per Box', label: 'Per Box' },
+                                    { value: 'Per Kg', label: 'Per Kg' },
+                                    { value: 'Per Liter', label: 'Per Liter' },
+                                    { value: 'Per Meter', label: 'Per Meter' },
+                                    { value: 'Per Roll', label: 'Per Roll' },
+                                    { value: 'Per Pack', label: 'Per Pack' },
+                                    { value: 'Per Case', label: 'Per Case' }
+                                ]}
+                            />
                         </div>
                         <button className="btn-primary add-btn" onClick={addToCart}>
                             <Plus size={20} />

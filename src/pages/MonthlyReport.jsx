@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import html2pdf from 'html2pdf.js';
 import { RefreshCw, TrendingUp, TrendingDown, DollarSign, Wallet, Users, Truck, AlertTriangle, Building2, Banknote, Download } from 'lucide-react';
+import CustomDropdown from '../components/CustomDropdown';
 import './MonthlyReport.css'; // Optional generic modern styling
 
 const API_URL = '/api/reports/monthly';
@@ -98,26 +99,26 @@ const MonthlyReport = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Month</span>
                         <div style={{ position: 'relative' }}>
-                            <select
+                            <CustomDropdown
                                 value={filterMonth}
                                 onChange={(e) => setFilterMonth(e.target.value)}
-                                className="input-field minimal-select"
-                                style={{ padding: '8px 36px 8px 12px', minWidth: '130px', appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500' }}
-                            >
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                            <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)', fontSize: '0.8rem' }}>▼</span>
+                                className="minimal-select"
+                                style={{ minWidth: '160px' }}
+                                options={[
+                                    { value: '01', label: 'January' },
+                                    { value: '02', label: 'February' },
+                                    { value: '03', label: 'March' },
+                                    { value: '04', label: 'April' },
+                                    { value: '05', label: 'May' },
+                                    { value: '06', label: 'June' },
+                                    { value: '07', label: 'July' },
+                                    { value: '08', label: 'August' },
+                                    { value: '09', label: 'September' },
+                                    { value: '10', label: 'October' },
+                                    { value: '11', label: 'November' },
+                                    { value: '12', label: 'December' }
+                                ]}
+                            />
                         </div>
                     </div>
 
@@ -125,18 +126,18 @@ const MonthlyReport = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Year</span>
                         <div style={{ position: 'relative' }}>
-                            <select
+                            <CustomDropdown
                                 value={filterYear}
                                 onChange={(e) => setFilterYear(e.target.value)}
-                                className="input-field minimal-select"
-                                style={{ padding: '8px 36px 8px 12px', minWidth: '90px', appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500' }}
-                            >
-                                <option value="2024">2024</option>
-                                <option value="2025">2025</option>
-                                <option value="2026">2026</option>
-                                <option value="2027">2027</option>
-                            </select>
-                            <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)', fontSize: '0.8rem' }}>▼</span>
+                                className="minimal-select"
+                                style={{ minWidth: '120px' }}
+                                options={[
+                                    { value: '2024', label: '2024' },
+                                    { value: '2025', label: '2025' },
+                                    { value: '2026', label: '2026' },
+                                    { value: '2027', label: '2027' }
+                                ]}
+                            />
                         </div>
                     </div>
                     

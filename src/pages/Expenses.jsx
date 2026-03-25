@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2, Search, DollarSign, X } from 'lucide-react';
+import CustomDropdown from '../components/CustomDropdown';
 import './Expenses.css'; // We'll create a generic css or reuse styles
 
 const API_URL = '/api/expenses';
@@ -123,40 +124,42 @@ const Expenses = () => {
                 <div className="filter-group" style={{ display: 'flex', gap: '10px' }}>
                     <div className="month-filter">
                         <label style={{ color: 'var(--text-secondary)', marginRight: '10px', fontSize: '0.9rem' }}>Year:</label>
-                        <select
+                        <CustomDropdown
                             value={filterYear}
                             onChange={(e) => setFilterYear(e.target.value)}
-                            className="input-field minimal-select"
-                            style={{ width: '100px', padding: '8px 12px' }}
-                        >
-                            <option value="2024">2024</option>
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
-                            <option value="2027">2027</option>
-                        </select>
+                            className="minimal-select"
+                            style={{ width: '100px', padding: '0px' }}
+                            options={[
+                                { value: '2024', label: '2024' },
+                                { value: '2025', label: '2025' },
+                                { value: '2026', label: '2026' },
+                                { value: '2027', label: '2027' }
+                            ]}
+                        />
                     </div>
 
                     <div className="month-filter">
                         <label style={{ color: 'var(--text-secondary)', marginRight: '10px', fontSize: '0.9rem' }}>Month:</label>
-                        <select
+                        <CustomDropdown
                             value={filterMonth}
                             onChange={(e) => setFilterMonth(e.target.value)}
-                            className="input-field minimal-select"
-                            style={{ width: '130px', padding: '8px 12px' }}
-                        >
-                            <option value="01">January</option>
-                            <option value="02">February</option>
-                            <option value="03">March</option>
-                            <option value="04">April</option>
-                            <option value="05">May</option>
-                            <option value="06">June</option>
-                            <option value="07">July</option>
-                            <option value="08">August</option>
-                            <option value="09">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                        </select>
+                            className="minimal-select"
+                            style={{ width: '130px', padding: '0px' }}
+                            options={[
+                                { value: '01', label: 'January' },
+                                { value: '02', label: 'February' },
+                                { value: '03', label: 'March' },
+                                { value: '04', label: 'April' },
+                                { value: '05', label: 'May' },
+                                { value: '06', label: 'June' },
+                                { value: '07', label: 'July' },
+                                { value: '08', label: 'August' },
+                                { value: '09', label: 'September' },
+                                { value: '10', label: 'October' },
+                                { value: '11', label: 'November' },
+                                { value: '12', label: 'December' }
+                            ]}
+                        />
                     </div>
                 </div>
             </div>
@@ -247,20 +250,20 @@ const Expenses = () => {
 
                                     <div className="input-group" style={{ display: 'flex', flexDirection: 'column' }}>
                                         <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '6px' }}>Category</label>
-                                        <select
-                                            className="input-field minimal-select"
+                                        <CustomDropdown
+                                            className="minimal-select"
                                             style={{ width: '100%' }}
                                             value={currentExpense.category}
                                             onChange={e => setCurrentExpense({ ...currentExpense, category: e.target.value })}
-                                            required
-                                        >
-                                            <option value="Petrol">Petrol</option>
-                                            <option value="Electric Bill">Electric Bill</option>
-                                            <option value="Food">Food / Meals</option>
-                                            <option value="Rent">Shop Rent</option>
-                                            <option value="Maintenance">Maintenance</option>
-                                            <option value="Other">Other</option>
-                                        </select>
+                                            options={[
+                                                { value: 'Petrol', label: 'Petrol' },
+                                                { value: 'Electric Bill', label: 'Electric Bill' },
+                                                { value: 'Food', label: 'Food / Meals' },
+                                                { value: 'Rent', label: 'Shop Rent' },
+                                                { value: 'Maintenance', label: 'Maintenance' },
+                                                { value: 'Other', label: 'Other' }
+                                            ]}
+                                        />
                                     </div>
                                 </div>
 

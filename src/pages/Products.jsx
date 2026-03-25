@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Plus, Package, SlidersHorizontal, Edit, Trash2, X } from 'lucide-react';
+import CustomDropdown from '../components/CustomDropdown';
 import './Products.css';
 
 const Products = () => {
@@ -496,18 +497,19 @@ const Products = () => {
                                     />
                                 </div>
                                 <div className="input-group">
-                                    <label>Unit</label>                                    <select
-                                        className="input-field minimal-select"
+                                    <label>Unit</label>                                    <CustomDropdown
+                                        className="minimal-select"
                                         name="quantity_unit"
                                         value={formData.quantity_unit}
                                         onChange={handleFormChange}
-                                    >
-                                        <option value="Per Piece">Per Piece</option>
-                                        <option value="Per Dozen">Per Dozen</option>
-                                        <option value="Per Box">Per Box</option>
-                                        <option value="Per Ft">Per Ft</option>
-                                        <option value="Per Meter">Per Meter</option>
-                                    </select>
+                                        options={[
+                                            { value: 'Per Piece', label: 'Per Piece' },
+                                            { value: 'Per Dozen', label: 'Per Dozen' },
+                                            { value: 'Per Box', label: 'Per Box' },
+                                            { value: 'Per Ft', label: 'Per Ft' },
+                                            { value: 'Per Meter', label: 'Per Meter' }
+                                        ]}
+                                    />
                                 </div>
                             </div>
 
@@ -520,18 +522,19 @@ const Products = () => {
 
                             <div className="input-group">
                                 <label>Category</label>
-                                <select
-                                    className="input-field minimal-select"
+                                <CustomDropdown
+                                    className="minimal-select"
                                     name="category"
                                     value={formData.category}
                                     onChange={handleFormChange}
-                                    required
-                                >
-                                    <option value="">-- Select Category --</option>
-                                    <option value="Paint">Paint</option>
-                                    <option value="Electric">Electric</option>
-                                    <option value="Hardware">Hardware</option>
-                                </select>
+                                    placeholder="-- Select Category --"
+                                    options={[
+                                        { value: '', label: '-- Select Category --' },
+                                        { value: 'Paint', label: 'Paint' },
+                                        { value: 'Electric', label: 'Electric' },
+                                        { value: 'Hardware', label: 'Hardware' }
+                                    ]}
+                                />
                             </div>
                             <div className="input-group">
                                 <label>Purchased From (Supplier)</label>
