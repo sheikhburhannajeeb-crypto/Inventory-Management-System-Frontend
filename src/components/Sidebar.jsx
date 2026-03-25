@@ -1,6 +1,7 @@
 import { LayoutDashboard, Users, Truck, FileText, Package, BarChart3, LogOut, Receipt, CalendarDays, Building2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import ThemeToggle from './ThemeToggle';
 import './Sidebar.css';
 
 const Sidebar = () => {
@@ -38,11 +39,12 @@ const Sidebar = () => {
 
     return (
         <aside className="sidebar glass-panel">
-            <div className="sidebar-header">
+            <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div className="logo-icon">
                     <LayoutDashboard size={28} color="var(--accent-primary)" />
                 </div>
-                <h2 className="logo-text text-gradient">Inventory<br /><span className="text-gradient-accent">Pro</span></h2>
+                <h2 className="logo-text text-gradient" style={{ flex: 1, margin: 0 }}>Inventory<br /><span className="text-gradient-accent">Pro</span></h2>
+                <ThemeToggle />
             </div>
 
             <nav className="sidebar-nav">

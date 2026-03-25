@@ -1,4 +1,4 @@
-:root {
+:root, :root[data-theme='dark'] {
   /* Color Palette - Premium Dark Theme (Matching Mobile App) */
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
@@ -23,6 +23,10 @@
   /* Glassmorphism */
   --glass-bg: rgba(30, 41, 59, 0.7);
   --glass-border: rgba(255, 255, 255, 0.1);
+  --table-th-bg: rgba(0, 0, 0, 0.4);
+  --table-tr-hover: rgba(255, 255, 255, 0.05);
+  --input-bg: rgba(15, 23, 42, 0.5);
+  --input-bg-focus: rgba(15, 23, 42, 0.8);
 
   /* Shadows and Details */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
@@ -32,6 +36,42 @@
 
   /* Typography */
   --font-sans: 'Inter', sans-serif;
+}
+
+:root[data-theme='light'] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-tertiary: #e2e8f0;
+
+  --accent-primary: #7c3aed;
+  --accent-secondary: #0ea5e9;
+  --accent-glow: rgba(124, 58, 237, 0.3);
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --border-color: #cbd5e1;
+  --border-highlight: #94a3b8;
+
+  --danger: #dc2626;
+  --success: #059669;
+  --warning: #d97706;
+  --info: #2563eb;
+
+  /* Glassmorphism Light */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --table-th-bg: rgba(241, 245, 249, 0.9);
+  --table-tr-hover: rgba(0, 0, 0, 0.03);
+  --input-bg: rgba(255, 255, 255, 0.9);
+  --input-bg-focus: #ffffff;
+
+  /* Shadows and Details Light */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.2);
 }
 
 * {
@@ -111,7 +151,7 @@ button {
 
 .input-field {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--input-bg);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   padding: 0.875rem 1.25rem;
@@ -124,7 +164,7 @@ button {
 .input-field:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 2px var(--accent-glow);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--input-bg-focus);
 }
 
 /* Beautiful Scrollbar */
@@ -189,7 +229,7 @@ body .data-table {
 }
 
 body .data-table th {
-    background: rgba(0, 0, 0, 0.4);
+    background: var(--table-th-bg);
     color: var(--text-secondary);
     border-bottom: 1px solid var(--glass-border);
 }
@@ -199,7 +239,7 @@ body .data-table td {
 }
 
 body .data-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--table-tr-hover);
 }
 
 body .table-container {
@@ -216,12 +256,12 @@ body .btn-primary {
 
 body .input-field {
     border-radius: 12px;
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--input-bg);
     border: 1px solid var(--border-color);
 }
 
 body .input-field:focus {
-    background: rgba(15, 23, 42, 0.8);
+    background: var(--input-bg-focus);
     border-color: var(--accent-primary);
 }
 
