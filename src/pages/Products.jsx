@@ -11,6 +11,7 @@ const Products = () => {
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+    const [sortBy, setSortBy] = useState('default');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -268,6 +269,11 @@ const Products = () => {
         }
 
         return matchesSearch && matchesCategory;
+    }).sort((a, b) => {
+        if (sortBy === 'nameAsc') return (a.name || '').localeCompare(b.name || '');
+        if (sortBy === 'priceAsc') return parseFloat(a.price || 0) - parseFloat(b.price || 0);
+        if (sortBy === 'stockAsc') return parseInt(a.remaining_quantity || 0) - parseInt(b.remaining_quantity || 0);
+        return 0;
     });
 
     const togglePurchaseRate = (id) => {
@@ -292,7 +298,7 @@ const Products = () => {
                 </button>
             </div>
 
-            <div className="controls-bar glass-panel">
+            <div className="controls-bar glass-panel" style={{ position: 'relative', zIndex: 10 }}>
                 <div className="search-wrapper">
                     <Search className="search-icon" size={20} />
                     <input
@@ -327,7 +333,23 @@ const Products = () => {
                     ))}
                 </div>
 
-                <button className="icon-btn" title="Filter options">
+                <div style={{ marginLeft: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap' }}>Arrange by:</span>
+                    <CustomDropdown
+                        className="minimal-select"
+                        style={{ minWidth: '150px' }}
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        options={[
+                            { value: 'default', label: 'Default' },
+                            { value: 'nameAsc', label: 'Name (A-Z)' },
+                            { value: 'priceAsc', label: 'Price (Low to High)' },
+                            { value: 'stockAsc', label: 'Stock (Low to High)' }
+                        ]}
+                    />
+                </div>
+
+                <button className="icon-btn" title="Filter options" style={{ marginLeft: '10px' }}>
                     <SlidersHorizontal size={20} />
                 </button>
             </div>
