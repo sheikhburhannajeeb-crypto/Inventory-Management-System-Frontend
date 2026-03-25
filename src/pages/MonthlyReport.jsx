@@ -38,11 +38,11 @@ const MonthlyReport = () => {
         const heightMm = element.scrollHeight * 0.264583;
 
         const opt = {
-            margin:       [8, 8, 8, 8],
+            margin:       [5, 5, 5, 5],
             filename:     `Monthly_Report_${filterYear}_${filterMonth}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 1.8, useCORS: true, width: 1060, windowWidth: 1060 },
-            jsPDF:        { unit: 'mm', format: [297, heightMm + 16], orientation: 'landscape' }
+            image:        { type: 'jpeg', quality: 0.95 },
+            html2canvas:  { scale: 1.0, useCORS: true, width: 1060, windowWidth: 1060 },
+            jsPDF:        { unit: 'mm', format: [297, heightMm * 0.55 + 10], orientation: 'landscape' }
         };
 
         element.classList.add('pdf-mode-active');
