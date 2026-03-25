@@ -51,6 +51,9 @@ const Billing = () => {
         element.style.background = '#ffffff';
         element.style.color = '#000000';
         
+        const actionsContainer = element.querySelector('.bill-actions-container');
+        if(actionsContainer) actionsContainer.style.display = 'none';
+        
         const newWindow = window.open('', '_blank');
         if (newWindow) newWindow.document.write('<body><h2 style="font-family:sans-serif; text-align:center; margin-top: 20vh;">Generating PDF Receipt...</h2></body>');
         
