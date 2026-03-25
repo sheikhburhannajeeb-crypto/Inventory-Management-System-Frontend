@@ -11,6 +11,7 @@ const DailyReport = () => {
     
     // Data state
     const [salesToday, setSalesToday] = useState([]);
+    const [productsToday, setProductsToday] = useState([]);
     const [supplierTxns, setSupplierTxns] = useState([]);
     const [buyersToday, setBuyersToday] = useState([]);
     const [suppliersToday, setSuppliersToday] = useState([]);

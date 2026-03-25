@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { RefreshCw, TrendingUp, TrendingDown, DollarSign, Wallet, Users, Truck, AlertTriangle, Building2, Banknote } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
+import { RefreshCw, TrendingUp, TrendingDown, DollarSign, Wallet, Users, Truck, AlertTriangle, Building2, Banknote, Download } from 'lucide-react';
 import './MonthlyReport.css'; // Optional generic modern styling
 
 const API_URL = '/api/reports/monthly';
@@ -13,10 +14,33 @@ const MonthlyReport = () => {
     const currentMonthStr = (new Date().getMonth() + 1).toString().padStart(2, '0');
     const [filterYear, setFilterYear] = useState(currentYearStr);
     const [filterMonth, setFilterMonth] = useState(currentMonthStr);
+    const reportRef = useRef();
 
     useEffect(() => {
         fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterYear, filterMonth]);
+
+    const handleDownloadPdf = () => {
+        const element = reportRef.current;
+        const opt = {
+            margin:       0.5,
+            filename:     `Monthly_Report_${filterYear}_${filterMonth}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        const originalBg = element.style.background;
+        const originalColor = element.style.color;
+        element.style.background = '#ffffff';
+        element.style.color = '#000000';
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.style.background = originalBg;
+            element.style.color = originalColor;
+        });
+    };
 
     const fetchReport = async () => {
         setLoading(true);
@@ -98,54 +122,65 @@ const MonthlyReport = () => {
                             <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)', fontSize: '0.8rem' }}>▼</span>
                         </div>
                     </div>
+                    
+                    {/* PDF Download Button */}
+                    <button 
+                        className="btn-primary" 
+                        onClick={handleDownloadPdf}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', marginLeft: '12px' }}
+                    >
+                        <Download size={18} />
+                        <span>Download PDF</span>
+                    </button>
                 </div>
             </header>
 
-            {/* KEY METRICS */}
+            <div ref={reportRef} style={{ background: 'var(--bg-primary)', padding: '20px', borderRadius: '8px' }}>
+                {/* KEY METRICS */}
             <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
 
                 {/* Net Cash Flow */}
-                <div className="stat-card glass-panel flex-row">
-                    <div className="stat-icon" style={{ background: summary.cash_flow_profit >= 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)' }}>
-                        {summary.cash_flow_profit >= 0 ? <TrendingUp size={28} color="#22c55e" /> : <TrendingDown size={28} color="#ef4444" />}
+                <div className="stat-card glass-panel flex-row" style={{ padding: '24px', borderRadius: '16px', border: summary.cash_flow_profit >= 0 ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)' }}>
+                    <div className="stat-icon" style={{ background: summary.cash_flow_profit >= 0 ? 'rgba(34, 197, 94, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: summary.cash_flow_profit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                        {summary.cash_flow_profit >= 0 ? <TrendingUp size={32} /> : <TrendingDown size={32} />}
                     </div>
                     <div className="stat-content">
-                        <p className="stat-title">Cash Flow Profit (In hand)</p>
-                        <h3 className="stat-value" style={{ color: summary.cash_flow_profit >= 0 ? '#22c55e' : '#ef4444' }}>
+                        <p className="stat-title" style={{ color: 'var(--text-secondary)' }}>Cash Flow Profit (In hand)</p>
+                        <h3 className="stat-value" style={{ color: summary.cash_flow_profit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
                             Rs. {summary.cash_flow_profit.toLocaleString()}
                         </h3>
                     </div>
                 </div>
 
                 {/* Accrual Profit */}
-                <div className="stat-card glass-panel flex-row" title="Profit based on invoice totals, regardless of if cash was received">
-                    <div className="stat-icon" style={{ background: 'rgba(56, 189, 248, 0.1)' }}>
-                        <Wallet size={28} color="#38bdf8" />
+                <div className="stat-card glass-panel flex-row" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.2)' }} title="Profit based on invoice totals, regardless of if cash was received">
+                    <div className="stat-icon" style={{ background: 'rgba(56, 189, 248, 0.15)', color: 'var(--info)' }}>
+                        <Wallet size={32} />
                     </div>
                     <div className="stat-content">
-                        <p className="stat-title">Gross Business Margin</p>
-                        <h3 className="stat-value text-primary">Rs. {summary.accrual_profit.toLocaleString()}</h3>
+                        <p className="stat-title" style={{ color: 'var(--text-secondary)' }}>Gross Business Margin</p>
+                        <h3 className="stat-value" style={{ color: 'var(--text-primary)' }}>Rs. {summary.accrual_profit.toLocaleString()}</h3>
                     </div>
                 </div>
 
                 {/* Expenses */}
-                <div className="stat-card glass-panel flex-row">
-                    <div className="stat-icon" style={{ background: 'rgba(249, 115, 22, 0.1)' }}>
-                        <DollarSign size={28} color="#f97316" />
+                <div className="stat-card glass-panel flex-row" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(249, 115, 22, 0.2)' }}>
+                    <div className="stat-icon" style={{ background: 'rgba(249, 115, 22, 0.15)', color: 'var(--warning)' }}>
+                        <DollarSign size={32} />
                     </div>
                     <div className="stat-content">
-                        <p className="stat-title">Total Shop Expenses</p>
-                        <h3 className="stat-value" style={{ color: '#f97316' }}>Rs. {summary.total_expenses.toLocaleString()}</h3>
+                        <p className="stat-title" style={{ color: 'var(--text-secondary)' }}>Total Shop Expenses</p>
+                        <h3 className="stat-value" style={{ color: 'var(--warning)' }}>Rs. {summary.total_expenses.toLocaleString()}</h3>
                     </div>
                 </div>
 
                 {/* Risk / Dues */}
-                <div className="stat-card glass-panel flex-row">
-                    <div className="stat-icon" style={{ background: 'rgba(234, 179, 8, 0.1)' }}>
-                        <AlertTriangle size={28} color="#eab308" />
+                <div className="stat-card glass-panel flex-row" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(234, 179, 8, 0.2)' }}>
+                    <div className="stat-icon" style={{ background: 'rgba(234, 179, 8, 0.15)', color: '#eab308' }}>
+                        <AlertTriangle size={32} />
                     </div>
                     <div className="stat-content">
-                        <p className="stat-title">All-Time Buyer Dues pending</p>
+                        <p className="stat-title" style={{ color: 'var(--text-secondary)' }}>All-Time Buyer Dues pending</p>
                         <h3 className="stat-value" style={{ color: '#eab308' }}>Rs. {summary.total_all_time_dues_from_buyers.toLocaleString()}</h3>
                     </div>
                 </div>
@@ -160,22 +195,22 @@ const MonthlyReport = () => {
                         <Users size={20} /> Income & Receivables
                     </h2>
 
-                    <div className="glass-panel" style={{ padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', marginBottom: '24px', background: 'rgba(56, 189, 248, 0.03)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Total Sales Invoices Made:</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {summary.total_sales_created_value.toLocaleString()}</span>
+                            <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Rs. {summary.total_sales_created_value.toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#22c55e' }}>
-                            <span>Cash Sales (Fully Paid):</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {(summary.total_cash_sales_this_month || 0).toLocaleString()}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Cash Sales (Fully Paid):</span>
+                            <span style={{ fontWeight: '600', color: 'var(--success)' }}>Rs. {(summary.total_cash_sales_this_month || 0).toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#a78bfa' }}>
-                            <span>Udhaar Installments Received:</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {summary.total_sales_collected_this_month.toLocaleString()}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Udhaar Installments Received:</span>
+                            <span style={{ fontWeight: '600', color: 'var(--info)' }}>Rs. {summary.total_sales_collected_this_month.toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#eab308', paddingTop: '10px', borderTop: '1px solid var(--glass-border)' }}>
-                            <span>New Credit Given This Month:</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {summary.total_credit_given_this_month.toLocaleString()}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px dashed var(--glass-border)' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>New Credit Given This Month:</span>
+                            <span style={{ fontWeight: '600', color: 'var(--warning)' }}>Rs. {summary.total_credit_given_this_month.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -202,16 +237,16 @@ const MonthlyReport = () => {
                                         <tr key={s.id}>
                                             <td style={{ fontWeight: '500' }}>{s.salesman_name}</td>
                                             <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{s.num_cash_bills}</td>
-                                            <td style={{ textAlign: 'right', color: '#22c55e', fontWeight: '600' }}>+Rs. {s.total_cash_collected.toLocaleString()}</td>
+                                            <td style={{ textAlign: 'right', color: 'var(--success)', fontWeight: '600' }}>+Rs. {s.total_cash_collected.toLocaleString()}</td>
                                         </tr>
                                     ))}
                                     {/* Total row */}
                                     <tr style={{ borderTop: '2px solid var(--glass-border)', background: 'rgba(34,197,94,0.05)' }}>
-                                        <td style={{ fontWeight: '700', color: '#22c55e' }}>Total</td>
+                                        <td style={{ fontWeight: '700', color: 'var(--success)' }}>Total</td>
                                         <td style={{ textAlign: 'center', fontWeight: '700' }}>
                                             {activity_lists.cash_sales_by_salesman.reduce((s, r) => s + r.num_cash_bills, 0)}
                                         </td>
-                                        <td style={{ textAlign: 'right', color: '#22c55e', fontWeight: '700' }}>
+                                        <td style={{ textAlign: 'right', color: 'var(--success)', fontWeight: '700' }}>
                                             +Rs. {(summary.total_cash_sales_this_month || 0).toLocaleString()}
                                         </td>
                                     </tr>
@@ -243,7 +278,7 @@ const MonthlyReport = () => {
                                         <tr key={b.id}>
                                             <td>{b.name}</td>
                                             <td>{b.phone}</td>
-                                            <td style={{ textAlign: 'right', color: '#a78bfa', fontWeight: '500' }}>+Rs. {b.amount_paid_this_month.toLocaleString()}</td>
+                                            <td style={{ textAlign: 'right', color: 'var(--accent-primary)', fontWeight: '500' }}>+Rs. {b.amount_paid_this_month.toLocaleString()}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -258,22 +293,22 @@ const MonthlyReport = () => {
                         <Truck size={20} /> Expenses & Payables
                     </h2>
 
-                    <div className="glass-panel" style={{ padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', marginBottom: '24px', background: 'rgba(239, 68, 68, 0.03)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Total Purchase Invoices Made:</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {summary.total_purchases_created_value.toLocaleString()}</span>
+                            <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>Rs. {summary.total_purchases_created_value.toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#ef4444' }}>
-                            <span>Actual Cash Paid to Suppliers:</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {summary.total_purchases_paid_this_month.toLocaleString()}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Actual Cash Paid to Suppliers:</span>
+                            <span style={{ fontWeight: '600', color: 'var(--danger)' }}>Rs. {summary.total_purchases_paid_this_month.toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f97316', paddingTop: '10px', borderTop: '1px solid var(--glass-border)', marginBottom: '10px' }}>
-                            <span>Total Shop Expenses:</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {summary.total_expenses.toLocaleString()}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px dashed var(--glass-border)', marginBottom: '14px' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Total Shop Expenses:</span>
+                            <span style={{ fontWeight: '600', color: 'var(--warning)' }}>Rs. {summary.total_expenses.toLocaleString()}</span>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#8b5cf6', paddingTop: '10px', borderTop: '1px solid var(--glass-border)' }}>
-                            <span>New Credit Taken This Month:</span>
-                            <span style={{ fontWeight: '600' }}>Rs. {summary.total_credit_taken_this_month.toLocaleString()}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px dashed var(--glass-border)' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>New Credit Taken This Month:</span>
+                            <span style={{ fontWeight: '600', color: 'var(--info)' }}>Rs. {summary.total_credit_taken_this_month.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -311,7 +346,7 @@ const MonthlyReport = () => {
                                     {activity_lists.payments_made_to_suppliers.map(s => (
                                         <tr key={s.id}>
                                             <td>{s.name}</td>
-                                            <td style={{ textAlign: 'right', color: '#ef4444', fontWeight: '500' }}>-Rs. {s.amount_paid_this_month.toLocaleString()}</td>
+                                            <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: '500' }}>-Rs. {s.amount_paid_this_month.toLocaleString()}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -353,8 +388,8 @@ const MonthlyReport = () => {
                                     </td>
                                     <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{c.num_transactions}</td>
                                     <td style={{ textAlign: 'right', fontWeight: '500' }}>Rs. {c.total_sales.toLocaleString()}</td>
-                                    <td style={{ textAlign: 'right', color: '#22c55e', fontWeight: '500' }}>Rs. {c.total_collected.toLocaleString()}</td>
-                                    <td style={{ textAlign: 'right', color: c.total_outstanding > 0 ? '#ef4444' : '#22c55e', fontWeight: '600' }}>
+                                    <td style={{ textAlign: 'right', color: 'var(--success)', fontWeight: '500' }}>Rs. {c.total_collected.toLocaleString()}</td>
+                                    <td style={{ textAlign: 'right', color: c.total_outstanding > 0 ? 'var(--danger)' : 'var(--success)', fontWeight: '600' }}>
                                         {c.total_outstanding > 0 ? `Rs. ${c.total_outstanding.toLocaleString()}` : '✓ Clear'}
                                     </td>
                                 </tr>
@@ -370,10 +405,10 @@ const MonthlyReport = () => {
                                 <td style={{ textAlign: 'right' }}>
                                     Rs. {company_wise_summary.reduce((s, c) => s + c.total_sales, 0).toLocaleString()}
                                 </td>
-                                <td style={{ textAlign: 'right', color: '#22c55e' }}>
+                                <td style={{ textAlign: 'right', color: 'var(--success)' }}>
                                     Rs. {company_wise_summary.reduce((s, c) => s + c.total_collected, 0).toLocaleString()}
                                 </td>
-                                <td style={{ textAlign: 'right', color: '#ef4444' }}>
+                                <td style={{ textAlign: 'right', color: 'var(--danger)' }}>
                                     Rs. {company_wise_summary.reduce((s, c) => s + c.total_outstanding, 0).toLocaleString()}
                                 </td>
                             </tr>
@@ -389,7 +424,7 @@ const MonthlyReport = () => {
                 </h3>
                 {activity_lists.all_time_buyers_with_dues.length === 0 ? (
                     <div className="empty-state" style={{ padding: '2rem' }}>
-                        <p style={{ color: '#22c55e', fontWeight: '500' }}>Great! No pending dues from any buyers.</p>
+                        <p style={{ color: 'var(--success)', fontWeight: '500' }}>Great! No pending dues from any buyers.</p>
                     </div>
                 ) : (
                     <table className="data-table">
@@ -405,9 +440,9 @@ const MonthlyReport = () => {
                                 <tr key={b.id}>
                                     <td style={{ fontWeight: '500' }}>{b.name}</td>
                                     <td>
-                                        <a href={`tel:${b.phone}`} style={{ color: '#38bdf8', textDecoration: 'none' }}>{b.phone}</a>
+                                        <a href={`tel:${b.phone}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{b.phone}</a>
                                     </td>
-                                    <td style={{ textAlign: 'right', color: '#ef4444', fontWeight: '600' }}>Rs. {b.remaining_due.toLocaleString()}</td>
+                                    <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: '600' }}>Rs. {b.remaining_due.toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -415,14 +450,48 @@ const MonthlyReport = () => {
                 )}
             </div>
 
+            {/* Advertisement Footer */}
+            <div style={{ marginTop: '50px', paddingTop: '24px', borderTop: '2px solid var(--border-color)', textAlign: 'center', color: 'var(--text-primary)' }}>
+                <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', fontWeight: 700, letterSpacing: '0.5px' }}>Software Developed by Hassan Ali Abrar</h3>
+                <p style={{ margin: '0 0 6px', fontSize: '0.95rem' }}>Instagram: <strong style={{ color: 'var(--info)' }}>hassan.secure</strong> | WhatsApp: <strong style={{ color: 'var(--success)' }}>+92 348 5055098</strong></p>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Contact for custom software development, business automation, and IT solutions.</p>
+            </div>
+            
+            </div> {/* End of reportRef wrapper */}
+
             <style dangerouslySetInnerHTML={{
                 __html: `
                 @keyframes spin { 100% { transform: rotate(360deg); } }
-                .flex-row { display: flex; align-items: center; gap: 15px; padding: 20px; border-radius: 16px; }
-                .stat-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 12px; }
-                .stat-title { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px; font-weight: 500;}
-                .stat-value { font-size: 1.6rem; margin: 0; font-weight: 700; }
-                tfoot td { padding: 12px 16px; font-size: 0.9rem; }
+                
+                /* Premium Glass Cards */
+                .stat-card.flex-row { 
+                    display: flex; align-items: center; gap: 20px; 
+                    transition: transform 0.2s ease, box-shadow 0.2s ease; 
+                }
+                .stat-card.flex-row:hover { transform: translateY(-3px); box-shadow: 0 16px 32px rgba(0,0,0,0.12); }
+                .stat-icon { display: flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 16px; font-size: 1.5rem; flex-shrink: 0; }
+                .stat-title { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+                .stat-value { font-size: 1.85rem; margin: 0; font-weight: 700; }
+                
+                /* Premium Tables */
+                .data-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; }
+                .data-table th { padding: 16px 20px; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.02); }
+                .data-table th:first-child { border-top-left-radius: 12px; }
+                .data-table th:last-child { border-top-right-radius: 12px; }
+                .data-table td { padding: 16px 20px; font-size: 0.95rem; color: var(--text-primary); border-bottom: 1px solid var(--glass-border); transition: background 0.2s; }
+                .data-table tbody tr:last-child td { border-bottom: none; }
+                .data-table tbody tr:hover td { background: rgba(255, 255, 255, 0.03); }
+                
+                tfoot td { padding: 16px 20px; font-size: 0.95rem; font-weight: 700; background: rgba(0,0,0,0.02); }
+                tfoot td:first-child { border-bottom-left-radius: 12px; }
+                tfoot td:last-child { border-bottom-right-radius: 12px; }
+
+                /* Hide border on glass-panel when tables are present for clean look */
+                .table-container { border: 1px solid var(--glass-border); background: var(--bg-primary); }
+                
+                /* Select inputs modern styling */
+                .page-header select:focus { background: rgba(255,255,255,0.05); }
+                .minimal-select option { background: var(--bg-primary); color: var(--text-primary); }
             `}} />
         </div>
     );
