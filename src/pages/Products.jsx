@@ -250,7 +250,10 @@ const Products = () => {
     };
 
     const filteredProducts = products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = product.name.toLowerCase().includes(query) || 
+                              String(product.id).includes(query) || 
+                              formatProductId(product.id).toLowerCase().includes(query);
         
         let matchesCategory = true;
         const remaining = Number(product.remaining_quantity || 0);
@@ -309,11 +312,13 @@ const Products = () => {
                             style={{
                                 padding: '6px 16px',
                                 borderRadius: '20px',
-                                border: '1px solid var(--border-color)',
-                                backgroundColor: activeCategory === cat ? 'var(--accent-primary)' : 'transparent',
-                                color: activeCategory === cat ? '#fff' : 'var(--text-secondary)',
+                                border: 'none',
+                                backgroundColor: activeCategory === cat ? 'var(--text-primary)' : 'transparent',
+                                color: activeCategory === cat ? 'var(--bg-primary)' : 'var(--text-muted)',
+                                boxShadow: activeCategory === cat ? 'var(--shadow-sm)' : 'none',
                                 cursor: 'pointer',
-                                transition: 'all 0.2s'
+                                transition: 'all 0.2s',
+                                fontWeight: activeCategory === cat ? '600' : '500'
                             }}
                         >
                             {cat}

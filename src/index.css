@@ -238,8 +238,13 @@ body .data-table td {
     border-bottom: 1px solid var(--border-color);
 }
 
+body .data-table tbody tr {
+    transition: all 0.2s ease;
+}
+
 body .data-table tbody tr:hover {
     background: var(--table-tr-hover);
+    transform: scale(1.002);
 }
 
 body .table-container {

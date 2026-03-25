@@ -44,7 +44,6 @@ const Sidebar = () => {
                     <LayoutDashboard size={28} color="var(--accent-primary)" />
                 </div>
                 <h2 className="logo-text text-gradient" style={{ flex: 1, margin: 0 }}>Inventory<br /><span className="text-gradient-accent">Pro</span></h2>
-                <ThemeToggle />
             </div>
 
             <nav className="sidebar-nav">
@@ -70,6 +69,9 @@ const Sidebar = () => {
                         <p className="user-name" style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={user.name}>{user.name}</p>
                         <p className="user-role" style={{ fontSize: '0.75rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={user.email}>{user.email}</p>
                     </div>
+                </div>
+                <div style={{ marginTop: 'auto', marginBottom: '8px', width: '100%' }}>
+                    <ThemeToggle />
                 </div>
                 <button
                     onClick={handleLogout}

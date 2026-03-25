@@ -200,32 +200,32 @@ const Companies = () => {
                                         onClick={() => setSelectedCompany(isOpen ? null : companyName)}
                                         style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            padding: '16px 20px', cursor: 'pointer',
+                                            padding: '10px 16px', cursor: 'pointer',
                                             background: isOpen ? 'rgba(56,189,248,0.08)' : 'transparent',
                                             transition: 'background 0.2s'
                                         }}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <div style={{
-                                                width: 40, height: 40, borderRadius: '10px',
+                                                width: 34, height: 34, borderRadius: '8px',
                                                 background: 'rgba(56,189,248,0.15)', display: 'flex',
                                                 alignItems: 'center', justifyContent: 'center'
                                             }}>
-                                                <Building2 size={20} color="#38bdf8" />
+                                                <Building2 size={18} color="#38bdf8" />
                                             </div>
                                             <div>
-                                                <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                                                <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                                                     {companyName}
                                                 </div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                                     {uniqueCustomers} customer{uniqueCustomers !== 1 ? 's' : ''} · {txns.length} transaction{txns.length !== 1 ? 's' : ''}
                                                 </div>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                                             <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding</div>
-                                                <div style={{ fontWeight: 700, fontSize: '1.1rem', color: totals.remaining > 0 ? '#ef4444' : '#4ade80' }}>
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding</div>
+                                                <div style={{ fontWeight: 700, fontSize: '1rem', color: totals.remaining > 0 ? '#ef4444' : '#4ade80' }}>
                                                     Rs. {totals.remaining.toLocaleString()}
                                                 </div>
                                             </div>
@@ -252,8 +252,8 @@ const Companies = () => {
                                             {txns.length === 0 ? (
                                                 <div className="text-center py-4 text-muted">No transactions recorded for this company.</div>
                                             ) : (
-                                                <div className="table-wrapper" style={{ padding: '8px' }}>
-                                                    <table className="custom-table">
+                                                <div className="table-container" style={{ padding: '8px' }}>
+                                                    <table className="data-table">
                                                         <thead>
                                                             <tr>
                                                                 <th>Customer</th>
