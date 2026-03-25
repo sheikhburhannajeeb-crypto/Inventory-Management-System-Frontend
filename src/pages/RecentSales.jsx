@@ -14,7 +14,7 @@ const TIME_FILTERS = [
 
 const formatProductId = (id) => {
     if (!id) return '';
-    return `AB${String(id).padStart(2, '0')}`;
+    return String(id).toUpperCase();
 };
 
 const getDateThreshold = (key) => {
