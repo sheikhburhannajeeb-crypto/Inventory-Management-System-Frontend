@@ -15,19 +15,28 @@ const ThemeToggle = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: '100%',
-                padding: '10px',
-                background: 'rgba(100, 116, 139, 0.1)',
+                padding: '12px',
+                background: 'var(--bg-secondary)',
                 border: '1px solid var(--border-color)',
                 color: 'var(--text-primary)',
-                transition: 'all 0.2s',
-                borderRadius: '8px',
-                cursor: 'pointer'
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                borderRadius: '30px',
+                cursor: 'pointer',
+                boxShadow: 'var(--shadow-sm)'
             }}
             onMouseOver={(e) => {
-                e.currentTarget.style.background = 'rgba(100, 116, 139, 0.2)';
+                e.currentTarget.style.background = 'var(--accent-primary)';
+                e.currentTarget.style.color = '#fff';
+                e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 12px var(--accent-glow)';
             }}
             onMouseOut={(e) => {
-                e.currentTarget.style.background = 'rgba(100, 116, 139, 0.1)';
+                e.currentTarget.style.background = 'var(--bg-secondary)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+                e.currentTarget.style.borderColor = 'var(--border-color)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
             }}
         >
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}

@@ -83,24 +83,33 @@ const Sidebar = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '8px',
-                        padding: '10px',
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        color: '#ef4444',
-                        border: '1px solid rgba(239, 68, 68, 0.2)',
-                        borderRadius: '8px',
+                        padding: '12px',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--danger)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '30px',
                         cursor: 'pointer',
-                        transition: 'all 0.2s'
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: 'var(--shadow-sm)'
                     }}
                     onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                        e.currentTarget.style.background = 'var(--danger)';
+                        e.currentTarget.style.color = '#fff';
+                        e.currentTarget.style.borderColor = 'var(--danger)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.3)';
                     }}
                     onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                        e.currentTarget.style.background = 'var(--bg-secondary)';
+                        e.currentTarget.style.color = 'var(--danger)';
+                        e.currentTarget.style.borderColor = 'var(--border-color)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
                     }}
                     title="Logout"
                 >
                     <LogOut size={18} />
-                    <span className="logout-btn-text">Logout</span>
+                    <span className="logout-btn-text" style={{ fontWeight: 600 }}>Logout</span>
                 </button>
             </div>
         </aside>

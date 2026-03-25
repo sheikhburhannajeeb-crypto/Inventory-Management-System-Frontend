@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Edit2, Trash2, Search, DollarSign } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, DollarSign, X } from 'lucide-react';
 import './Expenses.css'; // We'll create a generic css or reuse styles
 
 const API_URL = '/api/expenses';
@@ -223,75 +223,81 @@ const Expenses = () => {
 
             {isModalOpen && (
                 <div className="modal-overlay">
-                    <div className="modal-content glass-panel fade-in" style={{ maxWidth: '500px' }}>
-                        <div className="modal-header">
-                            <h2>{currentExpense.id ? 'Edit Expense' : 'Add Expense'}</h2>
-                            <button className="close-btn" onClick={handleCloseModal}>&times;</button>
+                    <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '450px' }}>
+                        <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{currentExpense.id ? 'Edit Expense' : 'Add Expense'}</h2>
+                            <button type="button" className="icon-btn-small" style={{ color: 'var(--text-muted)' }} onClick={handleCloseModal}>
+                                <X size={20} />
+                            </button>
                         </div>
-                        <form onSubmit={handleSubmit} className="modal-form">
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div className="form-group">
-                                    <label>Date</label>
-                                    <input
-                                        type="date"
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div className="input-group" style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '6px' }}>Date</label>
+                                        <input
+                                            type="date"
+                                            className="input-field"
+                                            style={{ width: '100%' }}
+                                            value={currentExpense.date}
+                                            onChange={e => setCurrentExpense({ ...currentExpense, date: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="input-group" style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '6px' }}>Category</label>
+                                        <select
+                                            className="input-field minimal-select"
+                                            style={{ width: '100%' }}
+                                            value={currentExpense.category}
+                                            onChange={e => setCurrentExpense({ ...currentExpense, category: e.target.value })}
+                                            required
+                                        >
+                                            <option value="Petrol">Petrol</option>
+                                            <option value="Electric Bill">Electric Bill</option>
+                                            <option value="Food">Food / Meals</option>
+                                            <option value="Rent">Shop Rent</option>
+                                            <option value="Maintenance">Maintenance</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="input-group" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '6px' }}>Amount (Rs)</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontWeight: 500 }}>Rs.</span>
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            value={currentExpense.amount}
+                                            onChange={e => setCurrentExpense({ ...currentExpense, amount: e.target.value })}
+                                            required
+                                            min="0"
+                                            style={{ paddingLeft: '48px', fontSize: '1.05rem', fontWeight: '600', width: '100%' }}
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="input-group" style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '6px' }}>Description (Optional)</label>
+                                    <textarea
                                         className="input-field"
-                                        value={currentExpense.date}
-                                        onChange={e => setCurrentExpense({ ...currentExpense, date: e.target.value })}
-                                        required
+                                        style={{ minHeight: '90px', resize: 'vertical', paddingTop: '12px', width: '100%' }}
+                                        value={currentExpense.description}
+                                        onChange={e => setCurrentExpense({ ...currentExpense, description: e.target.value })}
+                                        placeholder="e.g. Bought petrol for bike"
                                     />
                                 </div>
-
-                                <div className="input-group">
-                                    <label>Category</label>
-                                    <select
-                                        className="input-field minimal-select"
-                                        value={currentExpense.category}
-                                        onChange={e => setCurrentExpense({ ...currentExpense, category: e.target.value })}
-                                        required
-                                    >
-                                        <option value="Petrol">Petrol</option>
-                                        <option value="Electric Bill">Electric Bill</option>
-                                        <option value="Food">Food / Meals</option>
-                                        <option value="Rent">Shop Rent</option>
-                                        <option value="Maintenance">Maintenance</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
                             </div>
 
-                            <div className="form-group">
-                                <label>Amount (Rs)</label>
-                                <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>Rs.</span>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        value={currentExpense.amount}
-                                        onChange={e => setCurrentExpense({ ...currentExpense, amount: e.target.value })}
-                                        required
-                                        min="0"
-                                        style={{ paddingLeft: '45px', fontSize: '1.1rem', fontWeight: '500' }}
-                                        placeholder="0"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Description (Optional)</label>
-                                <textarea
-                                    className="input-field"
-                                    style={{ minHeight: '80px', resize: 'vertical' }}
-                                    value={currentExpense.description}
-                                    onChange={e => setCurrentExpense({ ...currentExpense, description: e.target.value })}
-                                    placeholder="e.g. Bought petrol for bike"
-                                />
-                            </div>
-
-                            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', marginTop: '20px' }}>
-                                <button type="button" className="btn-secondary" onClick={handleCloseModal} style={{ padding: '0.75rem 1.5rem', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-secondary)' }}>
+                            <div className="modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: 'var(--bg-secondary)', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
+                                <button type="button" onClick={handleCloseModal} style={{ padding: '10px 20px', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-secondary)', fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.color = 'var(--text-primary)'; }} onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary">
+                                <button type="submit" className="btn-primary" style={{ padding: '10px 24px', fontWeight: 600 }}>
                                     {currentExpense.id ? 'Update Expense' : 'Save Expense'}
                                 </button>
                             </div>

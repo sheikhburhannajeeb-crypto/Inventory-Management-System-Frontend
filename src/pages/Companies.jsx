@@ -237,15 +237,20 @@ const Companies = () => {
                                     {isOpen && (
                                         <div style={{ borderTop: '1px solid var(--border-color)', padding: '0 4px 8px' }}>
                                             {/* Summary bar */}
-                                            <div style={{ display: 'flex', gap: '16px', padding: '12px 16px', background: 'rgba(0,0,0,0.2)' }}>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                    Total Billed: <strong style={{ color: 'var(--text-primary)' }}>Rs. {totals.total.toLocaleString()}</strong>
+                                            <div style={{ 
+                                                display: 'flex', gap: '24px', padding: '16px 20px', 
+                                                background: 'var(--bg-secondary)', 
+                                                borderRadius: '12px', border: '1px solid var(--border-color)', 
+                                                margin: '12px 16px', boxShadow: 'var(--shadow-sm)'
+                                            }}>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                                    Total Billed: <strong style={{ color: 'var(--text-primary)', marginLeft: '6px' }}>Rs. {totals.total.toLocaleString()}</strong>
                                                 </span>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                    Total Paid: <strong style={{ color: '#4ade80' }}>Rs. {totals.paid.toLocaleString()}</strong>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                                    Total Paid: <strong style={{ color: 'var(--success)', marginLeft: '6px' }}>Rs. {totals.paid.toLocaleString()}</strong>
                                                 </span>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                    Remaining: <strong style={{ color: totals.remaining > 0 ? '#ef4444' : '#4ade80' }}>Rs. {totals.remaining.toLocaleString()}</strong>
+                                                <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                                    Remaining: <strong style={{ color: totals.remaining > 0 ? 'var(--danger)' : 'var(--success)', marginLeft: '6px' }}>Rs. {totals.remaining.toLocaleString()}</strong>
                                                 </span>
                                             </div>
 
