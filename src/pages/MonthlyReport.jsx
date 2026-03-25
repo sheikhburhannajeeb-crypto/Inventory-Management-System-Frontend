@@ -206,6 +206,17 @@ const MonthlyReport = () => {
                             </div>
                         </div>
 
+                        {/* Returns */}
+                        <div className="stat-card glass-panel flex-row" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                            <div className="stat-icon" style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)' }}>
+                                <TrendingDown size={32} />
+                            </div>
+                            <div className="stat-content">
+                                <p className="stat-title" style={{ color: 'var(--text-secondary)' }}>Total Returns</p>
+                                <h3 className="stat-value" style={{ color: 'var(--danger)' }}>Rs. {summary.total_returns_this_month?.toLocaleString() || '0'}</h3>
+                            </div>
+                        </div>
+
                         {/* Expenses */}
                         <div className="stat-card glass-panel flex-row" style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(249, 115, 22, 0.2)' }}>
                             <div className="stat-icon" style={{ background: 'rgba(249, 115, 22, 0.15)', color: 'var(--warning)' }}>
@@ -250,6 +261,10 @@ const MonthlyReport = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
                                     <span style={{ color: 'var(--text-secondary)' }}>Udhaar Installments Received:</span>
                                     <span style={{ fontWeight: '600', color: 'var(--info)' }}>Rs. {summary.total_sales_collected_this_month.toLocaleString()}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>Total Value Refunded (Returns):</span>
+                                    <span style={{ fontWeight: '600', color: 'var(--danger)' }}>Rs. {summary.total_returns_this_month?.toLocaleString() || '0'}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px dashed var(--glass-border)' }}>
                                     <span style={{ color: 'var(--text-secondary)' }}>New Credit Given This Month:</span>
@@ -513,6 +528,7 @@ const MonthlyReport = () => {
                                         <th style={{ textAlign: 'right', padding: '16px 20px' }}>Total Sale Value</th>
                                         <th style={{ textAlign: 'right', padding: '16px 20px' }}>Actual Cash Received</th>
                                         <th style={{ textAlign: 'right', padding: '16px 20px' }}>New Udhaar Given</th>
+                                        <th style={{ textAlign: 'right', padding: '16px 20px' }}>Returns Value</th>
                                         <th style={{ textAlign: 'right', padding: '16px 20px' }}>Expenses Logged</th>
                                     </tr>
                                 </thead>
@@ -531,6 +547,9 @@ const MonthlyReport = () => {
                                             </td>
                                             <td style={{ textAlign: 'right', color: day.udhaar_given > 0 ? 'var(--warning)' : 'var(--text-muted)', fontWeight: '600', padding: '16px 20px' }}>
                                                 {day.udhaar_given > 0 ? `Rs. ${day.udhaar_given.toLocaleString()}` : '-'}
+                                            </td>
+                                            <td style={{ textAlign: 'right', color: day.returned_sales_value > 0 ? 'var(--danger)' : 'var(--text-muted)', fontWeight: '600', padding: '16px 20px' }}>
+                                                {day.returned_sales_value > 0 ? `Rs. ${day.returned_sales_value.toLocaleString()}` : '-'}
                                             </td>
                                             <td style={{ textAlign: 'right', color: day.expenses > 0 ? 'var(--danger)' : 'var(--text-muted)', fontWeight: '600', padding: '16px 20px' }}>
                                                 {day.expenses > 0 ? `Rs. ${day.expenses.toLocaleString()}` : '-'}
@@ -552,6 +571,9 @@ const MonthlyReport = () => {
                                         </td>
                                         <td style={{ textAlign: 'right', padding: '16px 20px', color: 'var(--warning)' }}>
                                             Rs. {reportData.daily_breakdown.reduce((sum, d) => sum + d.udhaar_given, 0).toLocaleString()}
+                                        </td>
+                                        <td style={{ textAlign: 'right', padding: '16px 20px', color: 'var(--danger)' }}>
+                                            Rs. {reportData.daily_breakdown.reduce((sum, d) => sum + (d.returned_sales_value || 0), 0).toLocaleString()}
                                         </td>
                                         <td style={{ textAlign: 'right', padding: '16px 20px', color: 'var(--danger)' }}>
                                             Rs. {reportData.daily_breakdown.reduce((sum, d) => sum + d.expenses, 0).toLocaleString()}

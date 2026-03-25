@@ -138,6 +138,10 @@ const DailyReport = () => {
     const totalCashPaid = salesToday.reduce((sum, s) => sum + Number(s.paid_amount || 0), 0);
     const totalUdhaarGiven = totalSalesAmount - totalCashPaid;
     
+    // Returns Calculation
+    const totalReturnsAmount = returnsToday.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
+    const totalReturnsQty = returnsToday.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
+    
     // Supplier Udhaar Calculation
     const supplierTotalAmount = supplierTxns.reduce((sum, t) => sum + Number(t.total_amount || 0), 0);
     const supplierTotalPaid = supplierTxns.reduce((sum, t) => sum + Number(t.paid_amount || 0), 0);
@@ -198,7 +202,7 @@ const DailyReport = () => {
                         </div>
 
                         {/* Top Metrics Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', marginBottom: '40px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '40px' }}>
                             <div style={{ padding: '20px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', borderRadius: '12px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                                     <Target size={20} color="#38bdf8" />
@@ -234,6 +238,21 @@ const DailyReport = () => {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border-color)', paddingTop: '8px' }}>
                                     <span style={{ color: 'inherit' }}>Owed to Suppliers:</span>
                                     <strong style={{ color: totalUdhaarToSuppliers > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>Rs. {totalUdhaarToSuppliers.toLocaleString()}</strong>
+                                </div>
+                            </div>
+
+                            <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                    <Package size={20} color="#ef4444" />
+                                    <h3 style={{ fontSize: '1.1rem', color: '#ef4444', margin: 0 }}>Returns Overview</h3>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ color: 'inherit' }}>Total Returns Value:</span>
+                                    <strong style={{ color: 'var(--text-primary)' }}>Rs. {totalReturnsAmount.toLocaleString()}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span style={{ color: 'inherit' }}>Total Items Returned:</span>
+                                    <strong style={{ color: 'var(--text-primary)' }}>{totalReturnsQty}</strong>
                                 </div>
                             </div>
                         </div>

@@ -29,34 +29,34 @@ const Billing = () => {
             alert("No items in the cart to print.");
             return;
         }
-        
+
         const element = receiptRef.current;
-        
+
         const widthPx = element.offsetWidth || 500;
         const heightPx = element.scrollHeight || 800;
-        
+
         const widthMm = widthPx * 0.264583;
         const heightMm = heightPx * 0.264583;
 
         const opt = {
-            margin:       5,
-            filename:     `Invoice_${customerName || 'WalkIn'}_${new Date().toISOString().split('T')[0]}.pdf`,
-            image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'mm', format: [widthMm + 10, heightMm + 15], orientation: 'portrait' }
+            margin: 5,
+            filename: `Invoice_${customerName || 'WalkIn'}_${new Date().toISOString().split('T')[0]}.pdf`,
+            image: { type: 'jpeg', quality: 1 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: [widthMm + 10, heightMm + 15], orientation: 'portrait' }
         };
 
         // Temporary styles for PDF export
         element.classList.add('pdf-mode-active');
         element.style.background = '#ffffff';
         element.style.color = '#000000';
-        
+
         const actionsContainer = element.querySelector('.bill-actions-container');
-        if(actionsContainer) actionsContainer.style.display = 'none';
-        
+        if (actionsContainer) actionsContainer.style.display = 'none';
+
         const newWindow = window.open('', '_blank');
         if (newWindow) newWindow.document.write('<body><h2 style="font-family:sans-serif; text-align:center; margin-top: 20vh;">Generating PDF Receipt...</h2></body>');
-        
+
         await html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf) => {
             const pdfUrl = pdf.output('bloburl');
             if (newWindow) {
@@ -65,11 +65,11 @@ const Billing = () => {
                 window.open(pdfUrl, '_blank');
             }
         });
-        
+
         element.classList.remove('pdf-mode-active');
         element.style.background = '';
         element.style.color = '';
-        if(actionsContainer) actionsContainer.style.display = 'flex';
+        if (actionsContainer) actionsContainer.style.display = 'flex';
     };
 
     const formatProductId = (id) => {
@@ -228,6 +228,9 @@ const Billing = () => {
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const total = subtotal;
+
+    // Validate that important fields are filled
+    const canProceed = cart.length > 0 && (billType !== 'udhaar' || (customerName.trim() && buyerPhone.trim()));
 
     return (
         <div className="billing-container">
@@ -391,7 +394,7 @@ const Billing = () => {
                                 onChange={(e) => {
                                     const val = e.target.value;
                                     setSelectedProduct(val);
-                                    if(val) {
+                                    if (val) {
                                         const prod = products.find(p => String(p.id) === String(val));
                                         if (prod) setSelectedUnit(prod.quantity_unit || 'Per Piece');
                                     }
@@ -501,7 +504,7 @@ const Billing = () => {
                         <div className="receipt-logo">
                             <Calculator size={24} />
                         </div>
-                        <h2 style={{ fontSize: '1.4rem' }}>Jellani Hardware, Paint<br/>and Electric Store</h2>
+                        <h2 style={{ fontSize: '1.4rem' }}>Jellani Hardware, Paint<br />and Electric Store</h2>
                         <p className="receipt-address">Main Kallar Syedan Road, Near DHA Phase 7 Gate 1</p>
                         <p className="receipt-contact">Ph: 0329-5749291</p>
 
@@ -569,37 +572,32 @@ const Billing = () => {
                     {/* Advertisement Footer */}
                     <div style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px dashed var(--border-color)', textAlign: 'center', color: 'var(--text-primary)' }}>
                         <p style={{ margin: '0 0 5px', fontSize: '0.8rem', fontWeight: 600 }}>Software Developed by Hassan Ali Abrar</p>
-                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Insta: <strong style={{color:'var(--info)'}}>hassan.secure</strong> | WA: <strong style={{color:'var(--success)'}}>+92 348 5055098</strong></p>
+                        <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Insta: <strong style={{ color: 'var(--info)' }}>hassan.secure</strong> | WA: <strong style={{ color: 'var(--success)' }}>+92 348 5055098</strong></p>
                     </div>
 
                     <div className="flex gap-2 mt-auto bill-actions-container" style={{ flexWrap: 'wrap', marginTop: '20px' }}>
-                        <button className="btn-secondary flex-1" onClick={handleDownloadPdf}>
+                        <button 
+                            className="btn-secondary flex-1" 
+                            onClick={handleDownloadPdf}
+                            disabled={!canProceed || loading}
+                            style={{ opacity: (!canProceed || loading) ? 0.5 : 1, cursor: (!canProceed || loading) ? 'not-allowed' : 'pointer' }}
+                        >
                             <Download size={18} />
                             <span>Download PDF</span>
                         </button>
-                        {billType !== 'quotation' && (
-                            <button
-                                className="btn-primary flex-1"
-                                style={{ background: '#22c55e', borderColor: '#22c55e' }}
-                                onClick={handleSaveBill}
-                                disabled={loading || cart.length === 0}
-                            >
-                                <RefreshCw size={18} />
-                                <span>{loading ? 'Saving...' : 'Update / Save'}</span>
-                            </button>
-                        )}
                         <button
                             className="btn-primary flex-1 bg-accent"
-                            onClick={async () => { 
-                                await handleDownloadPdf(); 
+                            onClick={async () => {
+                                await handleDownloadPdf();
                                 if (billType !== 'quotation') {
-                                    handleSaveBill(); 
+                                    handleSaveBill();
                                 }
                             }}
-                            disabled={loading || cart.length === 0}
+                            disabled={!canProceed || loading}
+                            style={{ opacity: (!canProceed || loading) ? 0.5 : 1, cursor: (!canProceed || loading) ? 'not-allowed' : 'pointer' }}
                         >
                             <Save size={18} />
-                            <span>{loading ? 'Saving...' : billType === 'quotation' ? 'PDF Only' : billType === 'udhaar' ? 'Save Udhaar' : 'Save & PDF'}</span>
+                            <span>{loading ? 'Processing...' : 'Download & Save'}</span>
                         </button>
                     </div>
                 </div>
