@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Truck, FileText, Package, BarChart3, LogOut, Receipt, CalendarDays, Building2, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Users, Truck, FileText, Package, BarChart3, LogOut, Receipt, CalendarDays, Building2, ClipboardList, Menu, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
@@ -8,6 +8,7 @@ const Sidebar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [user, setUser] = useState({ name: 'Salesman', email: 'user@example.com' });
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('inventory_user');
@@ -19,6 +20,11 @@ const Sidebar = () => {
             }
         }
     }, []);
+
+    // Close sidebar on route change (mobile)
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [location.pathname]);
 
     const handleLogout = () => {
         localStorage.removeItem('inventory_token');
@@ -39,80 +45,109 @@ const Sidebar = () => {
     ];
 
     return (
-        <aside className="sidebar glass-panel">
-            <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '24px 0 16px' }}>
-                <div className="logo-icon">
-                    <LayoutDashboard size={28} color="var(--accent-primary)" />
-                </div>
-            </div>
+        <>
+            {/* ── Hamburger button (mobile only) ── */}
+            <button
+                className="sidebar-hamburger"
+                onClick={() => setMobileOpen(true)}
+                aria-label="Open menu"
+            >
+                <Menu size={22} />
+            </button>
 
-            <nav className="sidebar-nav">
-                {navItems.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                    >
-                        <div className={`nav-icon ${location.pathname.startsWith(item.path) ? 'active-icon' : ''}`}>
-                            {item.icon}
-                        </div>
-                        <span className="nav-text">{item.name}</span>
-                        {location.pathname.startsWith(item.path) && <div className="active-indicator" />}
-                    </NavLink>
-                ))}
-            </nav>
+            {/* ── Backdrop (mobile only, when drawer is open) ── */}
+            {mobileOpen && (
+                <div
+                    className="sidebar-backdrop"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
 
-            <div className="sidebar-footer">
-                <div className="user-profile">
-                    <div className="avatar">{user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}</div>
-                    <div className="user-info">
-                        <p className="user-name" style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={user.name}>{user.name}</p>
-                        <p className="user-role" style={{ fontSize: '0.75rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={user.email}>{user.email}</p>
+            {/* ── Sidebar / Drawer ── */}
+            <aside className={`sidebar glass-panel${mobileOpen ? ' sidebar-open' : ''}`}>
+                {/* Close button inside drawer (mobile only) */}
+                <button
+                    className="sidebar-close-btn"
+                    onClick={() => setMobileOpen(false)}
+                    aria-label="Close menu"
+                >
+                    <X size={20} />
+                </button>
+
+                <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '24px 0 16px' }}>
+                    <div className="logo-icon">
+                        <LayoutDashboard size={28} color="var(--accent-primary)" />
                     </div>
                 </div>
-                <div style={{ marginTop: 'auto', marginBottom: '8px', width: '100%' }}>
-                    <ThemeToggle />
+
+                <nav className="sidebar-nav">
+                    {navItems.map((item) => (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                        >
+                            <div className={`nav-icon ${location.pathname.startsWith(item.path) ? 'active-icon' : ''}`}>
+                                {item.icon}
+                            </div>
+                            <span className="nav-text">{item.name}</span>
+                            {location.pathname.startsWith(item.path) && <div className="active-indicator" />}
+                        </NavLink>
+                    ))}
+                </nav>
+
+                <div className="sidebar-footer">
+                    <div className="user-profile">
+                        <div className="avatar">{user.name ? user.name.substring(0, 2).toUpperCase() : 'US'}</div>
+                        <div className="user-info">
+                            <p className="user-name" style={{ fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={user.name}>{user.name}</p>
+                            <p className="user-role" style={{ fontSize: '0.75rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }} title={user.email}>{user.email}</p>
+                        </div>
+                    </div>
+                    <div style={{ marginTop: 'auto', marginBottom: '8px', width: '100%' }}>
+                        <ThemeToggle />
+                    </div>
+                    <button
+                        onClick={handleLogout}
+                        className="logout-btn"
+                        style={{
+                            marginTop: '1rem',
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '12px',
+                            background: 'var(--bg-secondary)',
+                            color: 'var(--danger)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '30px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}
+                        onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'var(--danger)';
+                            e.currentTarget.style.color = '#fff';
+                            e.currentTarget.style.borderColor = 'var(--danger)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.3)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'var(--bg-secondary)';
+                            e.currentTarget.style.color = 'var(--danger)';
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                        }}
+                        title="Logout"
+                    >
+                        <LogOut size={18} />
+                        <span className="logout-btn-text" style={{ fontWeight: 600 }}>Logout</span>
+                    </button>
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="logout-btn"
-                    style={{
-                        marginTop: '1rem',
-                        width: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '12px',
-                        background: 'var(--bg-secondary)',
-                        color: 'var(--danger)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '30px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        boxShadow: 'var(--shadow-sm)'
-                    }}
-                    onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'var(--danger)';
-                        e.currentTarget.style.color = '#fff';
-                        e.currentTarget.style.borderColor = 'var(--danger)';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(239, 68, 68, 0.3)';
-                    }}
-                    onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'var(--bg-secondary)';
-                        e.currentTarget.style.color = 'var(--danger)';
-                        e.currentTarget.style.borderColor = 'var(--border-color)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                    }}
-                    title="Logout"
-                >
-                    <LogOut size={18} />
-                    <span className="logout-btn-text" style={{ fontWeight: 600 }}>Logout</span>
-                </button>
-            </div>
-        </aside>
+            </aside>
+        </>
     );
 };
 
