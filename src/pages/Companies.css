@@ -1,0 +1,125 @@
+/* Companies.css — responsive overrides for Companies Ledger page */
+
+/* Summary cards row */
+.companies-stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.companies-stats-row .stat-card {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 24px;
+}
+
+/* Company expanded summary bar */
+.company-summary-bar {
+    display: flex;
+    gap: 24px;
+    padding: 16px 20px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin: 12px 16px;
+    box-shadow: var(--shadow-sm);
+    flex-wrap: wrap;
+}
+
+/* Company header row (name + outstanding) */
+.company-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.company-row-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+/* =============================================
+   RESPONSIVE — Companies Page
+   ============================================= */
+
+/* Tablet (768px – 1024px) */
+@media (max-width: 1024px) {
+    .companies-stats-row {
+        flex-wrap: wrap;
+    }
+
+    .companies-stats-row .stat-card {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+    }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 768px) {
+    .companies-stats-row {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .companies-stats-row .stat-card {
+        width: 100%;
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    /* Summary bar wraps to avoid overflow */
+    .company-summary-bar {
+        gap: 12px;
+        padding: 12px 14px;
+        margin: 8px 10px;
+    }
+
+    .company-summary-bar span {
+        flex: 1 1 100%;
+        font-size: 0.85rem !important;
+    }
+
+    /* Company header: hide outstanding label on very small, show amount */
+    .company-row-right {
+        gap: 12px;
+    }
+
+    /* Payment modal full width */
+    .modal-content {
+        width: 95vw !important;
+        max-width: 100% !important;
+        max-height: 90vh !important;
+        overflow-y: auto;
+    }
+
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+        gap: 0.75rem;
+    }
+
+    .modal-footer button {
+        width: 100%;
+    }
+}
+
+/* Small mobile (< 480px) */
+@media (max-width: 480px) {
+    .company-row-header {
+        padding: 8px 12px;
+    }
+
+    .company-row-right {
+        gap: 8px;
+    }
+}

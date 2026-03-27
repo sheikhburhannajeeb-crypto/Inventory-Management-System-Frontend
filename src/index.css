@@ -367,3 +367,173 @@ body .icon-btn {
     background: rgba(124, 58, 237, 0.1) !important;
     color: var(--accent-primary) !important;
 }
+
+/* =============================================
+   GLOBAL RESPONSIVE BREAKPOINTS
+   Mobile: < 768px | Tablet: 768-1024px
+   ============================================= */
+
+/* Make all tables scroll horizontally on small screens */
+.table-container, .premium-table-wrap, .glass-panel.table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure tables never overflow their container */
+.data-table, .premium-table {
+    min-width: 600px;
+}
+
+/* ---- TABLET (768px - 1024px) ---- */
+@media (max-width: 1024px) {
+    .main-content {
+        padding: 1.5rem;
+    }
+
+    .report-hero-stats {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    }
+
+    .ledger-split {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ---- MOBILE (< 768px) ---- */
+@media (max-width: 768px) {
+
+    /* Layout: sidebar turns into bottom nav, main takes full width */
+    .layout-container {
+        flex-direction: column !important;
+    }
+
+    .main-content {
+        padding: 1rem !important;
+        padding-bottom: 80px !important; /* space for bottom nav */
+    }
+
+    /* Controls bars wrap on mobile */
+    .controls-bar {
+        flex-direction: column !important;
+        gap: 10px !important;
+        padding: 12px !important;
+    }
+
+    .controls-bar > * {
+        width: 100% !important;
+    }
+
+    /* Input fields full width */
+    .input-field {
+        width: 100% !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* Buttons full width in forms */
+    form .btn-primary {
+        width: 100% !important;
+    }
+
+    /* Glass panels reduce padding */
+    .glass-panel {
+        padding: 1rem !important;
+        border-radius: 14px !important;
+    }
+
+    /* Page headers stack */
+    .page-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    .page-header h1 {
+        font-size: 1.4rem !important;
+    }
+
+    /* Report hero stats - 1 col on mobile */
+    .report-hero-stats {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* Ledger split stacks */
+    .ledger-split {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Tables: force scroll */
+    .table-container, .premium-table-wrap {
+        border-radius: 12px !important;
+    }
+
+    /* Product / billing grids */
+    .products-grid, .billing-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Stat cards narrower on mobile */
+    .stat-card-premium {
+        padding: 14px !important;
+    }
+
+    /* Modal dialogs full screen on mobile */
+    .modal-overlay > div,
+    [class*="modal"] > div {
+        width: 95vw !important;
+        max-width: 100% !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+        margin: auto !important;
+        border-radius: 16px !important;
+    }
+
+    /* Dropdown: full width on mobile */
+    .dropdown-options {
+        width: 100% !important;
+        left: 0 !important;
+    }
+
+    /* Hide decorative table hover transforms on mobile (performance) */
+    .data-table tbody tr:hover,
+    .premium-table tbody tr:hover {
+        transform: none !important;
+    }
+
+    /* Custom dropdown trigger full width */
+    .dropdown-trigger {
+        width: 100% !important;
+    }
+
+    /* Report date/filter row */
+    .report-filters {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+}
+
+/* ---- SMALL MOBILE (< 480px) ---- */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 0.75rem !important;
+        padding-bottom: 80px !important;
+    }
+
+    .page-header h1 {
+        font-size: 1.2rem !important;
+    }
+
+    .btn-primary {
+        padding: 0.65rem 1rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .glass-panel {
+        border-radius: 10px !important;
+    }
+
+    .stat-card-premium {
+        padding: 10px 12px !important;
+    }
+}

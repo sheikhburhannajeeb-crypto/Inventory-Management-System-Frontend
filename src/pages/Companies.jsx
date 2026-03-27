@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Building2, CreditCard, ChevronDown, ChevronUp, X } from 'lucide-react';
+import './Companies.css';
 
 const Companies = () => {
     const [buyers, setBuyers] = useState([]);
@@ -141,8 +142,8 @@ const Companies = () => {
             </div>
 
             {/* Summary Cards */}
-            <div className="stats-row" style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-                <div className="stat-card glass-panel flex-1">
+            <div className="companies-stats-row">
+                <div className="stat-card glass-panel">
                     <div className="stat-icon-wrapper" style={{ background: 'rgba(56,189,248,0.1)' }}>
                         <Building2 size={24} color="#38bdf8" />
                     </div>
@@ -151,7 +152,7 @@ const Companies = () => {
                         <h2 className="stat-value">{Object.keys(companyMap).length}</h2>
                     </div>
                 </div>
-                <div className="stat-card glass-panel flex-1">
+                <div className="stat-card glass-panel">
                     <div className="stat-icon-wrapper" style={{ background: 'rgba(239,68,68,0.1)' }}>
                         <CreditCard size={24} color="#ef4444" />
                     </div>
@@ -197,19 +198,16 @@ const Companies = () => {
                                 <div key={companyName} className="glass-panel" style={{ borderRadius: '12px', overflow: 'hidden' }}>
                                     {/* Company Header Row */}
                                     <div
+                                        className="company-row-header"
                                         onClick={() => setSelectedCompany(isOpen ? null : companyName)}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                            padding: '10px 16px', cursor: 'pointer',
-                                            background: isOpen ? 'rgba(56,189,248,0.08)' : 'transparent',
-                                            transition: 'background 0.2s'
-                                        }}
+                                        style={{ background: isOpen ? 'rgba(56,189,248,0.08)' : 'transparent' }}
                                     >
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <div style={{
                                                 width: 34, height: 34, borderRadius: '8px',
                                                 background: 'rgba(56,189,248,0.15)', display: 'flex',
-                                                alignItems: 'center', justifyContent: 'center'
+                                                alignItems: 'center', justifyContent: 'center',
+                                                flexShrink: 0
                                             }}>
                                                 <Building2 size={18} color="#38bdf8" />
                                             </div>
@@ -222,7 +220,7 @@ const Companies = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                                        <div className="company-row-right">
                                             <div style={{ textAlign: 'right' }}>
                                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding</div>
                                                 <div style={{ fontWeight: 700, fontSize: '1rem', color: totals.remaining > 0 ? '#ef4444' : '#4ade80' }}>
@@ -237,12 +235,7 @@ const Companies = () => {
                                     {isOpen && (
                                         <div style={{ borderTop: '1px solid var(--border-color)', padding: '0 4px 8px' }}>
                                             {/* Summary bar */}
-                                            <div style={{ 
-                                                display: 'flex', gap: '24px', padding: '16px 20px', 
-                                                background: 'var(--bg-secondary)', 
-                                                borderRadius: '12px', border: '1px solid var(--border-color)', 
-                                                margin: '12px 16px', boxShadow: 'var(--shadow-sm)'
-                                            }}>
+                                            <div className="company-summary-bar">
                                                 <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                                                     Total Billed: <strong style={{ color: 'var(--text-primary)', marginLeft: '6px' }}>Rs. {totals.total.toLocaleString()}</strong>
                                                 </span>

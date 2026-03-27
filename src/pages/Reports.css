@@ -498,3 +498,76 @@
     font-size: 0.78rem !important;
     margin: 0 0 4px 0 !important;
 }
+
+/* =============================================
+   RESPONSIVE — Reports / Daily / Monthly Pages
+   ============================================= */
+
+/* Tablet (768px – 1024px) */
+@media (max-width: 1024px) {
+    .report-hero-stats {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+
+    .ledger-split {
+        grid-template-columns: 1fr !important;
+        gap: 16px;
+    }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 768px) {
+    .report-hero-stats {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card-premium {
+        padding: 16px !important;
+    }
+
+    /* Disable hover lift on touch screens */
+    .stat-card-premium:hover {
+        transform: none !important;
+    }
+
+    .premium-list-item:hover {
+        transform: none !important;
+    }
+
+    .premium-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .premium-table {
+        min-width: 480px;
+    }
+
+    .premium-list-container {
+        padding: 16px;
+    }
+
+    .ledger-split {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+}
+
+/* Small mobile (< 480px) */
+@media (max-width: 480px) {
+    .stat-card-premium {
+        padding: 12px !important;
+        border-radius: 14px !important;
+    }
+
+    .stat-title {
+        font-size: 1rem;
+    }
+
+    .stat-row {
+        font-size: 0.85rem;
+    }
+}

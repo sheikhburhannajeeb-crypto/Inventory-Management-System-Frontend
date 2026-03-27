@@ -425,3 +425,86 @@
 .pdf-mode-active svg {
     stroke: black !important;
 }
+
+/* =============================================
+   RESPONSIVE — Billing Page
+   ============================================= */
+
+/* Tablet (768px – 1024px): shrink receipt panel */
+@media (max-width: 1024px) {
+    .billing-container {
+        grid-template-columns: 1fr 320px;
+        gap: 1.25rem;
+    }
+}
+
+/* Mobile (< 768px): stack entry + receipt vertically */
+@media (max-width: 768px) {
+    .billing-container {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem;
+        height: auto;
+    }
+
+    .billing-entry-panel {
+        height: auto;
+    }
+
+    /* Receipt panel: no longer sticky */
+    .billing-preview-panel {
+        position: static !important;
+        height: auto !important;
+    }
+
+    .receipt {
+        height: auto;
+        padding: 1.25rem;
+    }
+
+    /* Form grid 2-col → 1-col */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+
+    /* Add item row stacks on very small screens */
+    .add-item-row {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .add-item-row .flex-2,
+    .add-item-row .flex-1 {
+        flex: 1 1 100%;
+    }
+
+    .add-btn {
+        width: 100%;
+        height: 42px;
+    }
+
+    .form-section {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .cart-section {
+        padding: 1rem;
+    }
+}
+
+/* Small mobile (< 480px) */
+@media (max-width: 480px) {
+    .receipt {
+        padding: 1rem;
+    }
+
+    .receipt-header h2 {
+        font-size: 1rem;
+        letter-spacing: 1px;
+    }
+
+    .summary-row.total {
+        font-size: 1.1rem;
+    }
+}

@@ -72,3 +72,37 @@
 .status-badge.rent { background: rgba(139, 92, 246, 0.1) !important; color: #8b5cf6 !important; }
 .status-badge.maintenance { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
 .status-badge.other { background: rgba(100, 116, 139, 0.1) !important; color: #94a3b8 !important; }
+
+/* =============================================
+   RESPONSIVE — Expenses Page
+   ============================================= */
+
+/* Tablet (768px – 1024px) */
+@media (max-width: 1024px) {
+    .search-box {
+        min-width: 200px;
+    }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 768px) {
+    .filters-section {
+        flex-direction: column;
+        padding: 14px;
+        gap: 10px;
+    }
+
+    .search-box {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .month-filter {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .month-filter input {
+        width: 100%;
+    }
+}
