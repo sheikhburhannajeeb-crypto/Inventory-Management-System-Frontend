@@ -160,7 +160,7 @@ const Billing = () => {
 
         // ===== UDHAAR VALIDATION =====
         if (billType === 'udhaar' && (!customerName.trim() || !buyerPhone.trim())) {
-            alert('Udhaar bill requires Buyer Name and Phone.');
+            alert('Udhaar bill requires Customer Name and Phone.');
             return;
         }
 
@@ -257,7 +257,7 @@ const Billing = () => {
                                 options={[
                                     { value: 'original', label: 'Original (Deducts Stock)' },
                                     { value: 'quotation', label: 'Quotation (Estimate Only — No DB Changes)' },
-                                    { value: 'udhaar', label: 'Udhaar (Credit Sale — Saves to Buyers)' }
+                                    { value: 'udhaar', label: 'Udhaar (Credit Sale — Saves to Customers)' }
                                 ]}
                             />
                         </div>

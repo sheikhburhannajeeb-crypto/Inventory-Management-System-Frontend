@@ -282,7 +282,7 @@ const Buyers = () => {
 
                 <div className="table-wrapper">
                     {loading ? (
-                        <div className="loading-state text-center py-8">Loading buyers...</div>
+                        <div className="loading-state text-center py-8">Loading customers...</div>
                     ) : (
                         <table className="custom-table">
                             <thead>
@@ -352,7 +352,7 @@ const Buyers = () => {
                                                     </button>
                                                     <button
                                                         className="icon-btn-small text-danger"
-                                                        title="Delete Buyer"
+                                                        title="Delete Customer"
                                                         onClick={() => handleDelete(row.id)}
                                                     >
                                                         <Trash2 size={16} />

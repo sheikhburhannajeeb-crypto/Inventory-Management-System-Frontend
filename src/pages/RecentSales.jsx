@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Search, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import { Search, TrendingUp, Calendar, DollarSign, Download } from 'lucide-react';
+import { downloadSalesAnalyticsPdf } from '../utils/salesAnalyticsPdf';
 import './RecentSales.css';
 
 const TIME_FILTERS = [
@@ -73,6 +74,11 @@ const RecentSales = () => {
         }
     };
 
+    const periodLabel = useMemo(
+        () => TIME_FILTERS.find((f) => f.key === activeFilter)?.label || activeFilter,
+        [activeFilter]
+    );
+
     const { filteredSales, totalRevenue, totalPaid, totalPending } = useMemo(() => {
         const threshold = getDateThreshold(activeFilter);
         
@@ -98,12 +104,29 @@ const RecentSales = () => {
     }, [sales, searchQuery, activeFilter]);
 
     return (
-        <div className="page-container">
+        <div className="page-container recent-sales-page">
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Recent Sales</h1>
                     <p className="page-subtitle">View and filter your sales history</p>
                 </div>
+                <button
+                    type="button"
+                    className="btn-primary flex items-center gap-2"
+                    style={{ alignSelf: 'flex-start' }}
+                    disabled={loading || filteredSales.length === 0}
+                    onClick={async () => {
+                        try {
+                            await downloadSalesAnalyticsPdf(filteredSales, periodLabel, activeFilter);
+                        } catch (e) {
+                            console.error(e);
+                            alert('Could not generate PDF. Try again.');
+                        }
+                    }}
+                >
+                    <Download size={20} />
+                    <span>Download PDF report</span>
+                </button>
             </div>
 
             {/* Stats Cards */}
@@ -165,7 +188,7 @@ const RecentSales = () => {
                     <Search className="search-icon" size={20} />
                     <input
                         type="text"
-                        placeholder="Search by product or buyer name..."
+                        placeholder="Search by product or customer name..."
                         className="search-input"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -195,7 +218,7 @@ const RecentSales = () => {
                                 <th>Product</th>
                                 <th>Price</th>
                                 <th>Supplier</th>
-                                <th>Buyer</th>
+                                <th>Customer</th>
                                 <th>Qty</th>
                                 <th>Total Amount</th>
                                 <th>Paid</th>

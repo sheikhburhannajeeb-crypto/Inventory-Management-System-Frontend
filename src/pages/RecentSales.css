@@ -1,3 +1,11 @@
+.recent-sales-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
 .sales-stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

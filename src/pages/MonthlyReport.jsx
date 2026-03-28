@@ -255,7 +255,7 @@ const MonthlyReport = () => {
                                 <div className="stat-icon-wrapper">
                                     <AlertTriangle size={24} />
                                 </div>
-                                <h3 className="stat-title">Pending Buyer Dues</h3>
+                                <h3 className="stat-title">Pending Customer Dues</h3>
                             </div>
                             <div className="stat-row highlight">
                                 <span>All-Time:</span>
@@ -512,17 +512,17 @@ const MonthlyReport = () => {
                     {/* Outdated / All Time Dues Section */}
                     <div className="premium-table-wrap" style={{ marginTop: '30px', borderColor: 'rgba(234, 179, 8, 0.3)' }}>
                         <h3 style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', margin: 0, fontSize: '1.1rem', color: '#eab308' }}>
-                            ⚠️ Action Required: Buyers with Outstanding Dues (All-Time)
+                            ⚠️ Action Required: Customers with Outstanding Dues (All-Time)
                         </h3>
                         {activity_lists.all_time_buyers_with_dues.length === 0 ? (
                             <div className="empty-state" style={{ padding: '2rem' }}>
-                                <p style={{ color: 'var(--success)', fontWeight: '500' }}>Great! No pending dues from any buyers.</p>
+                                <p style={{ color: 'var(--success)', fontWeight: '500' }}>Great! No pending dues from any customers.</p>
                             </div>
                         ) : (
                             <table className="premium-table">
                                 <thead>
                                     <tr>
-                                        <th>Buyer Name</th>
+                                        <th>Customer Name</th>
                                         <th>Phone Number</th>
                                         <th style={{ textAlign: 'right' }}>Total Remaining Amount to Recover</th>
                                     </tr>

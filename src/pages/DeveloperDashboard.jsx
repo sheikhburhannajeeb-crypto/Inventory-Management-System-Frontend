@@ -170,7 +170,7 @@ const DeveloperDashboard = () => {
                         <div className="info-content">
                             <h3>System Information</h3>
                             <ul className="info-list">
-                                <li><strong>Role Access:</strong> Salesmen can manage products, buyers, suppliers, and billing.</li>
+                                <li><strong>Role Access:</strong> Salesmen can manage products, customers, suppliers, and billing.</li>
                                 <li><strong>Developer Role:</strong> Developers can only manage system access and cannot interact with actual inventory data.</li>
                                 <li><strong>Data Isolation:</strong> Ensure your Salesman IDs are securely isolated.</li>
                             </ul>
