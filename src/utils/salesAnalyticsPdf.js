@@ -244,6 +244,8 @@ function buildInnerHtml(sales, analytics, periodLabel) {
 
 /**
  * PDF for currently filtered sales (same rows as on screen).
+ * html2canvas often returns a blank image for off-screen nodes; we render the
+ * report in a fixed, visible panel (like Billing’s receipt) then capture it.
  */
 export async function downloadSalesAnalyticsPdf(filteredSales, periodLabel, activeFilterKey) {
     if (!filteredSales?.length) {
@@ -252,50 +254,120 @@ export async function downloadSalesAnalyticsPdf(filteredSales, periodLabel, acti
     }
 
     const analytics = computeSalesAnalytics(filteredSales);
+
+    const overlay = document.createElement('div');
+    overlay.setAttribute('data-sales-pdf-overlay', '1');
+    overlay.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'z-index:2147483646',
+        'background:rgba(15,23,42,0.55)',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'padding:20px',
+        'box-sizing:border-box',
+    ].join(';');
+
+    const stack = document.createElement('div');
+    stack.style.cssText = [
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'gap:14px',
+        'width:100%',
+        'max-width:1040px',
+        'max-height:92vh',
+    ].join(';');
+
+    const status = document.createElement('p');
+    status.style.cssText =
+        'color:#f8fafc;margin:0;font-family:system-ui,Segoe UI,sans-serif;font-size:14px;font-weight:600;';
+    status.textContent = 'Generating PDF…';
+
     const root = document.createElement('div');
     root.setAttribute('data-sales-pdf', '1');
-    root.style.position = 'absolute';
-    root.style.left = '-10000px';
-    root.style.top = '0';
-    root.style.width = '1000px';
-    root.style.padding = '20px';
-    root.style.background = '#ffffff';
+    root.style.cssText = [
+        'width:1000px',
+        'max-width:100%',
+        'max-height:calc(92vh - 52px)',
+        'overflow:auto',
+        'background:#ffffff',
+        'color:#0f172a',
+        'padding:24px',
+        'border-radius:12px',
+        'box-shadow:0 25px 80px rgba(0,0,0,0.35)',
+        'box-sizing:border-box',
+        '-webkit-font-smoothing:antialiased',
+    ].join(';');
     root.innerHTML = buildInnerHtml(filteredSales, analytics, periodLabel);
-    document.body.appendChild(root);
 
-    await new Promise((r) => setTimeout(r, 80));
+    stack.appendChild(status);
+    stack.appendChild(root);
+    overlay.appendChild(stack);
+    document.body.appendChild(overlay);
 
-    const heightMm = root.scrollHeight * 0.264583;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) => setTimeout(r, 150));
+
+    /* Let full document height paint; scrollable max-height would clip html2canvas */
+    const prevMaxHeight = root.style.maxHeight;
+    const prevOverflow = root.style.overflow;
+    root.style.maxHeight = 'none';
+    root.style.overflow = 'visible';
+    await new Promise((r) => setTimeout(r, 50));
+
+    const heightPx = Math.max(root.scrollHeight, 400);
+    const heightMm = heightPx * 0.264583;
     const safeFilename = `Sales_Report_${String(activeFilterKey).replace(/[^a-z0-9_-]/gi, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
 
     const opt = {
-        margin: [8, 8, 8, 8],
+        margin: [10, 10, 10, 10],
         filename: safeFilename,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 1.4, useCORS: true, width: 1000, windowWidth: 1000 },
-        jsPDF: { unit: 'mm', format: [210, Math.max(heightMm + 24, 280)], orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
+        image: { type: 'jpeg', quality: 0.92 },
+        html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            windowWidth: Math.max(root.scrollWidth, 960),
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: [210, Math.min(heightMm + 40, 15000)],
+            orientation: 'portrait',
+        },
+        pagebreak: { mode: ['css', 'legacy'] },
     };
 
     const newWindow = window.open('', '_blank');
     if (newWindow) {
         newWindow.document.write(
-            '<body><p style="font-family:sans-serif;text-align:center;margin-top:22vh;">Generating sales PDF…</p></body>'
+            '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sales PDF</title></head><body style="margin:0;font-family:sans-serif;"><p style="text-align:center;margin-top:22vh;color:#334155;">Opening sales PDF…</p></body></html>'
         );
     }
 
     try {
-        await html2pdf()
+        const pdfUrl = await html2pdf()
             .set(opt)
             .from(root)
             .toPdf()
             .get('pdf')
-            .then((pdf) => {
-                const pdfUrl = pdf.output('bloburl');
-                if (newWindow) newWindow.location.href = pdfUrl;
-                else window.open(pdfUrl, '_blank');
-            });
+            .then((pdf) => pdf.output('bloburl'));
+        if (newWindow) {
+            newWindow.location.href = pdfUrl;
+        } else {
+            window.open(pdfUrl, '_blank');
+        }
+    } catch (e) {
+        console.error('salesAnalyticsPdf', e);
+        if (newWindow) newWindow.close();
+        throw e;
     } finally {
-        document.body.removeChild(root);
+        root.style.maxHeight = prevMaxHeight;
+        root.style.overflow = prevOverflow;
+        if (overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
     }
 }
