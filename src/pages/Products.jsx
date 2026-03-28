@@ -37,7 +37,10 @@ const Products = () => {
         purchased_from: '',
         purchase_date: '',
         total_quantity: '',
+        remaining_display: '',
         add_quantity: '',
+        restock_paid_amount: '',
+        restock_purchase_date: '',
         quantity_unit: 'Per Piece',
         paid_amount: '',
         supplier_phone: '',
@@ -107,7 +110,10 @@ const Products = () => {
             purchased_from: '',
             purchase_date: new Date().toISOString().split('T')[0],
             total_quantity: '',
+            remaining_display: '',
             add_quantity: '',
+            restock_paid_amount: '',
+            restock_purchase_date: new Date().toISOString().split('T')[0],
             quantity_unit: 'Per Piece',
             paid_amount: '',
             supplier_phone: '',
@@ -131,7 +137,10 @@ const Products = () => {
             purchased_from: product.purchased_from || '',
             purchase_date: product.purchase_date ? new Date(product.purchase_date).toISOString().split('T')[0] : '',
             total_quantity: product.total_quantity,
+            remaining_display: String(product.remaining_quantity ?? ''),
             add_quantity: '',
+            restock_paid_amount: '',
+            restock_purchase_date: new Date().toISOString().split('T')[0],
             quantity_unit: product.quantity_unit || 'Per Piece',
             paid_amount: '',
             supplier_phone: '',
@@ -183,13 +192,25 @@ const Products = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Auto-derived: total amount to pay supplier = purchase_rate × quantity
     const totalToPaySupplier = useMemo(() => {
         const rate = parseFloat(formData.purchase_rate);
-        const qty = modalMode === 'add' ? parseInt(formData.total_quantity, 10) : parseInt(formData.add_quantity, 10);
+        const qty = parseInt(formData.total_quantity, 10);
         if (!isNaN(rate) && rate > 0 && !isNaN(qty) && qty > 0) return rate * qty;
         return null;
-    }, [formData.purchase_rate, formData.total_quantity, formData.add_quantity, modalMode]);
+    }, [formData.purchase_rate, formData.total_quantity]);
+
+    const restockBatch = useMemo(() => {
+        if (modalMode !== 'edit') return null;
+        const rate = parseFloat(formData.purchase_rate);
+        const q = parseInt(formData.add_quantity, 10);
+        if (isNaN(q) || q <= 0) return null;
+        const rateNum = isNaN(rate) ? 0 : rate;
+        const supplierDue = rateNum * q;
+        const paidRawNum = parseFloat(formData.restock_paid_amount || 0);
+        const paidClamped = Math.min(Math.max(0, isNaN(paidRawNum) ? 0 : paidRawNum), supplierDue);
+        const balance = Math.max(0, supplierDue - paidClamped);
+        return { q, rate: rateNum, supplierDue, paidRaw: isNaN(paidRawNum) ? 0 : paidRawNum, balance };
+    }, [modalMode, formData.purchase_rate, formData.add_quantity, formData.restock_paid_amount]);
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
@@ -209,28 +230,69 @@ const Products = () => {
 
         try {
             const token = localStorage.getItem('inventory_token');
-            const dataToSubmit = {
-                ...formData,
-                price: parseFloat(formData.price),
-                purchase_rate: formData.purchase_rate ? parseFloat(formData.purchase_rate) : null,
-                max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
-                paid_amount: formData.paid_amount ? parseFloat(formData.paid_amount) : 0,
-                total_quantity: parseInt(formData.total_quantity, 10),
-                add_quantity: formData.add_quantity ? parseInt(formData.add_quantity, 10) : 0,
-                quantity_unit: formData.quantity_unit
-            };
 
             if (modalMode === 'add') {
+                const dataToSubmit = {
+                    name: formData.name.trim(),
+                    category: formData.category,
+                    price: parseFloat(formData.price),
+                    purchase_rate: formData.purchase_rate ? parseFloat(formData.purchase_rate) : null,
+                    max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
+                    purchased_from: formData.purchased_from?.trim() || '',
+                    purchase_date: formData.purchase_date,
+                    total_quantity: parseInt(formData.total_quantity, 10),
+                    quantity_unit: formData.quantity_unit,
+                    paid_amount: formData.paid_amount ? parseFloat(formData.paid_amount) : 0,
+                    supplier_phone: formData.supplier_phone,
+                    supplier_company_name: formData.supplier_company_name
+                };
                 await axios.post('/api/products', dataToSubmit, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 fetchProducts();
             } else {
+                const addQ = formData.add_quantity !== '' && formData.add_quantity != null
+                    ? parseInt(formData.add_quantity, 10)
+                    : 0;
+                const hasRestock = !isNaN(addQ) && addQ > 0;
+
+                if (hasRestock) {
+                    if (!formData.purchased_from?.trim()) {
+                        alert('Supplier is required when adding stock.');
+                        return;
+                    }
+                    const rate = parseFloat(formData.purchase_rate || 0);
+                    const batchTotal = rate * addQ;
+                    const paidRestock = parseFloat(formData.restock_paid_amount || 0);
+                    if (paidRestock < 0 || paidRestock > batchTotal) {
+                        alert(`Payment cannot exceed this batch total (Rs. ${batchTotal.toLocaleString()}).`);
+                        return;
+                    }
+                }
+
+                const dataToSubmit = {
+                    name: formData.name.trim(),
+                    category: formData.category,
+                    price: parseFloat(formData.price),
+                    purchase_rate: formData.purchase_rate ? parseFloat(formData.purchase_rate) : null,
+                    max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
+                    purchased_from: formData.purchased_from?.trim() || '',
+                    purchase_date: formData.purchase_date,
+                    quantity_unit: formData.quantity_unit,
+                    supplier_phone: formData.supplier_phone,
+                    supplier_company_name: formData.supplier_company_name
+                };
+                if (hasRestock) {
+                    dataToSubmit.add_quantity = addQ;
+                    dataToSubmit.restock_paid_amount = parseFloat(formData.restock_paid_amount || 0);
+                    dataToSubmit.restock_purchase_date =
+                        formData.restock_purchase_date || new Date().toISOString().split('T')[0];
+                }
+
                 await axios.put(`/api/products/${formData.id}`, dataToSubmit, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                // If user entered a payment, call the purchases update API
                 if (addPaymentAmount && Number(addPaymentAmount) > 0 && supplierTxnInfo?.txn_id) {
                     if (Number(addPaymentAmount) > supplierTxnInfo.remaining) {
                         alert('Payment cannot exceed remaining amount: Rs. ' + supplierTxnInfo.remaining);
@@ -432,7 +494,7 @@ const Products = () => {
                                         <div className="action-buttons">
                                             <button
                                                 className="icon-btn-small text-accent"
-                                                title="Edit"
+                                                title="Update"
                                                 onClick={() => openEditModal(product)}
                                             >
                                                 <Edit size={16} />
@@ -459,7 +521,7 @@ const Products = () => {
                 <div className="modal-overlay">
                     <div className="modal-content glass-panel animate-fade-in">
                         <div className="modal-header">
-                            <h2>{modalMode === 'add' ? 'Add New Product' : 'Edit Product'}</h2>
+                            <h2>{modalMode === 'add' ? 'Add New Product' : 'Update Product'}</h2>
                             <button className="icon-btn-small" onClick={closeModal}>
                                 <X size={20} />
                             </button>
@@ -478,70 +540,150 @@ const Products = () => {
                                 />
                             </div>
 
-                            <div className="form-grid">
-                                <div className="input-group">
-                                    <label>Sale Price (Rs) <span style={{ color: 'var(--danger-color, #ef4444)' }}>*</span></label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        name="price"
-                                        value={formData.price}
-                                        onChange={handleFormChange}
-                                        min="0"
-                                        placeholder="0"
-                                        required
-                                    />
-                                </div>
-                                <div className="input-group">
-                                    <label>Purchase Price (Rs)</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        name="purchase_rate"
-                                        value={formData.purchase_rate}
-                                        onChange={handleFormChange}
-                                        min="0"
-                                        placeholder="0"
-                                    />
-                                </div>
-                            </div>
+                            {modalMode === 'add' && (
+                                <>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <label>Sale Price (Rs) <span style={{ color: 'var(--danger-color, #ef4444)' }}>*</span></label>
+                                            <input
+                                                type="number"
+                                                className="input-field"
+                                                name="price"
+                                                value={formData.price}
+                                                onChange={handleFormChange}
+                                                min="0"
+                                                placeholder="0"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Purchase Price (Rs)</label>
+                                            <input
+                                                type="number"
+                                                className="input-field"
+                                                name="purchase_rate"
+                                                value={formData.purchase_rate}
+                                                onChange={handleFormChange}
+                                                min="0"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <label>Total Qty (Stock) <span style={{ color: 'var(--danger-color, #ef4444)' }}>*</span></label>
+                                            <input
+                                                type="number"
+                                                className="input-field"
+                                                name="total_quantity"
+                                                value={formData.total_quantity}
+                                                onChange={handleFormChange}
+                                                min="0"
+                                                placeholder="0"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Unit</label>
+                                            <CustomDropdown
+                                                className="minimal-select"
+                                                name="quantity_unit"
+                                                value={formData.quantity_unit}
+                                                onChange={handleFormChange}
+                                                options={[
+                                                    { value: 'Per Piece', label: 'Per Piece' },
+                                                    { value: 'Per Dozen', label: 'Per Dozen' },
+                                                    { value: 'Per Box', label: 'Per Box' },
+                                                    { value: 'Per Ft', label: 'Per Ft' },
+                                                    { value: 'Per Meter', label: 'Per Meter' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                    {totalToPaySupplier !== null && (
+                                        <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Supplier due</span>
+                                            <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '1rem' }}>Rs. {totalToPaySupplier.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
-                            <div className="form-grid">
-                                <div className="input-group">
-                                    <label>{modalMode === 'add' ? 'Total Qty (Stock)' : 'Add New Quantity'}</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        name={modalMode === 'add' ? 'total_quantity' : 'add_quantity'}
-                                        value={modalMode === 'add' ? formData.total_quantity : formData.add_quantity}
-                                        onChange={handleFormChange}
-                                        min={modalMode === 'add' ? "0" : "1"}
-                                        placeholder="0"
-                                        required={modalMode === 'add'}
-                                    />
-                                </div>
-                                <div className="input-group">
-                                    <label>Unit</label>                                    <CustomDropdown
-                                        className="minimal-select"
-                                        name="quantity_unit"
-                                        value={formData.quantity_unit}
-                                        onChange={handleFormChange}
-                                        options={[
-                                            { value: 'Per Piece', label: 'Per Piece' },
-                                            { value: 'Per Dozen', label: 'Per Dozen' },
-                                            { value: 'Per Box', label: 'Per Box' },
-                                            { value: 'Per Ft', label: 'Per Ft' },
-                                            { value: 'Per Meter', label: 'Per Meter' }
-                                        ]}
-                                    />
-                                </div>
-                            </div>
-
-                            {totalToPaySupplier !== null && modalMode === 'add' && (
-                                <div style={{ padding: '10px 14px', borderRadius: '8px', backgroundColor: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>💳 Total to Pay Supplier</span>
-                                    <span style={{ color: '#38bdf8', fontWeight: 'bold', fontSize: '1rem' }}>Rs. {totalToPaySupplier.toLocaleString()}</span>
-                                </div>
+                            {modalMode === 'edit' && (
+                                <>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <label>Total qty</label>
+                                            <input type="text" className="input-field" readOnly value={formData.total_quantity} style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }} />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Remaining</label>
+                                            <input type="text" className="input-field" readOnly value={formData.remaining_display} style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }} />
+                                        </div>
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Unit</label>
+                                        <CustomDropdown
+                                            className="minimal-select"
+                                            name="quantity_unit"
+                                            value={formData.quantity_unit}
+                                            onChange={handleFormChange}
+                                            options={[
+                                                { value: 'Per Piece', label: 'Per Piece' },
+                                                { value: 'Per Dozen', label: 'Per Dozen' },
+                                                { value: 'Per Box', label: 'Per Box' },
+                                                { value: 'Per Ft', label: 'Per Ft' },
+                                                { value: 'Per Meter', label: 'Per Meter' }
+                                            ]}
+                                        />
+                                    </div>
+                                    <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '14px', marginBottom: '16px', backgroundColor: 'var(--bg-secondary)' }}>
+                                        <label style={{ display: 'block', fontWeight: 600, marginBottom: '12px', color: 'var(--text-primary)' }}>Restock</label>
+                                        <div className="form-grid">
+                                            <div className="input-group">
+                                                <label>Sale price (Rs) <span style={{ color: 'var(--danger-color, #ef4444)' }}>*</span></label>
+                                                <input type="number" className="input-field" name="price" value={formData.price} onChange={handleFormChange} min="0" required />
+                                            </div>
+                                            <div className="input-group">
+                                                <label>Purchase rate (Rs)</label>
+                                                <input type="number" className="input-field" name="purchase_rate" value={formData.purchase_rate} onChange={handleFormChange} min="0" placeholder="0" />
+                                            </div>
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Add qty</label>
+                                            <input type="number" className="input-field" name="add_quantity" value={formData.add_quantity} onChange={handleFormChange} min="0" placeholder="0" />
+                                        </div>
+                                        {restockBatch && (
+                                            <div style={{ padding: '12px', borderRadius: '10px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-primary)', marginBottom: '12px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 500 }}>Supplier due</span>
+                                                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Rs. {restockBatch.supplierDue.toLocaleString()}</span>
+                                                </div>
+                                                {restockBatch.rate > 0 ? (
+                                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '8px 0 0 0' }}>{restockBatch.q} × Rs. {restockBatch.rate} purchase rate</p>
+                                                ) : (
+                                                    <p style={{ fontSize: '0.8rem', color: '#ca8a04', margin: '8px 0 0 0' }}>Enter purchase rate</p>
+                                                )}
+                                                {restockBatch.supplierDue > 0 && restockBatch.paidRaw > 0 && (
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.85rem' }}>
+                                                        <span style={{ color: 'var(--text-muted)' }}>Balance</span>
+                                                        <span style={{ fontWeight: 'bold', color: restockBatch.balance > 0 ? '#ef4444' : '#22c55e' }}>Rs. {restockBatch.balance.toLocaleString()}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                        <div className="form-grid">
+                                            <div className="input-group">
+                                                <label>Paid (Rs)</label>
+                                                <input type="number" className="input-field" name="restock_paid_amount" value={formData.restock_paid_amount} onChange={handleFormChange} min="0" placeholder="0" />
+                                            </div>
+                                            <div className="input-group">
+                                                <label>Batch date</label>
+                                                <input type="date" className="input-field" name="restock_purchase_date" value={formData.restock_purchase_date} onChange={handleFormChange} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
                             )}
 
                             <div className="input-group">
@@ -642,7 +784,7 @@ const Products = () => {
                                 </div>
                                 {modalMode === 'add' && (
                                     <div className="input-group">
-                                        <label>Paid Amount (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(0 = udhaar)</span></label>
+                                        <label>Paid Amount (Rs) <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(0 = credit)</span></label>
                                         <input
                                             type="number"
                                             className="input-field"
@@ -672,7 +814,7 @@ const Products = () => {
                                 <>
                                     <hr style={{ margin: '16px 0', borderColor: 'var(--border-color)' }} />
                                     <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '12px' }}>
-                                        💰 Supplier Payment Ledger
+                                        Supplier balance
                                     </h3>
                                     <div className="form-grid">
                                         <div className="input-group">
@@ -698,7 +840,7 @@ const Products = () => {
                                     </div>
                                     <div className="form-grid">
                                         <div className="input-group">
-                                            <label>Remaining (Udhaar) (Rs)</label>
+                                            <label>Remaining owed (Rs)</label>
                                             <input
                                                 type="text"
                                                 className="input-field"
@@ -742,7 +884,7 @@ const Products = () => {
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
                                 <button type="submit" className="btn-primary">
-                                    {modalMode === 'add' ? 'Save Product' : 'Update Product'}
+                                    {modalMode === 'add' ? 'Save' : 'Update'}
                                 </button>
                             </div>
                         </form>
