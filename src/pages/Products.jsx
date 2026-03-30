@@ -91,6 +91,12 @@ const Products = () => {
         const product = products.find(p => p.id === id);
         if (!product) return;
         
+        // Check if product is already in pending list
+        if (isProductIdInPendingList(id)) {
+            alert('This product is already in the pending list.');
+            return;
+        }
+        
         if (!window.confirm(`Add "${product.name}" to pending deletions?`)) return;
 
         // Add to pending list instead of direct deletion
@@ -237,6 +243,12 @@ const Products = () => {
         }
 
         if (modalMode === 'add') {
+            // Check if product with same name already exists in pending list
+            if (isProductIdInPendingList(formData.name.trim())) {
+                alert('This product is already in the pending list.');
+                return;
+            }
+            
             // Validate required fields
             if (!formData.name.trim() || !formData.price || !formData.total_quantity) {
                 alert('Please fill in all required fields.');
@@ -377,6 +389,20 @@ const Products = () => {
         if (window.confirm('Clear all pending changes?')) {
             setPendingItems([]);
         }
+    };
+
+    // Check if product ID already exists in pending list
+    const isProductIdInPendingList = (productId) => {
+        return pendingItems.some(item => {
+            if (item.action === 'add') {
+                // For new items, we don't have an ID yet, so check by name
+                return item.name.toLowerCase().trim() === productId.toLowerCase().trim();
+            } else if (item.action === 'delete') {
+                // For deletions, check by actual ID
+                return item.data.id === productId;
+            }
+            return false;
+        });
     };
 
     const handleProcessPendingItems = async () => {
