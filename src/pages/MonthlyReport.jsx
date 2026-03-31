@@ -39,7 +39,8 @@ const MonthlyReport = () => {
 
         const opt = {
             margin:       [5, 5, 5, 5],
-            filename:     `Monthly_Report_${filterYear}_${filterMonth}.pdf`,
+            // Generate random filename for security
+            filename:     `Report_${new Date().toISOString().slice(0, 10)}_${Math.random().toString(36).substring(2, 15)}.pdf`,
             image:        { type: 'jpeg', quality: 0.95 },
             html2canvas:  { scale: 1.0, useCORS: true, width: 1060, windowWidth: 1060 },
             jsPDF:        { unit: 'mm', format: [297, heightMm * 0.55 + 10], orientation: 'landscape' }

@@ -328,7 +328,11 @@ export async function downloadSalesAnalyticsPdf(filteredSales, periodLabel, acti
 
     const heightPx = Math.max(root.scrollHeight, 400);
     const heightMm = heightPx * 0.264583;
-    const safeFilename = `Sales_Report_${String(activeFilterKey).replace(/[^a-z0-9_-]/gi, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    
+    // Generate random filename for security
+    const randomId = Math.random().toString(36).substring(2, 15); // Random string
+    const timestamp = new Date().toISOString().slice(0, 10); // Date part
+    const safeFilename = `Report_${timestamp}_${randomId}.pdf`;
 
     const opt = {
         margin: [10, 10, 10, 10],

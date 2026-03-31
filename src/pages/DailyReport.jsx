@@ -112,7 +112,8 @@ const DailyReport = () => {
 
         const opt = {
             margin:       [8, 8, 8, 8],
-            filename:     `Daily_Report_${reportDate}.pdf`,
+            // Generate random filename for security
+            filename:     `Report_${new Date().toISOString().slice(0, 10)}_${Math.random().toString(36).substring(2, 15)}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 1.8, useCORS: true, width: 1060, windowWidth: 1060 },
             jsPDF:        { unit: 'mm', format: [297, heightMm + 16], orientation: 'landscape' }
