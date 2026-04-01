@@ -226,6 +226,31 @@
     to   { opacity: 1; }
 }
 
+/* Danger link styles */
+.danger-link {
+    color: #ef4444 !important;
+    border-left-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.danger-link:hover {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-left-color: #ef4444 !important;
+}
+
+.danger-link.active {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-left-color: #ef4444 !important;
+}
+
+.danger-icon {
+    color: #ef4444 !important;
+}
+
+.danger-link.active .danger-icon {
+    color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+}
+
 /* Close (X) button — inside drawer, mobile only */
 .sidebar-close-btn {
     display: none;
@@ -365,4 +390,4 @@
         display: inline !important;
     }
 }
-
+

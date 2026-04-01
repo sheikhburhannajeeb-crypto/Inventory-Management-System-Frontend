@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Truck, FileText, Package, BarChart3, LogOut, Receipt, CalendarDays, Building2, ClipboardList, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Truck, FileText, Package, BarChart3, LogOut, Receipt, CalendarDays, Building2, ClipboardList, Menu, X, Database } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
@@ -42,6 +42,7 @@ const Sidebar = () => {
         { path: '/expenses', name: 'Expenses', icon: <Receipt size={20} /> },
         { path: '/daily-report', name: 'Daily Report', icon: <ClipboardList size={20} /> },
         { path: '/monthly-report', name: 'Monthly Report', icon: <CalendarDays size={20} /> },
+        { path: '/database-export', name: 'Database Export', icon: <Database size={20} />, danger: true },
     ];
 
     return (
@@ -85,9 +86,9 @@ const Sidebar = () => {
                         <NavLink
                             key={item.path}
                             to={item.path}
-                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                            className={({ isActive }) => `nav-link ${isActive ? 'active' : ''} ${item.danger ? 'danger-link' : ''}`}
                         >
-                            <div className={`nav-icon ${location.pathname.startsWith(item.path) ? 'active-icon' : ''}`}>
+                            <div className={`nav-icon ${location.pathname.startsWith(item.path) ? 'active-icon' : ''} ${item.danger ? 'danger-icon' : ''}`}>
                                 {item.icon}
                             </div>
                             <span className="nav-text">{item.name}</span>
