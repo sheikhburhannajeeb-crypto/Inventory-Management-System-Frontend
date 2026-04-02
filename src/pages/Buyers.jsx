@@ -701,6 +701,7 @@ const Buyers = () => {
         <ProductSideList
             isOpen={isSideListOpen}
             onClose={() => setIsSideListOpen(false)}
+            onToggle={() => setIsSideListOpen(!isSideListOpen)}
             pendingItems={pendingItems}
             onRemoveItem={handleRemovePendingItem}
             onClearAll={handleClearAllPending}
