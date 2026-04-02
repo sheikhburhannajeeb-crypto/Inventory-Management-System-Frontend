@@ -5,6 +5,7 @@ import './ProductSideList.css';
 const ProductSideList = ({ 
   isOpen, 
   onClose, 
+  onToggle,
   pendingItems, 
   onRemoveItem, 
   onClearAll, 
@@ -118,16 +119,16 @@ const ProductSideList = ({
       </div>
 
       {/* Toggle Button */}
-      <button 
-        className={`side-list-toggle ${pendingItems.length > 0 ? 'has-items' : ''}`}
-        onClick={() => isOpen ? onClose() : onClose()} // This will be handled by parent
-        title={`Pending changes (${pendingItems.length})`}
-      >
-        <Package size={24} />
-        {pendingItems.length > 0 && (
-          <span className="toggle-badge">{pendingItems.length}</span>
-        )}
-      </button>
+      {pendingItems.length > 0 && (
+          <button 
+            className={`side-list-toggle ${pendingItems.length > 0 ? 'has-items' : ''}`}
+            onClick={onToggle || onClose} 
+            title={`Pending changes (${pendingItems.length})`}
+          >
+            <Package size={24} />
+            <span className="toggle-badge">{pendingItems.length}</span>
+          </button>
+      )}
     </>
   );
 };

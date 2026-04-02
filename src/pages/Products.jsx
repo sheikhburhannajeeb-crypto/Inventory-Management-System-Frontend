@@ -1016,6 +1016,7 @@ const Products = () => {
             <ProductSideList
                 isOpen={isSideListOpen}
                 onClose={() => setIsSideListOpen(false)}
+                onToggle={toggleSideList}
                 pendingItems={pendingItems}
                 onRemoveItem={handleRemovePendingItem}
                 onClearAll={handleClearAllPending}
