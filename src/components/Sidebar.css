@@ -1,6 +1,7 @@
 .sidebar {
     width: 60px;
     height: calc(100vh - 2rem);
+    height: calc(100dvh - 2rem);
     margin: 1rem;
     display: flex;
     flex-direction: column;
@@ -12,6 +13,20 @@
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
     transition: width 0.3s ease;
     z-index: 50;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Hide scrollbar for sidebar, but allow scrolling on small heights */
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
 
 .sidebar-header {
@@ -306,6 +321,7 @@
         bottom: 0 !important;
         width: 260px !important;
         height: 100vh !important;
+        height: 100dvh !important;
         margin: 0 !important;
         border-radius: 0 20px 20px 0 !important;
         flex-direction: column !important;

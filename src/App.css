@@ -1,10 +1,12 @@
 #root {
   width: 100%;
   height: 100vh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
   text-align: left;
-  /* reset to left */
+  display: flex;
+  flex-direction: column;
 }
 
 .logo {
