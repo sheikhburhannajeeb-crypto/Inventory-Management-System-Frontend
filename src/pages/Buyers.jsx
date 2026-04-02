@@ -230,7 +230,7 @@ const Buyers = () => {
                         quantity: Number(formData.quantity),
                         total_amount: Number(formData.total_amount),
                         paid_amount: Number(formData.paid_amount || 0),
-                        bill_type: 'CREDIT' // Udhaar
+                        bill_type: 'CREDIT' // Credit
                     };
 
                     await axios.post('/api/sales', salePayload, {
@@ -368,7 +368,7 @@ const Buyers = () => {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Customers Directory</h1>
-                    <p className="page-subtitle">Track credit sales (Udhaar) and collections</p>
+                    <p className="page-subtitle">Track credit sales (Credit) and collections</p>
                 </div>
                 <button className="btn-primary flex items-center gap-2" onClick={openAddModal}>
                     <Plus size={20} />
@@ -382,7 +382,7 @@ const Buyers = () => {
                         <CreditCard size={24} className="stat-icon" />
                     </div>
                     <div className="stat-content">
-                        <p className="stat-label">Total Outstanding (Udhaar)</p>
+                        <p className="stat-label">Total Outstanding (Credit)</p>
                         <h2 className="stat-value">Rs. {totalOutstanding.toLocaleString()}</h2>
                     </div>
                 </div>
@@ -420,7 +420,7 @@ const Buyers = () => {
                                     <th>Qty</th>
                                     <th>Total Amt</th>
                                     <th>Paid Amt</th>
-                                    <th>Remaining (Udhaar)</th>
+                                    <th>Remaining (Credit)</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -490,7 +490,7 @@ const Buyers = () => {
                                 {flattenedData.length === 0 && (
                                     <tr>
                                         <td colSpan="11" className="text-center py-8 text-muted">
-                                            No customers or Udhaar records found.
+                                            No customers or Credit records found.
                                         </td>
                                     </tr>
                                 )}
@@ -560,7 +560,7 @@ const Buyers = () => {
                             {modalMode === 'add' && (
                                 <>
                                     <hr className="my-4 border-gray-700" />
-                                    <h3 className="text-lg font-medium text-gray-200 mb-4">Udhaar / Credit Details (Optional)</h3>
+                                    <h3 className="text-lg font-medium text-gray-200 mb-4">Credit / Credit Details (Optional)</h3>
 
                                     <div className="form-grid">
                                         <div className="input-group">

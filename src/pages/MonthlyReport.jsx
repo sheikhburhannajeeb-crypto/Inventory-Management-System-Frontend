@@ -255,7 +255,7 @@ const MonthlyReport = () => {
                                     <span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(summary.total_cash_sales_this_month || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="stat-row">
-                                    <span>Udhaar Installments Received:</span>
+                                    <span>Credit Installments Received:</span>
                                     <span className="stat-value" style={{ color: 'var(--info)' }}>Rs. {summary.total_sales_collected_this_month.toLocaleString()}</span>
                                 </div>
                                 <div className="stat-row">
@@ -309,14 +309,14 @@ const MonthlyReport = () => {
                                 )}
                             </div>
 
-                            {/* Udhaar Installments received */}
+                            {/* credit installments received */}
                             <div className="premium-table-wrap">
                                 <h3 style={{ padding: '15px 20px', borderBottom: '1px solid var(--glass-border)', margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Users size={16} color="#a78bfa" /> Udhaar Installments Received
+                                    <Users size={16} color="#a78bfa" /> Credit Installments Received
                                 </h3>
-                                {activity_lists.udhaar_payments_received.length === 0 ? (
+                                {activity_lists.credit_payments_received.length === 0 ? (
                                     <div className="empty-state" style={{ padding: '2rem' }}>
-                                        <p>No udhaar payments received this month.</p>
+                                        <p>No credit payments received this month.</p>
                                     </div>
                                 ) : (
                                     <table className="premium-table">
@@ -328,7 +328,7 @@ const MonthlyReport = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {activity_lists.udhaar_payments_received.map(b => (
+                                            {activity_lists.credit_payments_received.map(b => (
                                                 <tr key={b.id}>
                                                     <td>{b.name}</td>
                                                     <td>{b.phone}</td>
@@ -527,7 +527,7 @@ const MonthlyReport = () => {
                                         <th style={{ textAlign: 'right' }}>Sales (#)</th>
                                         <th style={{ textAlign: 'right' }}>Total Sale Value</th>
                                         <th style={{ textAlign: 'right' }}>Actual Cash Received</th>
-                                        <th style={{ textAlign: 'right' }}>New Udhaar Given</th>
+                                        <th style={{ textAlign: 'right' }}>New Credit Given</th>
                                         <th style={{ textAlign: 'right' }}>Returns Value</th>
                                         <th style={{ textAlign: 'right' }}>Expenses Logged</th>
                                     </tr>
@@ -545,8 +545,8 @@ const MonthlyReport = () => {
                                             <td style={{ textAlign: 'right', color: 'var(--success)', fontWeight: '600', padding: '16px 20px' }}>
                                                 {day.cash_in > 0 ? `Rs. ${day.cash_in.toLocaleString()}` : '-'}
                                             </td>
-                                            <td style={{ textAlign: 'right', color: day.udhaar_given > 0 ? 'var(--warning)' : 'var(--text-muted)', fontWeight: '600', padding: '16px 20px' }}>
-                                                {day.udhaar_given > 0 ? `Rs. ${day.udhaar_given.toLocaleString()}` : '-'}
+                                            <td style={{ textAlign: 'right', color: day.credit_given > 0 ? 'var(--warning)' : 'var(--text-muted)', fontWeight: '600', padding: '16px 20px' }}>
+                                                {day.credit_given > 0 ? `Rs. ${day.credit_given.toLocaleString()}` : '-'}
                                             </td>
                                             <td style={{ textAlign: 'right', color: day.returned_sales_value > 0 ? 'var(--danger)' : 'var(--text-muted)', fontWeight: '600', padding: '16px 20px' }}>
                                                 {day.returned_sales_value > 0 ? `Rs. ${day.returned_sales_value.toLocaleString()}` : '-'}
@@ -570,7 +570,7 @@ const MonthlyReport = () => {
                                             Rs. {reportData.daily_breakdown.reduce((sum, d) => sum + d.cash_in, 0).toLocaleString()}
                                         </td>
                                         <td style={{ textAlign: 'right', padding: '16px 20px', color: 'var(--warning)' }}>
-                                            Rs. {reportData.daily_breakdown.reduce((sum, d) => sum + d.udhaar_given, 0).toLocaleString()}
+                                            Rs. {reportData.daily_breakdown.reduce((sum, d) => sum + d.credit_given, 0).toLocaleString()}
                                         </td>
                                         <td style={{ textAlign: 'right', padding: '16px 20px', color: 'var(--danger)' }}>
                                             Rs. {reportData.daily_breakdown.reduce((sum, d) => sum + (d.returned_sales_value || 0), 0).toLocaleString()}

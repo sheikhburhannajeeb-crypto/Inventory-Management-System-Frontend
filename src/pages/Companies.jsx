@@ -42,7 +42,7 @@ const Companies = () => {
         }
     };
 
-    // Build companyMap from BOTH buyers (udhaar) AND direct buyer_transactions (original bills)
+    // Build companyMap from BOTH buyers (credit) AND direct buyer_transactions (original bills)
     const { companyList, grandTotals, companyMap } = useMemo(() => {
         const cMap = {};
         
@@ -137,7 +137,7 @@ const Companies = () => {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Companies Ledger</h1>
-                    <p className="page-subtitle">Customers aap ko pay karte hain (company-wise udhaar)</p>
+                    <p className="page-subtitle">Track customer payments (company-wise credit)</p>
                 </div>
             </div>
 

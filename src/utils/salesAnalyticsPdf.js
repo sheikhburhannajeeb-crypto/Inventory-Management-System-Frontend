@@ -190,7 +190,7 @@ function buildInnerHtml(sales, analytics, periodLabel) {
                     <div style="font-size:18px;font-weight:700;color:#6d28d9;">${fmtRs(totalPaid)}</div>
                 </div>
                 <div style="flex:1;min-width:140px;border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#fff;border-top:3px solid #ef4444;">
-                    <div style="font-size:10px;color:#64748b;font-weight:700;">PENDING (UDHAAR)</div>
+                    <div style="font-size:10px;color:#64748b;font-weight:700;">PENDING (CREDIT)</div>
                     <div style="font-size:18px;font-weight:700;color:#b91c1c;">${fmtRs(totalPending)}</div>
                 </div>
                 <div style="flex:1;min-width:140px;border:1px solid #e2e8f0;border-radius:8px;padding:12px;background:#fff;border-top:3px solid #3b82f6;">

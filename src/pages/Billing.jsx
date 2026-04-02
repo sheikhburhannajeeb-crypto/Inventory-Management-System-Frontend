@@ -19,7 +19,7 @@ const Billing = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Udhaar-specific fields
+    // Credit-specific fields
     const [buyerPhone, setBuyerPhone] = useState('');
     const [paidAmount, setPaidAmount] = useState('');
 
@@ -116,7 +116,7 @@ const Billing = () => {
         if (product) {
             const qtyToAdd = parseInt(quantity);
 
-            // Validate stock for original and udhaar bills (both are real sales)
+            // Validate stock for original and credit bills (both are real sales)
             if (billType !== 'quotation' && product.remaining_quantity < qtyToAdd) {
                 setError(`Notification: Cannot add ${qtyToAdd} items. Only ${product.remaining_quantity} in stock.`);
                 return;
@@ -158,9 +158,9 @@ const Billing = () => {
             return;
         }
 
-        // ===== UDHAAR VALIDATION =====
-        if (billType === 'udhaar' && (!customerName.trim() || !buyerPhone.trim())) {
-            alert('Udhaar bill requires Customer Name and Phone.');
+        // ===== CREDIT VALIDATION =====
+        if (billType === 'credit' && (!customerName.trim() || !buyerPhone.trim())) {
+            alert('Credit bill requires Customer Name and Phone.');
             return;
         }
 
@@ -169,8 +169,8 @@ const Billing = () => {
             const token = localStorage.getItem('inventory_token');
             let buyerId = null;
 
-            // ===== UDHAAR: Create buyer first =====
-            if (billType === 'udhaar') {
+            // ===== CREDIT: Create buyer first =====
+            if (billType === 'credit') {
                 const buyerRes = await axios.post('/api/buyers', {
                     name: customerName.trim(),
                     phone: buyerPhone.trim(),
@@ -183,8 +183,8 @@ const Billing = () => {
             }
 
             // ===== Process each cart item as a sale =====
-            const actualBillType = billType === 'udhaar' ? 'CREDIT' : 'REAL';
-            const userPaid = billType === 'udhaar' ? Number(paidAmount || 0) : null;
+            const actualBillType = billType === 'credit' ? 'CREDIT' : 'REAL';
+            const userPaid = billType === 'credit' ? Number(paidAmount || 0) : null;
 
             for (const item of cart) {
                 const itemTotal = item.price * item.quantity;
@@ -196,7 +196,7 @@ const Billing = () => {
                     buyer_id: buyerId,
                     buyer_name: customerName || 'Cash Walk-in Customer',
                     company_name: companyName || null,
-                    paid_amount: billType === 'udhaar' ? userPaid : itemTotal,
+                    paid_amount: billType === 'credit' ? userPaid : itemTotal,
                     quantity_unit: item.cart_unit
                 };
 
@@ -205,9 +205,9 @@ const Billing = () => {
                 });
             }
 
-            if (billType === 'udhaar') {
+            if (billType === 'credit') {
                 const remaining = total - Number(paidAmount || 0);
-                alert(`Udhaar Bill saved! Stock deducted. Remaining balance: Rs. ${remaining}`);
+                alert(`Credit Bill saved! Stock deducted. Remaining balance: Rs. ${remaining}`);
             } else {
                 alert('Original Bill saved! Stock has been deducted.');
             }
@@ -231,7 +231,7 @@ const Billing = () => {
     const total = subtotal;
 
     // Validate that important fields are filled
-    const canProceed = cart.length > 0 && (billType !== 'udhaar' || (customerName.trim() && buyerPhone.trim()));
+    const canProceed = cart.length > 0 && (billType !== 'credit' || (customerName.trim() && buyerPhone.trim()));
 
     return (
         <div className="billing-container">
@@ -257,23 +257,23 @@ const Billing = () => {
                                 options={[
                                     { value: 'original', label: 'Original (Deducts Stock)' },
                                     { value: 'quotation', label: 'Quotation (Estimate Only — No DB Changes)' },
-                                    { value: 'udhaar', label: 'Udhaar (Credit Sale — Saves to Customers)' }
+                                    { value: 'credit', label: 'Credit (Credit Sale — Saves to Customers)' }
                                 ]}
                             />
                         </div>
 
                         <div className="input-group">
-                            <label>{billType === 'udhaar' ? 'Customer Name *' : 'Customer Name'}</label>
+                            <label>{billType === 'credit' ? 'Customer Name *' : 'Customer Name'}</label>
                             <div style={{ position: 'relative' }}>
                                 <input
                                     type="text"
                                     className="input-field"
-                                    placeholder={billType === 'udhaar' ? 'Enter customer name (required)' : 'Enter or pick customer'}
+                                    placeholder={billType === 'credit' ? 'Enter customer name (required)' : 'Enter or pick customer'}
                                     value={customerName}
                                     onChange={(e) => { setCustomerName(e.target.value); setShowCustomerDropdown('customer'); }}
                                     onFocus={() => setShowCustomerDropdown('customer')}
                                     onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 150)}
-                                    required={billType === 'udhaar'}
+                                    required={billType === 'credit'}
                                 />
                                 {showCustomerDropdown === 'customer' && customers.filter(c =>
                                     c.name.toLowerCase().includes(customerName.toLowerCase()) ||
@@ -307,7 +307,7 @@ const Billing = () => {
                         </div>
                     </div>
 
-                    {/* Company Name - shown for Original and Udhaar bills */}
+                    {/* Company Name - shown for Original and Credit bills */}
                     {billType !== 'quotation' && (() => {
                         const companyOptions = [...new Set(
                             customers
@@ -355,8 +355,8 @@ const Billing = () => {
                         );
                     })()}
 
-                    {/* Udhaar-specific fields */}
-                    {billType === 'udhaar' && (
+                    {/* Credit-specific fields */}
+                    {billType === 'credit' && (
                         <>
                             <div className="form-grid">
                                 <div className="input-group">
@@ -512,7 +512,7 @@ const Billing = () => {
                         <p className="receipt-contact">Ph: 0329-5749291</p>
 
                         <div className="receipt-type-badge">
-                            {billType === 'quotation' ? 'QUOTATION / ESTIMATE' : billType === 'udhaar' ? 'UDHAAR / CREDIT INVOICE' : 'TAX INVOICE'}
+                            {billType === 'quotation' ? 'QUOTATION / ESTIMATE' : billType === 'credit' ? 'CREDIT / CREDIT INVOICE' : 'TAX INVOICE'}
                         </div>
                     </div>
 
@@ -558,14 +558,14 @@ const Billing = () => {
                             <span>Total Amount</span>
                             <span>Rs. {total.toLocaleString()}</span>
                         </div>
-                        {billType === 'udhaar' && (
+                        {billType === 'credit' && (
                             <>
                                 <div className="summary-row">
                                     <span>Paid Amount</span>
                                     <span>Rs. {Number(paidAmount || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="summary-row total" style={{ color: '#ef4444' }}>
-                                    <span>Remaining (Udhaar)</span>
+                                    <span>Remaining (Credit)</span>
                                     <span>Rs. {(total - Number(paidAmount || 0)).toLocaleString()}</span>
                                 </div>
                             </>

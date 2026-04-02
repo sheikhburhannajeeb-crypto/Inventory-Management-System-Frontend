@@ -59,11 +59,11 @@ const RecentSales = () => {
         }
     };
 
-    /** Full line: DELETE. Partial: POST /sales/:id/return — only this line’s udhaar drops in proportion. */
+    /** Full line: DELETE. Partial: POST /sales/:id/return — only this line’s credit drops in proportion. */
     const handleReturnSale = async (sale) => {
         const max = Number(sale.quantity);
         const qtyStr = window.prompt(
-            `Return kitni quantity? (Max ${max}. Poori line = saara udhaar / payment is line ka clear. Kam qty = sirf is line ka hissa.)`,
+            `Return kitni quantity? (Max ${max}. Poori line = saara credit / payment is line ka clear. Kam qty = sirf is line ka hissa.)`,
             String(max)
         );
         if (qtyStr === null) return;
@@ -75,7 +75,7 @@ const RecentSales = () => {
         try {
             const token = localStorage.getItem('inventory_token');
             if (q >= max) {
-                if (!window.confirm('Poori sale line return / undo? Stock wapas, is line ka udhaar clear.')) return;
+                if (!window.confirm('Poori sale line return / undo? Stock return, is line ka credit clear.')) return;
                 await axios.delete(`/api/sales/${sale.id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -174,7 +174,7 @@ const RecentSales = () => {
                         <Calendar size={22} />
                     </div>
                     <div>
-                        <p className="stat-label">PENDING (UDHAAR)</p>
+                        <p className="stat-label">PENDING (CREDIT)</p>
                         <h3 className="stat-value" style={{ color: '#ef4444' }}>Rs. {totalPending.toLocaleString()}</h3>
                     </div>
                 </div>
@@ -277,7 +277,7 @@ const RecentSales = () => {
                                                 className="icon-btn-danger" 
                                                 style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'flex', gap: '4px', alignItems: 'center', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                                                 onClick={() => handleReturnSale(sale)}
-                                                title="Full or partial return; udhaar sirf is line ke hisaab se"
+                                                title="Full or partial return; credit sirf is line ke hisaab se"
                                             >
                                                 Return
                                             </button>

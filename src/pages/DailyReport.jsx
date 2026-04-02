@@ -63,7 +63,7 @@ const DailyReport = () => {
             });
             setProductsToday(pToday);
 
-            // Filter Supplier transactions (Udhaar given to suppliers)
+            // Filter Supplier transactions (Credit given to suppliers)
             let stoday = [];
             const newSuppliers = [];
             (suppliersRes.data || []).forEach(supplier => {
@@ -146,16 +146,16 @@ const DailyReport = () => {
     // Calculations
     const totalSalesAmount = salesToday.reduce((sum, s) => sum + Number(s.total_amount || 0), 0);
     const totalCashPaid = salesToday.reduce((sum, s) => sum + Number(s.paid_amount || 0), 0);
-    const totalUdhaarGiven = totalSalesAmount - totalCashPaid;
+    const totalCreditGiven = totalSalesAmount - totalCashPaid;
     
     // Returns Calculation
     const totalReturnsAmount = returnsToday.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
     const totalReturnsQty = returnsToday.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
     
-    // Supplier Udhaar Calculation
+    // Supplier Credit Calculation
     const supplierTotalAmount = supplierTxns.reduce((sum, t) => sum + Number(t.total_amount || 0), 0);
     const supplierTotalPaid = supplierTxns.reduce((sum, t) => sum + Number(t.paid_amount || 0), 0);
-    const totalUdhaarToSuppliers = supplierTotalAmount - supplierTotalPaid;
+    const totalCreditToSuppliers = supplierTotalAmount - supplierTotalPaid;
 
     return (
         <div className="report-container page-container fade-in" style={{ paddingBottom: '40px' }}>
@@ -224,8 +224,8 @@ const DailyReport = () => {
                                     <span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {totalCashPaid.toLocaleString()}</span>
                                 </div>
                                 <div className="stat-row highlight">
-                                    <span>Given on Udhaar:</span>
-                                    <span className="stat-value" style={{ color: totalUdhaarGiven > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>Rs. {totalUdhaarGiven.toLocaleString()}</span>
+                                    <span>Given on Credit:</span>
+                                    <span className="stat-value" style={{ color: totalCreditGiven > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>Rs. {totalCreditGiven.toLocaleString()}</span>
                                 </div>
                             </div>
 
@@ -246,7 +246,7 @@ const DailyReport = () => {
                                 </div>
                                 <div className="stat-row highlight">
                                     <span>Owed to Suppliers:</span>
-                                    <span className="stat-value" style={{ color: totalUdhaarToSuppliers > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>Rs. {totalUdhaarToSuppliers.toLocaleString()}</span>
+                                    <span className="stat-value" style={{ color: totalCreditToSuppliers > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>Rs. {totalCreditToSuppliers.toLocaleString()}</span>
                                 </div>
                             </div>
 
@@ -385,7 +385,7 @@ const DailyReport = () => {
                                             {salesToday.map((sale, i) => {
                                                 const total = Number(sale.total_amount || 0);
                                                 const paid = Number(sale.paid_amount || 0);
-                                                const udhaar = total - paid;
+                                                const credit = total - paid;
                                                 return (
                                                     <tr key={i}>
                                                         <td>{sale.buyer_name || sale.buyers?.name || 'Walk-in Customer'}</td>
@@ -396,9 +396,9 @@ const DailyReport = () => {
                                                         <td style={{ fontWeight: 600 }}>Rs. {total.toLocaleString()}</td>
                                                         <td style={{ color: 'var(--success)', fontWeight: 600 }}>Rs. {paid.toLocaleString()}</td>
                                                         <td>
-                                                            {udhaar > 0 ? (
+                                                            {credit > 0 ? (
                                                                 <span style={{ color: 'var(--danger)', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem' }}>
-                                                                    Udhaar: Rs. {udhaar.toLocaleString()}
+                                                                    Credit: Rs. {credit.toLocaleString()}
                                                                 </span>
                                                             ) : (
                                                                 <span style={{ color: 'var(--success)', fontWeight: 600, background: 'rgba(34, 197, 94, 0.15)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.85rem' }}>
