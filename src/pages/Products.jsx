@@ -25,7 +25,7 @@ const Products = () => {
     const [addPaymentAmount, setAddPaymentAmount] = useState('');
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
     const [showPurchaseRates, setShowPurchaseRates] = useState({});
-    
+
     // Side List State
     const [isSideListOpen, setIsSideListOpen] = useState(false);
     const [pendingItems, setPendingItems] = useState([]);
@@ -92,13 +92,13 @@ const Products = () => {
     const handleDelete = async (id) => {
         const product = products.find(p => p.id === id);
         if (!product) return;
-        
+
         // Check if product is already in pending list
         if (isProductIdInPendingList(id)) {
             notifyError('This product is already in the pending list.');
             return;
         }
-        
+
         const confirmed = await confirmAction('Pending Deletion', `Add "${product.name}" to pending deletions?`);
         if (!confirmed) return;
 
@@ -108,7 +108,7 @@ const Products = () => {
             name: product.name,
             data: product
         };
-        
+
         setPendingItems(prev => [...prev, newItem]);
         setIsSideListOpen(true);
     };
@@ -251,7 +251,7 @@ const Products = () => {
                 notifyError('This product is already in the pending list.');
                 return;
             }
-            
+
             // Validate required fields
             if (!formData.name.trim() || !formData.price || !formData.total_quantity) {
                 notifyError('Please fill in all required fields.');
@@ -279,7 +279,7 @@ const Products = () => {
                 name: formData.name.trim(),
                 data: dataToSubmit
             };
-            
+
             setPendingItems(prev => [...prev, newItem]);
             setIsSideListOpen(true);
             closeModal();
@@ -316,7 +316,9 @@ const Products = () => {
                     purchase_date: formData.purchase_date,
                     quantity_unit: formData.quantity_unit,
                     supplier_phone: formData.supplier_phone,
-                    supplier_company_name: formData.supplier_company_name
+                    supplier_company_name: formData.supplier_company_name,
+                    set_total_quantity: formData.total_quantity !== '' ? parseInt(formData.total_quantity, 10) : undefined,
+                    set_remaining_quantity: formData.remaining_display !== '' ? parseInt(formData.remaining_display, 10) : undefined
                 };
                 if (hasRestock) {
                     dataToSubmit.add_quantity = addQ;
@@ -352,10 +354,10 @@ const Products = () => {
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
             const query = searchQuery.toLowerCase();
-            const matchesSearch = product.name.toLowerCase().includes(query) || 
-                                  String(product.id).includes(query) || 
-                                  formatProductId(product.id).toLowerCase().includes(query);
-            
+            const matchesSearch = product.name.toLowerCase().includes(query) ||
+                String(product.id).includes(query) ||
+                formatProductId(product.id).toLowerCase().includes(query);
+
             let matchesCategory = true;
             const remaining = Number(product.remaining_quantity || 0);
 
@@ -411,7 +413,7 @@ const Products = () => {
 
     const handleProcessPendingItems = async () => {
         if (pendingItems.length === 0) return;
-        
+
         const confirmed = await confirmAction('Process Changes', `Process ${pendingItems.length} pending changes? This cannot be undone.`);
         if (!confirmed) {
             return;
@@ -576,66 +578,66 @@ const Products = () => {
                                 } else if (remaining < 20) {
                                     rowStyle = { borderLeft: '4px solid #eab308' };
                                 }
-                                
+
                                 return (
-                                <tr key={product.id} className="animate-fade-in" style={rowStyle}>
-                                    <td className="font-bold text-accent">{formatProductId(product.id)}</td>
-                                    <td className="font-medium">{product.name}</td>
-                                    <td>
-                                        <span className="badge" style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
-                                            {product.category || 'Uncategorized'}
-                                        </span>
-                                    </td>
-                                    <td>Rs. {product.price}</td>
-                                    <td 
-                                        onClick={() => togglePurchaseRate(product.id)} 
-                                        style={{ cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold' }}
-                                        title="Click to toggle visibility"
-                                    >
-                                        {product.purchase_rate 
-                                            ? (showPurchaseRates[product.id] ? `Rs. ${product.purchase_rate}` : '***') 
-                                            : '-'}
-                                    </td>
-                                    <td>
-                                        {product.color ? (
-                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                                <span style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: product.color, border: '2px solid rgba(255,255,255,0.2)', display: 'inline-block' }}></span>
-                                                <span style={{ fontSize: '0.8rem' }}>{product.color}</span>
+                                    <tr key={product.id} className="animate-fade-in" style={rowStyle}>
+                                        <td className="font-bold text-accent">{formatProductId(product.id)}</td>
+                                        <td className="font-medium">{product.name}</td>
+                                        <td>
+                                            <span className="badge" style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                {product.category || 'Uncategorized'}
                                             </span>
-                                        ) : '-'}
-                                    </td>
-                                    <td>
-                                        <span className="badge" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
-                                            {product.quantity_unit || 'Piece'}
-                                        </span>
-                                    </td>
-                                    <td>{product.purchased_from || '-'}</td>
-                                    <td>{product.purchase_date ? new Date(product.purchase_date).toLocaleDateString() : '-'}</td>
-                                    <td>{product.total_quantity}</td>
-                                    <td>
-                                        <span className="qty-badge" style={{ backgroundColor: remaining === 0 ? 'rgba(239, 68, 68, 0.1)' : (remaining < 20 ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)'), color: remaining === 0 ? '#ef4444' : (remaining < 20 ? '#ca8a04' : '#22c55e'), padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                                            {remaining}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="action-buttons">
-                                            <button
-                                                className="icon-btn-small text-accent"
-                                                title="Update"
-                                                onClick={() => openEditModal(product)}
-                                            >
-                                                <Edit size={16} />
-                                            </button>
-                                            <button
-                                                className="icon-btn-small text-danger"
-                                                title="Delete"
-                                                onClick={() => handleDelete(product.id)}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </td>
+                                        <td>Rs. {product.price}</td>
+                                        <td
+                                            onClick={() => togglePurchaseRate(product.id)}
+                                            style={{ cursor: 'pointer', fontFamily: 'monospace', fontWeight: 'bold' }}
+                                            title="Click to toggle visibility"
+                                        >
+                                            {product.purchase_rate
+                                                ? (showPurchaseRates[product.id] ? `Rs. ${product.purchase_rate}` : '***')
+                                                : '-'}
+                                        </td>
+                                        <td>
+                                            {product.color ? (
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                                    <span style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: product.color, border: '2px solid rgba(255,255,255,0.2)', display: 'inline-block' }}></span>
+                                                    <span style={{ fontSize: '0.8rem' }}>{product.color}</span>
+                                                </span>
+                                            ) : '-'}
+                                        </td>
+                                        <td>
+                                            <span className="badge" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                {product.quantity_unit || 'Piece'}
+                                            </span>
+                                        </td>
+                                        <td>{product.purchased_from || '-'}</td>
+                                        <td>{product.purchase_date ? new Date(product.purchase_date).toLocaleDateString() : '-'}</td>
+                                        <td>{product.total_quantity}</td>
+                                        <td>
+                                            <span className="qty-badge" style={{ backgroundColor: remaining === 0 ? 'rgba(239, 68, 68, 0.1)' : (remaining < 20 ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)'), color: remaining === 0 ? '#ef4444' : (remaining < 20 ? '#ca8a04' : '#22c55e'), padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                                {remaining}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="action-buttons">
+                                                <button
+                                                    className="icon-btn-small text-accent"
+                                                    title="Update"
+                                                    onClick={() => openEditModal(product)}
+                                                >
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button
+                                                    className="icon-btn-small text-danger"
+                                                    title="Delete"
+                                                    onClick={() => handleDelete(product.id)}
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 );
                             })}
                         </tbody>
@@ -754,12 +756,28 @@ const Products = () => {
                                 <>
                                     <div className="form-grid">
                                         <div className="input-group">
-                                            <label>Total qty</label>
-                                            <input type="text" className="input-field" readOnly value={formData.total_quantity} style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }} />
+                                            <label>Total qty <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Edit to adjust)</span></label>
+                                            <input
+                                                type="number"
+                                                className="input-field"
+                                                name="total_quantity"
+                                                value={formData.total_quantity}
+                                                onChange={handleFormChange}
+                                                min="0"
+                                                style={{ borderColor: 'rgba(99,102,241,0.4)' }}
+                                            />
                                         </div>
                                         <div className="input-group">
-                                            <label>Remaining</label>
-                                            <input type="text" className="input-field" readOnly value={formData.remaining_display} style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }} />
+                                            <label>Remaining <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(Edit to adjust)</span></label>
+                                            <input
+                                                type="number"
+                                                className="input-field"
+                                                name="remaining_display"
+                                                value={formData.remaining_display}
+                                                onChange={handleFormChange}
+                                                min="0"
+                                                style={{ borderColor: 'rgba(99,102,241,0.4)' }}
+                                            />
                                         </div>
                                     </div>
                                     <div className="input-group">
@@ -896,7 +914,7 @@ const Products = () => {
                                     )}
                                 </div>
                             </div>
-                            
+
                             {formData.purchased_from && !suppliersList.some(s => s.name.toLowerCase() === formData.purchased_from.toLowerCase()) && (
                                 <div style={{ backgroundColor: 'rgba(99, 102, 241, 0.05)', padding: '12px', borderRadius: '10px', marginTop: '16px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
                                     <label style={{ color: 'var(--accent-primary)', fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>✨ Auto-Create New Supplier</label>
