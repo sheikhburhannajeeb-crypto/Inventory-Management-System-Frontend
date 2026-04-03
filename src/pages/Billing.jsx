@@ -79,6 +79,9 @@ const Billing = () => {
         return String(id).toUpperCase();
     };
 
+    // Remove "Per " prefix for display on bill (e.g. "Per Piece" → "Piece")
+    const stripPer = (unit) => unit ? unit.replace(/^Per\s+/i, '') : '';
+
     useEffect(() => {
         fetchProducts();
         fetchCustomers();
@@ -443,7 +446,19 @@ const Billing = () => {
                                     { value: 'Per Meter', label: 'Per Meter' },
                                     { value: 'Per Roll', label: 'Per Roll' },
                                     { value: 'Per Pack', label: 'Per Pack' },
-                                    { value: 'Per Case', label: 'Per Case' }
+                                    { value: 'Per Case', label: 'Per Case' },
+                                    { value: 'Per Gallon', label: 'Per Gallon' },
+                                    { value: 'Per Bucket', label: 'Per Bucket / Balti' },
+                                    { value: 'Per 250g', label: 'Per 250 Gram' },
+                                    { value: 'Per Gram', label: 'Per Gram' },
+                                    { value: 'Per Inch', label: 'Per Inch' },
+                                    { value: 'Per Ft', label: 'Per Ft' },
+                                    { value: 'Per Millimeter', label: 'Per Millimeter' },
+                                    { value: 'Per Pair', label: 'Per Pair' },
+                                    { value: 'Per Set', label: 'Per Set' },
+                                    { value: 'Per Strip', label: 'Per Strip' },
+                                    { value: 'Per Bag', label: 'Per Bag' },
+                                    { value: 'Per Coil', label: 'Per Coil' }
                                 ]}
                             />
                         </div>
@@ -485,7 +500,7 @@ const Billing = () => {
                                         <h4>{item.name}</h4>
                                         <p>
                                             <span style={{ fontSize: '0.85em', color: 'var(--accent-primary)', marginRight: '6px' }}>{formatProductId(item.id)}</span>
-                                            Rs. {item.price} x {item.quantity} {item.cart_unit ? `(${item.cart_unit})` : ''}
+                                            Rs. {item.price} x {item.quantity} {item.cart_unit ? `(${stripPer(item.cart_unit)})` : ''}
                                         </p>
                                     </div>
                                     <div className="item-total">
@@ -544,7 +559,7 @@ const Billing = () => {
                                     {item.name}
                                     <div style={{ fontSize: '0.7em', color: '#666', marginTop: '2px' }}>{formatProductId(item.id)}</div>
                                 </span>
-                                <span>{item.quantity} {item.cart_unit ? `\n(${item.cart_unit})` : ''}</span>
+                                <span>{item.quantity} {item.cart_unit ? `(${stripPer(item.cart_unit)})` : ''}</span>
                                 <span>Rs. {(item.price * item.quantity).toLocaleString()}</span>
                             </div>
                         ))}

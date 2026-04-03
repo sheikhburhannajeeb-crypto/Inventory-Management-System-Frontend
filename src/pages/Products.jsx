@@ -41,7 +41,7 @@ const Products = () => {
         category: '',
         price: '',
         purchase_rate: '',
-        max_discount: '',
+        color: '',
         purchased_from: '',
         purchase_date: '',
         total_quantity: '',
@@ -123,7 +123,7 @@ const Products = () => {
             category: '',
             price: '',
             purchase_rate: '',
-            max_discount: '',
+            color: '',
             purchased_from: '',
             purchase_date: new Date().toISOString().split('T')[0],
             total_quantity: '',
@@ -150,7 +150,7 @@ const Products = () => {
             category: product.category || '',
             price: product.price,
             purchase_rate: product.purchase_rate || '',
-            max_discount: product.max_discount || '',
+            color: product.color || '',
             purchased_from: product.purchased_from || '',
             purchase_date: product.purchase_date ? new Date(product.purchase_date).toISOString().split('T')[0] : '',
             total_quantity: product.total_quantity,
@@ -264,7 +264,7 @@ const Products = () => {
                 category: formData.category,
                 price: parseFloat(formData.price),
                 purchase_rate: formData.purchase_rate ? parseFloat(formData.purchase_rate) : null,
-                max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
+                color: formData.color || null,
                 purchased_from: formData.purchased_from?.trim() || '',
                 purchase_date: formData.purchase_date,
                 total_quantity: parseInt(formData.total_quantity, 10),
@@ -311,7 +311,7 @@ const Products = () => {
                     category: formData.category,
                     price: parseFloat(formData.price),
                     purchase_rate: formData.purchase_rate ? parseFloat(formData.purchase_rate) : null,
-                    max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
+                    color: formData.color || null,
                     purchased_from: formData.purchased_from?.trim() || '',
                     purchase_date: formData.purchase_date,
                     quantity_unit: formData.quantity_unit,
@@ -558,7 +558,7 @@ const Products = () => {
                                 <th>Category</th>
                                 <th>Sale Price</th>
                                 <th>Purchase Rate</th>
-                                <th>Max Discount</th>
+                                <th>Color</th>
                                 <th>Unit</th>
                                 <th>Purchased From</th>
                                 <th>Purchase Date</th>
@@ -596,7 +596,14 @@ const Products = () => {
                                             ? (showPurchaseRates[product.id] ? `Rs. ${product.purchase_rate}` : '***') 
                                             : '-'}
                                     </td>
-                                    <td>{product.max_discount ? `Rs. ${product.max_discount}` : '-'}</td>
+                                    <td>
+                                        {product.color ? (
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                                <span style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: product.color, border: '2px solid rgba(255,255,255,0.2)', display: 'inline-block' }}></span>
+                                                <span style={{ fontSize: '0.8rem' }}>{product.color}</span>
+                                            </span>
+                                        ) : '-'}
+                                    </td>
                                     <td>
                                         <span className="badge" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#a78bfa', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
                                             {product.quantity_unit || 'Piece'}
@@ -715,7 +722,21 @@ const Products = () => {
                                                     { value: 'Dozen', label: 'Dozen' },
                                                     { value: 'Box', label: 'Box' },
                                                     { value: 'Ft', label: 'Ft' },
-                                                    { value: 'Meter', label: 'Meter' }
+                                                    { value: 'Meter', label: 'Meter' },
+                                                    { value: 'Liter', label: 'Liter' },
+                                                    { value: 'Gallon', label: 'Gallon' },
+                                                    { value: 'Bucket', label: 'Bucket / Balti' },
+                                                    { value: '250 Gram', label: '250 Gram' },
+                                                    { value: 'Kg', label: 'Kg' },
+                                                    { value: 'Gram', label: 'Gram' },
+                                                    { value: 'Inch', label: 'Inch' },
+                                                    { value: 'Millimeter', label: 'Millimeter' },
+                                                    { value: 'Pair', label: 'Pair' },
+                                                    { value: 'Set', label: 'Set' },
+                                                    { value: 'Strip', label: 'Strip' },
+                                                    { value: 'Roll', label: 'Roll' },
+                                                    { value: 'Bag', label: 'Bag' },
+                                                    { value: 'Coil', label: 'Coil' }
                                                 ]}
                                             />
                                         </div>
@@ -753,7 +774,20 @@ const Products = () => {
                                                 { value: 'Dozen', label: 'Dozen' },
                                                 { value: 'Box', label: 'Box' },
                                                 { value: 'Ft', label: 'Ft' },
-                                                { value: 'Meter', label: 'Meter' }
+                                                { value: 'Meter', label: 'Meter' },
+                                                { value: 'Liter', label: 'Liter' },
+                                                { value: 'Gallon', label: 'Gallon' },
+                                                { value: 'Bucket', label: 'Bucket / Balti' },
+                                                { value: '250 Gram', label: '250 Gram' },
+                                                { value: 'Kg', label: 'Kg' },
+                                                { value: 'Gram', label: 'Gram' },
+                                                { value: 'Inch', label: 'Inch' },
+                                                { value: 'Millimeter', label: 'Millimeter' },
+                                                { value: 'Pair', label: 'Pair' },
+                                                { value: 'Set', label: 'Set' },
+                                                { value: 'Strip', label: 'Strip' },
+                                                { value: 'Roll', label: 'Roll' },
+                                                { value: 'Bag', label: 'Bag' }
                                             ]}
                                         />
                                     </div>
@@ -895,16 +929,25 @@ const Products = () => {
 
                             <div className="form-grid" style={{ marginTop: '16px' }}>
                                 <div className="input-group">
-                                    <label>Max Discount (Rs)</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        name="max_discount"
-                                        value={formData.max_discount}
-                                        onChange={handleFormChange}
-                                        min="0"
-                                        placeholder="0"
-                                    />
+                                    <label>Product Color</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <input
+                                            type="color"
+                                            name="color"
+                                            value={formData.color || '#6366f1'}
+                                            onChange={handleFormChange}
+                                            style={{ width: '44px', height: '38px', padding: '2px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', cursor: 'pointer' }}
+                                        />
+                                        <input
+                                            type="text"
+                                            className="input-field"
+                                            name="color"
+                                            value={formData.color || ''}
+                                            onChange={handleFormChange}
+                                            placeholder="e.g. #ff0000 or Red"
+                                            style={{ flex: 1 }}
+                                        />
+                                    </div>
                                 </div>
                                 {modalMode === 'add' && (
                                     <div className="input-group">
