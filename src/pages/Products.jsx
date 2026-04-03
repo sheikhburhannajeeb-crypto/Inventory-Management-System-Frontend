@@ -50,6 +50,7 @@ const Products = () => {
         restock_paid_amount: '',
         restock_purchase_date: '',
         quantity_unit: 'Piece',
+        low_stock_threshold: '10',
         paid_amount: '',
         supplier_phone: '',
         supplier_company_name: ''
@@ -132,6 +133,7 @@ const Products = () => {
             restock_paid_amount: '',
             restock_purchase_date: new Date().toISOString().split('T')[0],
             quantity_unit: 'Piece',
+            low_stock_threshold: '10',
             paid_amount: '',
             supplier_phone: '',
             supplier_company_name: ''
@@ -159,6 +161,7 @@ const Products = () => {
             restock_paid_amount: '',
             restock_purchase_date: new Date().toISOString().split('T')[0],
             quantity_unit: product.quantity_unit || 'Piece',
+            low_stock_threshold: product.low_stock_threshold !== undefined && product.low_stock_threshold !== null ? String(product.low_stock_threshold) : '10',
             paid_amount: '',
             supplier_phone: '',
             supplier_company_name: ''
@@ -315,6 +318,7 @@ const Products = () => {
                     purchased_from: formData.purchased_from?.trim() || '',
                     purchase_date: formData.purchase_date,
                     quantity_unit: formData.quantity_unit,
+                    low_stock_threshold: formData.low_stock_threshold ? Number(formData.low_stock_threshold) : 10,
                     supplier_phone: formData.supplier_phone,
                     supplier_company_name: formData.supplier_company_name,
                     set_total_quantity: formData.total_quantity !== '' ? parseInt(formData.total_quantity, 10) : undefined,
@@ -360,9 +364,10 @@ const Products = () => {
 
             let matchesCategory = true;
             const remaining = Number(product.remaining_quantity || 0);
+            const threshold = product.low_stock_threshold !== undefined && product.low_stock_threshold !== null ? product.low_stock_threshold : 10;
 
             if (activeCategory === 'Low Stock') {
-                matchesCategory = remaining > 0 && remaining <= 10;
+                matchesCategory = remaining > 0 && remaining <= threshold;
             } else if (activeCategory === 'Out of Stock') {
                 matchesCategory = remaining === 0;
             } else if (activeCategory !== 'All') {
@@ -566,16 +571,18 @@ const Products = () => {
                                 <th>Purchase Date</th>
                                 <th>Total Qty</th>
                                 <th>Remaining Qty</th>
+                                <th>Alert Limit</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredProducts.map(product => {
                                 const remaining = Number(product.remaining_quantity || 0);
+                                const threshold = product.low_stock_threshold !== undefined && product.low_stock_threshold !== null ? product.low_stock_threshold : 10;
                                 let rowStyle = {};
                                 if (remaining === 0) {
                                     rowStyle = { borderLeft: '4px solid #ef4444' };
-                                } else if (remaining < 20) {
+                                } else if (remaining <= threshold) {
                                     rowStyle = { borderLeft: '4px solid #eab308' };
                                 }
 
@@ -615,8 +622,13 @@ const Products = () => {
                                         <td>{product.purchase_date ? new Date(product.purchase_date).toLocaleDateString() : '-'}</td>
                                         <td>{product.total_quantity}</td>
                                         <td>
-                                            <span className="qty-badge" style={{ backgroundColor: remaining === 0 ? 'rgba(239, 68, 68, 0.1)' : (remaining < 20 ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)'), color: remaining === 0 ? '#ef4444' : (remaining < 20 ? '#ca8a04' : '#22c55e'), padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                            <span className="qty-badge" style={{ backgroundColor: remaining === 0 ? 'rgba(239, 68, 68, 0.1)' : (remaining <= threshold ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)'), color: remaining === 0 ? '#ef4444' : (remaining <= threshold ? '#ca8a04' : '#22c55e'), padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
                                                 {remaining}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="badge" style={{ backgroundColor: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                {threshold}
                                             </span>
                                         </td>
                                         <td>
@@ -863,21 +875,35 @@ const Products = () => {
                                 </>
                             )}
 
-                            <div className="input-group">
-                                <label>Category</label>
-                                <CustomDropdown
-                                    className="minimal-select"
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleFormChange}
-                                    placeholder="-- Select Category --"
-                                    options={[
-                                        { value: '', label: '-- Select Category --' },
-                                        { value: 'Paint', label: 'Paint' },
-                                        { value: 'Electric', label: 'Electric' },
-                                        { value: 'Hardware', label: 'Hardware' }
-                                    ]}
-                                />
+                            <div className="form-grid">
+                                <div className="input-group">
+                                    <label>Category</label>
+                                    <CustomDropdown
+                                        className="minimal-select"
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={handleFormChange}
+                                        placeholder="-- Select Category --"
+                                        options={[
+                                            { value: '', label: '-- Select Category --' },
+                                            { value: 'Paint', label: 'Paint' },
+                                            { value: 'Electric', label: 'Electric' },
+                                            { value: 'Hardware', label: 'Hardware' }
+                                        ]}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Low Stock Threshold</label>
+                                    <input
+                                        type="number"
+                                        className="input-field"
+                                        name="low_stock_threshold"
+                                        value={formData.low_stock_threshold}
+                                        onChange={handleFormChange}
+                                        min="0"
+                                        placeholder="10"
+                                    />
+                                </div>
                             </div>
                             <div className="input-group">
                                 <label>Purchased From (Supplier)</label>

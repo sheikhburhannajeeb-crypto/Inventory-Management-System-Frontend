@@ -189,6 +189,7 @@ const Billing = () => {
             // ===== Process each cart item as a sale =====
             const actualBillType = billType === 'credit' ? 'CREDIT' : 'REAL';
             const userPaid = billType === 'credit' ? Number(paidAmount || 0) : null;
+            const lowStockAlerts = [];
 
             for (const item of cart) {
                 const itemTotal = item.price * item.quantity;
@@ -207,6 +208,12 @@ const Billing = () => {
                 await axios.post('/api/sales', saleData, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
+
+                const newRemaining = item.remaining_quantity - item.quantity;
+                const threshold = item.low_stock_threshold !== undefined && item.low_stock_threshold !== null ? item.low_stock_threshold : 10;
+                if (newRemaining <= threshold) {
+                    lowStockAlerts.push(`${item.name} (${newRemaining} left)`);
+                }
             }
 
             if (billType === 'credit') {
@@ -214,6 +221,12 @@ const Billing = () => {
                 notifySuccess(`Credit Bill saved! Stock deducted. Remaining balance: Rs. ${remaining}`);
             } else {
                 notifySuccess('Original Bill saved! Stock has been deducted.');
+            }
+
+            if (lowStockAlerts.length > 0) {
+                setTimeout(() => {
+                    notifyError(`⚠️ Low Stock Alert:\n${lowStockAlerts.join('\n')}`);
+                }, 500);
             }
 
             setCart([]);

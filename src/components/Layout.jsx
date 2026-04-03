@@ -1,8 +1,44 @@
+import { useEffect } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import Sidebar from './Sidebar';
 
 const Layout = () => {
     const location = useLocation();
+    
+    useEffect(() => {
+        const checkLowStock = async () => {
+            try {
+                const token = localStorage.getItem('inventory_token');
+                if (!token) return;
+                const { data } = await axios.get('/api/products', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                let lowCount = 0;
+                data.forEach(p => {
+                    const rem = Number(p.remaining_quantity || 0);
+                    const thr = p.low_stock_threshold !== undefined && p.low_stock_threshold !== null ? p.low_stock_threshold : 10;
+                    if (rem > 0 && rem <= thr) lowCount++;
+                });
+                if (lowCount > 0) {
+                    toast(`⚠️ ${lowCount} item${lowCount > 1 ? 's are' : ' is'} running low on stock!`, {
+                        duration: 5000,
+                        icon: '⚠️',
+                        style: {
+                            borderRadius: '10px',
+                            background: '#1e293b',
+                            color: '#fbbf24',
+                        },
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch initial low stock status", err);
+            }
+        };
+        checkLowStock();
+    }, []);
+
     // Assume user is logged in for the Layout wrapper (Login is handled separately in App.jsx)
 
     return (
