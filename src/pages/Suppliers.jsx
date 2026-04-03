@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Plus, MoreVertical, Truck, Edit, Trash2, X } from 'lucide-react';
-import ProductSideList from '../components/ProductSideList';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
+import ScrollableTable from '../components/ScrollableTable';
+import ProductSideList from '../components/ProductSideList';
 import './Suppliers.css';
 
 const Suppliers = () => {
@@ -92,6 +93,11 @@ const Suppliers = () => {
             setLoading(false);
         }
     };
+
+    const filteredSuppliers = suppliers.filter(supplier =>
+        supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
     const handleDelete = async (id) => {
         const supplier = suppliers.find(s => s.id === id);
@@ -472,11 +478,6 @@ const Suppliers = () => {
         }
     };
 
-    const filteredSuppliers = suppliers.filter(supplier =>
-        supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-
     // Build a quick product id → name lookup to use as fallback
     const productMap = {};
     productsList.forEach(p => { productMap[p.id] = p.name; });
@@ -519,7 +520,7 @@ const Suppliers = () => {
 
             {error && <div className="error-message">{error}</div>}
 
-            <div className="table-container glass-panel">
+            <ScrollableTable className="table-container glass-panel">
                 <div className="table-header-controls">
                     <div className="search-wrapper">
                         <Search className="search-icon" size={20} />
@@ -630,7 +631,7 @@ const Suppliers = () => {
                         </table>
                     )}
                 </div>
-            </div>
+            </ScrollableTable>
 
             {/* Modal for Add / Edit */}
             {isModalOpen && (

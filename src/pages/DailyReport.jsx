@@ -4,6 +4,7 @@ import { Download, FileText, Package, Truck, Target, CreditCard, Filter } from '
 import html2pdf from 'html2pdf.js';
 import CustomDatePicker from '../components/CustomDatePicker';
 import './Expenses.css'; // borrowing standard page styles
+import ScrollableTable from '../components/ScrollableTable';
 import './Reports.css'; // Premium analytics styling
 
 const DailyReport = () => {
@@ -369,7 +370,7 @@ const DailyReport = () => {
                                     <p style={{ color: 'var(--text-muted)', fontSize: '1rem', margin: 0 }}>No sales recorded today.</p>
                                 </div>
                             ) : (
-                                <div className="premium-table-wrap">
+                                <ScrollableTable className="premium-table-wrap">
                                     <table className="premium-table">
                                         <thead>
                                             <tr>
@@ -424,7 +425,7 @@ const DailyReport = () => {
                                             })}
                                         </tbody>
                                     </table>
-                                </div>
+                                </ScrollableTable>
                             )}
                         </div>
 

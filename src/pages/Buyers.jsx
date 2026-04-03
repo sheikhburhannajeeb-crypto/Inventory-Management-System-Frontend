@@ -4,6 +4,7 @@ import { Search, Plus, MoreVertical, CreditCard, Edit, Trash2, X } from 'lucide-
 import ProductSideList from '../components/ProductSideList';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
+import ScrollableTable from '../components/ScrollableTable';
 import './Buyers.css';
 
 const Buyers = () => {
@@ -394,7 +395,7 @@ const Buyers = () => {
 
             {error && <div className="error-message">{error}</div>}
 
-            <div className="table-container glass-panel">
+            <ScrollableTable className="table-container glass-panel">
                 <div className="table-header-controls">
                     <div className="search-wrapper">
                         <Search className="search-icon" size={20} />
@@ -510,7 +511,7 @@ const Buyers = () => {
                         </table>
                     )}
                 </div>
-            </div>
+            </ScrollableTable>
 
             {/* Modal for Add / Edit */}
             {isModalOpen && (

@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, Search, DollarSign, X } from 'lucide-react';
 import CustomDropdown from '../components/CustomDropdown';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
+import ScrollableTable from '../components/ScrollableTable';
 import './Expenses.css';
 
 const API_URL = '/api/expenses';
@@ -151,7 +152,7 @@ const Expenses = () => {
                 </div>
             </div>
 
-            <div className="table-container glass-panel">
+            <ScrollableTable className="table-container glass-panel">
                 {loading ? (
                     <div className="loading-state">Loading expenses...</div>
                 ) : filteredExpenses.length === 0 ? (
@@ -197,7 +198,7 @@ const Expenses = () => {
                         </tbody>
                     </table>
                 )}
-            </div>
+            </ScrollableTable>
 
             {isModalOpen && (
                 <div className="modal-overlay">

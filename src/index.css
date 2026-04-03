@@ -237,6 +237,52 @@ select.input-field option {
   background-clip: text;
 }
 
+/* Scrollable Table Wrapper Styles */
+.scrollable-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.scrollable-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  background: var(--glass-bg);
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px var(--accent-glow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.scrollable-arrow:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 15px var(--accent-glow);
+}
+
+.scrollable-arrow:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.scrollable-arrow-left {
+  left: -22px;
+}
+
+.scrollable-arrow-right {
+  right: -22px;
+}
+
 /* --- Global Mobile-Aesthetic Overrides --- */
 
 body .data-table {
@@ -512,6 +558,21 @@ body .icon-btn {
     .report-filters {
         flex-direction: column !important;
         gap: 10px !important;
+    }
+
+    .scrollable-arrow {
+        width: 36px;
+        height: 36px;
+    }
+    .scrollable-arrow svg {
+        width: 20px;
+        height: 20px;
+    }
+    .scrollable-arrow-left {
+        left: -10px;
+    }
+    .scrollable-arrow-right {
+        right: -10px;
     }
 }
 

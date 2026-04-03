@@ -4,6 +4,7 @@ import { Search, TrendingUp, Calendar, DollarSign, Download } from 'lucide-react
 import { downloadSalesAnalyticsPdf } from '../utils/salesAnalyticsPdf';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
 import Swal from 'sweetalert2';
+import ScrollableTable from '../components/ScrollableTable';
 import './RecentSales.css';
 
 const TIME_FILTERS = [
@@ -229,7 +230,7 @@ const RecentSales = () => {
             {error && <div className="error-message">{error}</div>}
 
             {/* Table */}
-            <div className="table-container glass-panel">
+            <ScrollableTable className="table-container glass-panel">
                 {loading ? (
                     <div className="loading-state">Loading sales...</div>
                 ) : filteredSales.length === 0 ? (
@@ -311,7 +312,7 @@ const RecentSales = () => {
                         </tbody>
                     </table>
                 )}
-            </div>
+            </ScrollableTable>
         </div>
     );
 };

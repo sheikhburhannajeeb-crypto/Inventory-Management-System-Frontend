@@ -4,6 +4,7 @@ import { Search, Plus, Package, SlidersHorizontal, Edit, Trash2, X } from 'lucid
 import CustomDropdown from '../components/CustomDropdown';
 import CustomDatePicker from '../components/CustomDatePicker';
 import ProductSideList from '../components/ProductSideList';
+import ScrollableTable from '../components/ScrollableTable';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
 import './Products.css';
 
@@ -535,7 +536,7 @@ const Products = () => {
 
             {error && <div className="error-message">{error}</div>}
 
-            <div className="table-container glass-panel">
+            <ScrollableTable className="table-container glass-panel">
                 {loading ? (
                     <div className="loading-state">Loading products...</div>
                 ) : filteredProducts.length === 0 ? (
@@ -643,7 +644,7 @@ const Products = () => {
                         </tbody>
                     </table>
                 )}
-            </div>
+            </ScrollableTable>
 
             {/* Modal for Add / Edit */}
             {isModalOpen && (
