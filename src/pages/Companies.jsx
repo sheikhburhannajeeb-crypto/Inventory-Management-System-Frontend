@@ -106,29 +106,44 @@ const Companies = () => {
         return { total, paid, remaining: total - paid };
     };
 
-    const openPayModal = (txn, buyerName) => {
+    const openPayModal = (companyName, companyData) => {
         setPayAmount('');
-        setPayModal({ txn, buyerName });
+        setPayModal({ companyName, companyData, isCompanyPayment: true });
     };
 
     const handlePay = async () => {
         const amt = Number(payAmount);
-        if (!amt || amt <= 0) { notifyError('Enter a valid amount.'); return; }
-        const remaining = Number(payModal.txn.total_amount) - Number(payModal.txn.paid_amount);
-        if (amt > remaining) { notifyError(`Cannot pay more than remaining: Rs. ${remaining}`); return; }
-
+        if (!amt || amt <= 0) { 
+            notifyError('Payment amount must be greater than 0'); 
+            return; 
+        }
+        
+        if (amt > payModal.companyData.total_remaining) { 
+            notifyError(`Payment amount cannot exceed outstanding amount: Rs. ${payModal.companyData.total_remaining.toLocaleString()}`); 
+            return; 
+        }
+        
+        const confirmMessage = `Receive payment of Rs. ${amt} from ${payModal.companyName}? This will be distributed across all ${payModal.companyData.buyers.length} customers in this company.`;
+        
+        if (!window.confirm(confirmMessage)) return;
+        
         try {
             setPaying(true);
             const token = localStorage.getItem('inventory_token');
-            await axios.put(`/api/sales/${payModal.txn.id}`, { add_payment: amt }, {
+            await axios.post('/api/buyers/company-payment', {
+                company_name: payModal.companyName,
+                payment_amount: amt,
+                date: new Date().toISOString().split('T')[0]
+            }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            notifySuccess(`Payment of Rs. ${amt} recorded successfully!`);
+            
+            notifySuccess(`Company payment of Rs. ${amt} received and distributed across ${payModal.companyData.buyers.length} customers!`);
             setPayModal(null);
             fetchBuyers();
             fetchSales();
         } catch (err) {
-            notifyError(err.response?.data?.error || 'Payment failed.');
+            notifyError(err.response?.data?.error || 'Company payment failed.');
         } finally {
             setPaying(false);
         }
@@ -223,10 +238,23 @@ const Companies = () => {
                                             </div>
                                         </div>
                                         <div className="company-row-right">
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding</div>
-                                                <div style={{ fontWeight: 700, fontSize: '1rem', color: totals.remaining > 0 ? '#ef4444' : '#4ade80' }}>
-                                                    Rs. {totals.remaining.toLocaleString()}
+                                            <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <button
+                                                    className="btn-primary"
+                                                    style={{ padding: '4px 12px', fontSize: '0.8rem', background: '#22c55e', borderColor: '#22c55e' }}
+                                                    onClick={() => openPayModal(companyName, { 
+                                                        buyers: companyData.buyers || [], 
+                                                        total_remaining: totals.remaining 
+                                                    })}
+                                                    title="Receive Company Payment"
+                                                >
+                                                    💰 Pay Company
+                                                </button>
+                                                <div>
+                                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Outstanding</div>
+                                                    <div style={{ fontWeight: 700, fontSize: '1rem', color: totals.remaining > 0 ? '#ef4444' : '#4ade80' }}>
+                                                        Rs. {totals.remaining.toLocaleString()}
+                                                    </div>
                                                 </div>
                                             </div>
                                             {isOpen ? <ChevronUp size={20} color="var(--text-muted)" /> : <ChevronDown size={20} color="var(--text-muted)" />}
@@ -265,7 +293,6 @@ const Companies = () => {
                                                                 <th>Method</th>
                                                                 <th>Remaining</th>
                                                                 <th>Date</th>
-                                                                <th>Action</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -306,19 +333,6 @@ const Companies = () => {
                                                                         <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
                                                                             {txn.purchase_date ? new Date(txn.purchase_date).toLocaleDateString() : '-'}
                                                                         </td>
-                                                                        <td>
-                                                                            {rem > 0 ? (
-                                                                                <button
-                                                                                    className="btn-primary"
-                                                                                    style={{ padding: '4px 12px', fontSize: '0.8rem' }}
-                                                                                    onClick={() => openPayModal(txn, txn.buyerName)}
-                                                                                >
-                                                                                    Pay
-                                                                                </button>
-                                                                            ) : (
-                                                                                <span style={{ color: '#4ade80', fontSize: '0.8rem', fontWeight: 600 }}>✓ Cleared</span>
-                                                                            )}
-                                                                        </td>
                                                                     </tr>
                                                                 );
                                                             })}
@@ -340,37 +354,47 @@ const Companies = () => {
                 <div className="modal-overlay">
                     <div className="modal-content glass-panel animate-fade-in" style={{ maxWidth: '420px' }}>
                         <div className="modal-header">
-                            <h2>Record Payment</h2>
+                            <h2>Receive Company Payment</h2>
                             <button className="icon-btn-small" onClick={() => setPayModal(null)}><X size={20} /></button>
                         </div>
                         <div className="modal-body">
-                            <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
-                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '4px' }}>Customer</p>
-                                <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{payModal.buyerName}</p>
-                                <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+                            {/* Company Payment Info */}
+                            <div style={{ background: 'rgba(34,197,94,0.1)', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+                                <p style={{ color: 'var(--text-primary)', fontWeight: 600, marginBottom: '8px', fontSize: '1rem' }}>
+                                    🏢 <strong>{payModal.companyName}</strong>
+                                </p>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '12px' }}>
+                                    Company Representative Payment
+                                </p>
+                                <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
                                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                        Total: <strong>Rs. {Number(payModal.txn.total_amount).toLocaleString()}</strong>
+                                        Total Customers: <strong style={{ color: 'var(--text-primary)' }}>{payModal.companyData.buyers.length}</strong>
                                     </span>
                                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                        Already Paid: <strong style={{ color: '#4ade80' }}>Rs. {Number(payModal.txn.paid_amount).toLocaleString()}</strong>
-                                    </span>
-                                    <span style={{ fontSize: '0.85rem', color: '#ef4444' }}>
-                                        Remaining: <strong>Rs. {(Number(payModal.txn.total_amount) - Number(payModal.txn.paid_amount)).toLocaleString()}</strong>
+                                        Total Outstanding: <strong style={{ color: '#ef4444' }}>Rs. {payModal.companyData.total_remaining.toLocaleString()}</strong>
                                     </span>
                                 </div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '12px', fontStyle: 'italic' }}>
+                                    💡 Payment will be distributed proportionally across all customers in this company
+                                </p>
                             </div>
+                            
                             <div className="input-group">
-                                <label>Amount to Pay (Rs)</label>
+                                <label>Payment Amount (Rs) *</label>
                                 <input
                                     type="number"
                                     className="input-field"
-                                    placeholder="Enter amount..."
+                                    placeholder="Enter amount received..."
                                     min="1"
-                                    max={Number(payModal.txn.total_amount) - Number(payModal.txn.paid_amount)}
+                                    max={payModal.companyData.total_remaining}
                                     value={payAmount}
                                     onChange={(e) => setPayAmount(e.target.value)}
                                     autoFocus
+                                    required
                                 />
+                                <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
+                                    Maximum amount: Rs. {payModal.companyData.total_remaining.toLocaleString()}
+                                </small>
                             </div>
                         </div>
                         <div className="modal-footer">
@@ -381,7 +405,7 @@ const Companies = () => {
                                 onClick={handlePay}
                                 disabled={paying}
                             >
-                                {paying ? 'Saving...' : 'Confirm Payment'}
+                                {paying ? 'Processing...' : 'Receive Company Payment'}
                             </button>
                         </div>
                     </div>
