@@ -94,10 +94,26 @@ const Suppliers = () => {
         }
     };
 
-    const filteredSuppliers = suppliers.filter(supplier =>
-        supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    const filteredSuppliers = suppliers
+        .filter(supplier =>
+            supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
+        .sort((a, b) => {
+            // Calculate remaining amounts for both suppliers
+            const aRemaining = Number(a.total_amount || 0) - Number(a.paid_amount || 0);
+            const bRemaining = Number(b.total_amount || 0) - Number(b.paid_amount || 0);
+            
+            // If one has outstanding and other doesn't, outstanding comes first
+            if (aRemaining > 0 && bRemaining <= 0) return -1;
+            if (aRemaining <= 0 && bRemaining > 0) return 1;
+            
+            // If both have outstanding, sort by higher outstanding amount
+            if (aRemaining > 0 && bRemaining > 0) return bRemaining - aRemaining;
+            
+            // If both are cleared, sort alphabetically
+            return a.name.localeCompare(b.name);
+        });
 
     // Handler functions for ExpandableSupplierCard
     const handleEditSupplier = (supplier) => {
