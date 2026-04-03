@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import './CustomDropdown.css';
 
-const CustomDropdown = ({ name, value, onChange, options, placeholder = "Select an option", className = "", style = {} }) => {
+const CustomDropdown = ({ name, value, onChange, options, placeholder = "Select an option", className = "", style = {}, displayLabel }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
@@ -30,7 +30,10 @@ const CustomDropdown = ({ name, value, onChange, options, placeholder = "Select 
                     textOverflow: 'ellipsis',
                     color: selectedOption ? 'inherit' : 'var(--text-muted)'
                 }}>
-                    {selectedOption ? selectedOption.label : placeholder}
+                    {displayLabel !== undefined
+                        ? (displayLabel || placeholder)
+                        : (selectedOption ? selectedOption.label : placeholder)
+                    }
                 </span>
                 <ChevronDown size={18} className={`dropdown-icon ${isOpen ? 'rotate' : ''}`} />
             </div>

@@ -397,6 +397,13 @@ const Billing = () => {
                             <CustomDropdown
                                 className="minimal-select"
                                 value={selectedProduct}
+                                displayLabel={(() => {
+                                    if (!selectedProduct) return '';
+                                    const prod = products.find(p => String(p.id) === String(selectedProduct));
+                                    if (!prod) return '';
+                                    const name = prod.name.length > 22 ? prod.name.slice(0, 22) + '…' : prod.name;
+                                    return `${name} · Rs.${prod.price}`;
+                                })()}
                                 onChange={(e) => {
                                     const val = e.target.value;
                                     setSelectedProduct(val);
