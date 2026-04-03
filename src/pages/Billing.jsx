@@ -17,6 +17,8 @@ const Billing = () => {
     const [customerName, setCustomerName] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+    const [productSearchTerm, setProductSearchTerm] = useState('');
+    const [showProductDropdown, setShowProductDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -140,6 +142,7 @@ const Billing = () => {
                 setCart([...cart, { ...product, quantity: qtyToAdd, cart_unit: selectedUnit }]);
             }
             setSelectedProduct('');
+            setProductSearchTerm('');
             setQuantity(1);
             setSelectedUnit('Per Piece');
         }
@@ -407,32 +410,67 @@ const Billing = () => {
                     <h3 className="section-title">Add Items</h3>
                     <div className="add-item-row">
                         <div className="input-group flex-2">
-                            <CustomDropdown
-                                className="minimal-select"
-                                value={selectedProduct}
-                                displayLabel={(() => {
-                                    if (!selectedProduct) return '';
-                                    const prod = products.find(p => String(p.id) === String(selectedProduct));
-                                    if (!prod) return '';
-                                    const name = prod.name.length > 22 ? prod.name.slice(0, 22) + '…' : prod.name;
-                                    return `${name} · Rs.${prod.price}`;
-                                })()}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setSelectedProduct(val);
-                                    if (val) {
-                                        const prod = products.find(p => String(p.id) === String(val));
-                                        if (prod) setSelectedUnit(prod.quantity_unit || 'Per Piece');
-                                    }
-                                }}
-                                options={[
-                                    { value: '', label: 'Select a product...' },
-                                    ...products.filter(p => billType === 'quotation' || (p.remaining_quantity && p.remaining_quantity >= 1)).map(p => ({
-                                        value: p.id,
-                                        label: `[${formatProductId(p.id)}] ${p.name} - Rs. ${p.price} ${p.quantity_unit ? `(${p.quantity_unit})` : ''} ${billType !== 'quotation' ? `(Stock: ${p.remaining_quantity})` : ''}`
-                                    }))
-                                ]}
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}>
+                                    <Search size={16} />
+                                </div>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    placeholder="Search by ID or Name..."
+                                    style={{ paddingLeft: '35px', width: '100%' }}
+                                    value={productSearchTerm}
+                                    onChange={(e) => {
+                                        setProductSearchTerm(e.target.value);
+                                        setShowProductDropdown(true);
+                                        if (selectedProduct) setSelectedProduct('');
+                                    }}
+                                    onFocus={() => setShowProductDropdown(true)}
+                                    onBlur={() => setTimeout(() => setShowProductDropdown(false), 200)}
+                                />
+                                {showProductDropdown && (
+                                    <div className="dropdown-options glass-panel" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, maxHeight: '250px', overflowY: 'auto' }}>
+                                        {products
+                                            .filter(p => billType === 'quotation' || (p.remaining_quantity && p.remaining_quantity >= 1))
+                                            .filter(p =>
+                                                p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                                                String(p.id).toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                                                formatProductId(p.id).toLowerCase().includes(productSearchTerm.toLowerCase())
+                                            )
+                                            .map(p => (
+                                                <div
+                                                    key={p.id}
+                                                    className="dropdown-option"
+                                                    style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '10px 14px' }}
+                                                    onMouseDown={() => {
+                                                        setSelectedProduct(p.id);
+                                                        setProductSearchTerm(`${p.name} - Rs. ${p.price}`);
+                                                        setSelectedUnit(p.quantity_unit || 'Per Piece');
+                                                        setShowProductDropdown(false);
+                                                    }}
+                                                >
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <strong style={{ fontSize: '0.95rem' }}>{p.name}</strong>
+                                                        <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>Rs. {p.price}</span>
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8em', color: 'var(--text-muted)', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
+                                                        <span style={{ color: 'var(--text-secondary)' }}>ID: {formatProductId(p.id)}</span>
+                                                        {p.category && <span>• {p.category}</span>}
+                                                        {p.color && (
+                                                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                • <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: p.color, border: '1px solid rgba(255,255,255,0.2)', display: 'inline-block' }}></span> {p.color}
+                                                            </span>
+                                                        )}
+                                                        {billType !== 'quotation' && <span style={{ color: p.remaining_quantity > 0 ? '#a78bfa' : '#ef4444' }}>• Stock: {p.remaining_quantity}</span>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        {products.filter(p => p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) || String(p.id).toLowerCase().includes(productSearchTerm.toLowerCase())).length === 0 && (
+                                            <div style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>No products found</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         <div className="input-group flex-1">
                             <input
@@ -518,8 +556,16 @@ const Billing = () => {
                                 <div key={item.id} className="cart-item animate-fade-in">
                                     <div className="item-details">
                                         <h4>{item.name}</h4>
-                                        <p>
-                                            <span style={{ fontSize: '0.85em', color: 'var(--accent-primary)', marginRight: '6px' }}>{formatProductId(item.id)}</span>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '4px', fontSize: '0.85em', color: 'var(--text-muted)', alignItems: 'center' }}>
+                                            <span style={{ color: 'var(--accent-primary)', fontWeight: 'bold' }}>{formatProductId(item.id)}</span>
+                                            {item.category && <span>• {item.category}</span>}
+                                            {item.color && (
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    • <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: item.color, border: '1px solid rgba(255,255,255,0.2)', display: 'inline-block' }}></span> {item.color}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p style={{ marginTop: '4px' }}>
                                             Rs. {item.price} x {item.quantity} {item.cart_unit ? `(${stripPer(item.cart_unit)})` : ''}
                                         </p>
                                     </div>
@@ -576,8 +622,16 @@ const Billing = () => {
                         {cart.map(item => (
                             <div key={item.id} className="receipt-table-row">
                                 <span className="item-name-col">
-                                    {item.name}
-                                    <div style={{ fontSize: '0.7em', color: '#666', marginTop: '2px' }}>{formatProductId(item.id)}</div>
+                                    <span style={{ fontWeight: 600 }}>{item.name}</span>
+                                    <div style={{ fontSize: '0.75em', color: '#666', marginTop: '3px', display: 'flex', flexWrap: 'wrap', gap: '4px', alignItems: 'center' }}>
+                                        <span>[{formatProductId(item.id)}]</span>
+                                        {item.category && <span>• {item.category}</span>}
+                                        {item.color && (
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                • <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, border: '1px solid #ccc', display: 'inline-block' }}></span> {item.color}
+                                            </span>
+                                        )}
+                                    </div>
                                 </span>
                                 <span>{item.quantity} {item.cart_unit ? `(${stripPer(item.cart_unit)})` : ''}</span>
                                 <span>Rs. {(item.price * item.quantity).toLocaleString()}</span>
