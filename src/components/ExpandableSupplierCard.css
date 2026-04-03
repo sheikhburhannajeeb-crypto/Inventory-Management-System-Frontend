@@ -1,0 +1,436 @@
+/* Expandable Supplier Card Styles */
+.supplier-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.supplier-card.has-due {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);
+}
+
+.supplier-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Card Header */
+.supplier-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.supplier-card-header:hover {
+    background: var(--bg-tertiary);
+}
+
+.supplier-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.supplier-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    color: white;
+    flex-shrink: 0;
+}
+
+.supplier-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.supplier-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+.supplier-company {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+}
+
+.supplier-phone {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.supplier-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.summary-amount {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.summary-amount .amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.summary-amount .amount.due {
+    color: var(--danger);
+}
+
+.summary-amount .amount.clear {
+    color: var(--success);
+}
+
+.summary-amount .total-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.expand-icon {
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+/* Expanded Content */
+.supplier-card-expanded {
+    border-top: 1px solid var(--glass-border);
+    background: var(--bg-primary);
+    padding: 1.25rem;
+}
+
+/* Summary Boxes */
+.summary-boxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-box {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+}
+
+.summary-box.success {
+    border-color: var(--success);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.summary-box.danger {
+    border-color: var(--danger);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.box-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: var(--accent-primary);
+    color: white;
+    flex-shrink: 0;
+}
+
+.summary-box.success .box-icon {
+    background: var(--success);
+}
+
+.summary-box.danger .box-icon {
+    background: var(--danger);
+}
+
+.box-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.box-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+.box-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+/* Supplier Details Expanded */
+.supplier-details-expanded {
+    margin-bottom: 1.5rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Transaction History */
+.transaction-history {
+    margin-bottom: 1.5rem;
+}
+
+.history-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.transaction-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.transaction-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.product-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.transaction-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.transaction-status.paid {
+    color: var(--success);
+}
+
+.transaction-status.due {
+    color: var(--danger);
+}
+
+.transaction-details {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.detail-cell {
+    text-align: center;
+    padding: 0.5rem;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+}
+
+.cell-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.cell-value {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cell-value.paid {
+    color: var(--success);
+}
+
+/* Action Buttons */
+.card-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn.edit:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.action-btn.add-payment:hover {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+}
+
+.action-btn.add-transaction:hover {
+    background: var(--info);
+    color: white;
+    border-color: var(--info);
+}
+
+.action-btn.delete:hover {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .supplier-card-header {
+        padding: 1rem;
+    }
+    
+    .supplier-info {
+        gap: 0.75rem;
+    }
+    
+    .supplier-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .supplier-name {
+        font-size: 1rem;
+    }
+    
+    .summary-boxes {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .transaction-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .card-actions {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    .action-btn {
+        padding: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .supplier-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .supplier-summary {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .summary-amount {
+        align-items: flex-start;
+    }
+    
+    .transaction-details {
+        grid-template-columns: 1fr;
+    }
+}

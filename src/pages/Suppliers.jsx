@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, Plus, MoreVertical, Truck, Edit, Trash2, X } from 'lucide-react';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
-import ScrollableTable from '../components/ScrollableTable';
+import ExpandableSupplierCard from '../components/ExpandableSupplierCard';
 import ProductSideList from '../components/ProductSideList';
 import './Suppliers.css';
 
@@ -98,6 +98,43 @@ const Suppliers = () => {
         supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
     );
+
+    // Handler functions for ExpandableSupplierCard
+    const handleEditSupplier = (supplier) => {
+        openEditModal(supplier);
+    };
+
+    const handleDeleteSupplier = (supplierId) => {
+        handleDelete(supplierId);
+    };
+
+    const handleAddTransaction = (supplier) => {
+        // Open modal in add transaction mode
+        setModalMode('add-transaction');
+        setFormData({
+            ...formData,
+            id: supplier.id,
+            name: supplier.name,
+            phone: supplier.phone,
+            company_name: supplier.company_name,
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleAddPayment = (supplier) => {
+        // Open modal in add payment mode
+        setModalMode('add-payment');
+        const txnDue = (supplier.supplier_transactions || []).reduce((acc, t) => acc + (Number(t.total_amount || 0) - Number(t.paid_amount || 0)), 0);
+        setFormData({
+            ...formData,
+            id: supplier.id,
+            name: supplier.name,
+            phone: supplier.phone,
+            company_name: supplier.company_name,
+            txn_due: txnDue,
+        });
+        setIsModalOpen(true);
+    };
 
     const handleDelete = async (id) => {
         const supplier = suppliers.find(s => s.id === id);
@@ -520,7 +557,7 @@ const Suppliers = () => {
 
             {error && <div className="error-message">{error}</div>}
 
-            <ScrollableTable className="table-container glass-panel">
+            <div className="suppliers-list-container glass-panel">
                 <div className="table-header-controls">
                     <div className="search-wrapper">
                         <Search className="search-icon" size={20} />
@@ -537,99 +574,26 @@ const Suppliers = () => {
                 {loading ? (
                     <div className="loading-state text-center py-8">Loading suppliers...</div>
                 ) : (
-                    <table className="custom-table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Supplier / Company</th>
-                                    <th>Contact</th>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Purchase Rate</th>
-                                    <th>Total Amt</th>
-                                    <th>Paid Amt</th>
-                                    <th>Remaining (Payable)</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {flattenedData.map((row, idx) => {
-                                    const { txn } = row;
-                                    const remainingPayable = txn ? (Number(txn.total_amount || 0) - Number(txn.paid_amount || 0)) : 0;
-                                    return (
-                                        <tr key={txn ? `txn-${txn.id}` : `supplier-${row.id}`} className="animate-fade-in">
-                                            <td>{row.id}</td>
-                                            <td>
-                                                <div className="supplier-name-cell">
-                                                    <div className="supplier-avatar">
-                                                        <Truck size={18} />
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-medium text-primary">{row.name}</div>
-                                                        {row.company_name && (
-                                                            <div className="text-secondary" style={{ fontSize: '0.8rem' }}>
-                                                                {row.company_name}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td><span className="text-secondary">{row.phone || '-'}</span></td>
+                    <div className="suppliers-cards-list">
+                        {filteredSuppliers.map((supplier) => (
+                            <ExpandableSupplierCard
+                                key={supplier.id}
+                                supplier={supplier}
+                                onEdit={handleEditSupplier}
+                                onDelete={handleDeleteSupplier}
+                                onAddTransaction={handleAddTransaction}
+                                onAddPayment={handleAddPayment}
+                            />
+                        ))}
 
-                                            {txn ? (
-                                                <>
-                                                    <td><span className="font-medium">{txn.products?.name || productMap[txn.product_id] || `Product #${txn.product_id}`}</span></td>
-                                                    <td>{txn.quantity}</td>
-                                                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                                        {txn.quantity && txn.total_amount
-                                                            ? `Rs. ${(Number(txn.total_amount) / Number(txn.quantity)).toFixed(0)}`
-                                                            : '-'}
-                                                    </td>
-                                                    <td>Rs. {txn.total_amount}</td>
-                                                    <td>Rs. {txn.paid_amount}</td>
-                                                    <td>
-                                                        <span className={`qty-badge ${remainingPayable > 0 ? 'low-stock text-danger' : 'in-stock'}`}>
-                                                            Rs. {remainingPayable}
-                                                        </span>
-                                                    </td>
-                                                </>
-                                            ) : (
-                                                <td colSpan="6" className="text-secondary text-center italic">No transactions</td>
-                                            )}
-
-                                            <td>
-                                                <div className="action-buttons flex gap-2">
-                                                    <button
-                                                        className="icon-btn-small text-accent"
-                                                        title="Edit / Update Payment"
-                                                        onClick={() => openEditModal(row)}
-                                                    >
-                                                        <Edit size={16} />
-                                                    </button>
-                                                    <button
-                                                        className="icon-btn-small text-danger"
-                                                        title="Delete Supplier"
-                                                        onClick={() => handleDelete(row.id)}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-
-                                {flattenedData.length === 0 && (
-                                    <tr>
-                                        <td colSpan="9" className="text-center py-8 text-muted">
-                                            No suppliers or payable records found matching your search.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    )}
-            </ScrollableTable>
+                        {filteredSuppliers.length === 0 && (
+                            <div className="text-center py-8 text-muted">
+                                No suppliers found matching your search.
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             {/* Modal for Add / Edit */}
             {isModalOpen && (
