@@ -324,7 +324,7 @@
 /* Action Buttons */
 .card-actions {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
     padding-top: 1rem;
     border-top: 1px solid var(--glass-border);
@@ -356,18 +356,6 @@
     background: var(--accent-primary);
     color: white;
     border-color: var(--accent-primary);
-}
-
-.action-btn.add-payment:hover {
-    background: var(--success);
-    color: white;
-    border-color: var(--success);
-}
-
-.action-btn.add-transaction:hover {
-    background: var(--info);
-    color: white;
-    border-color: var(--info);
 }
 
 .action-btn.delete:hover {

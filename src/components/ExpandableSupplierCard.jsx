@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Truck, Edit, Trash2, Plus, Phone, Building, Package, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Truck, Edit, Trash2, Phone, Building, Package, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
 import './ExpandableSupplierCard.css';
 
 const ExpandableSupplierCard = ({ 
     supplier, 
     onEdit, 
-    onDelete, 
-    onAddTransaction,
-    onAddPayment 
+    onDelete
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     
@@ -37,7 +35,7 @@ const ExpandableSupplierCard = ({
                         )}
                         {supplier.phone && (
                             <p className="supplier-phone">
-                                <Phone size={14} />
+                                <Phone size={16} />
                                 {supplier.phone}
                             </p>
                         )}
@@ -155,14 +153,6 @@ const ExpandableSupplierCard = ({
                         <button className="action-btn edit" onClick={() => onEdit(supplier)}>
                             <Edit size={16} />
                             <span>Edit</span>
-                        </button>
-                        <button className="action-btn add-payment" onClick={() => onAddPayment(supplier)}>
-                            <DollarSign size={16} />
-                            <span>Add Payment</span>
-                        </button>
-                        <button className="action-btn add-transaction" onClick={() => onAddTransaction(supplier)}>
-                            <Plus size={16} />
-                            <span>Add Purchase</span>
                         </button>
                         <button className="action-btn delete" onClick={() => onDelete(supplier.id)}>
                             <Trash2 size={16} />

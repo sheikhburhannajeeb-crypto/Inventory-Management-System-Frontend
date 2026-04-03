@@ -108,34 +108,6 @@ const Suppliers = () => {
         handleDelete(supplierId);
     };
 
-    const handleAddTransaction = (supplier) => {
-        // Open modal in add transaction mode
-        setModalMode('add-transaction');
-        setFormData({
-            ...formData,
-            id: supplier.id,
-            name: supplier.name,
-            phone: supplier.phone,
-            company_name: supplier.company_name,
-        });
-        setIsModalOpen(true);
-    };
-
-    const handleAddPayment = (supplier) => {
-        // Open modal in add payment mode
-        setModalMode('add-payment');
-        const txnDue = (supplier.supplier_transactions || []).reduce((acc, t) => acc + (Number(t.total_amount || 0) - Number(t.paid_amount || 0)), 0);
-        setFormData({
-            ...formData,
-            id: supplier.id,
-            name: supplier.name,
-            phone: supplier.phone,
-            company_name: supplier.company_name,
-            txn_due: txnDue,
-        });
-        setIsModalOpen(true);
-    };
-
     const handleDelete = async (id) => {
         const supplier = suppliers.find(s => s.id === id);
         if (!supplier) return;
@@ -581,8 +553,6 @@ const Suppliers = () => {
                                 supplier={supplier}
                                 onEdit={handleEditSupplier}
                                 onDelete={handleDeleteSupplier}
-                                onAddTransaction={handleAddTransaction}
-                                onAddPayment={handleAddPayment}
                             />
                         ))}
 
