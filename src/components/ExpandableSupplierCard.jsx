@@ -116,9 +116,19 @@ const ExpandableSupplierCard = ({
                                     return (
                                         <div key={txn.id || idx} className="transaction-card">
                                             <div className="transaction-header">
-                                                <span className="product-name">
-                                                    {txn.products?.name || `Product #${txn.product_id}`}
-                                                </span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <span className="product-name">
+                                                        {txn.products?.name || `Product #${txn.product_id}`}
+                                                    </span>
+                                                    {txn.payment_method && (
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                                            {txn.payment_method} 
+                                                            {txn.payment_method === 'Split' && (
+                                                                <span style={{fontWeight: 400}}> (C: {txn.cash_amount} | O: {txn.online_amount})</span>
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <span className={`transaction-status ${isPaid ? 'paid' : 'due'}`}>
                                                     {isPaid ? '✓ Paid' : `Due: Rs. ${remaining.toLocaleString()}`}
                                                 </span>

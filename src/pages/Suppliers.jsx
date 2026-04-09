@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Search, Plus, MoreVertical, Truck, Edit, Trash2, X } from 'lucide-react';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
 import ExpandableSupplierCard from '../components/ExpandableSupplierCard';
+import CustomDropdown from '../components/CustomDropdown';
 import ProductSideList from '../components/ProductSideList';
 import './Suppliers.css';
 
@@ -44,7 +45,10 @@ const Suppliers = () => {
         txn_paid_amount: 0,
         txn_total_amount: 0,
         unit_price: '',
-        payment_date: new Date().toISOString().split('T')[0]
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_method: 'Cash',
+        cash_amount: '',
+        online_amount: ''
     });
 
     useEffect(() => {
@@ -172,7 +176,10 @@ const Suppliers = () => {
             txn_paid_amount: 0,
             txn_total_amount: 0,
             unit_price: '',
-            payment_date: new Date().toISOString().split('T')[0]
+            payment_date: new Date().toISOString().split('T')[0],
+            payment_method: 'Cash',
+            cash_amount: '',
+            online_amount: ''
         });
         setIsModalOpen(true);
     };
@@ -209,7 +216,10 @@ const Suppliers = () => {
             remaining_amount: txn ? (Number(txn.total_amount || 0) - Number(txn.paid_amount || 0)) : 0,
             txn_paid_amount: txn ? (Number(txn.paid_amount || 0)) : 0,
             txn_total_amount: txn ? (Number(txn.total_amount || 0)) : 0,
-            payment_date: new Date().toISOString().split('T')[0]
+            payment_date: new Date().toISOString().split('T')[0],
+            payment_method: 'Cash',
+            cash_amount: '',
+            online_amount: ''
         });
         setIsModalOpen(true);
     };
@@ -299,6 +309,34 @@ const Suppliers = () => {
                 company_name: formData.company_name
             };
 
+            let splitCash = 0;
+            let splitOnline = 0;
+            let actualPaymentMethod = formData.payment_method || 'Cash';
+            let targetAmountForSplitValidation = 0;
+            
+            const finalProductName = formData.product_name || productSearch;
+
+            if (formData.id && formData.payment_amount) {
+                targetAmountForSplitValidation = Number(formData.payment_amount);
+            } else if (modalMode === 'add' || (!formData.txn_id && (formData.product_id || finalProductName))) {
+                targetAmountForSplitValidation = Number(formData.paid_amount || 0);
+            } else if (formData.txn_id && formData.add_payment) {
+                targetAmountForSplitValidation = Number(formData.add_payment);
+            }
+
+            if (actualPaymentMethod === 'Split' && targetAmountForSplitValidation > 0) {
+                splitCash = Number(formData.cash_amount || 0);
+                splitOnline = Number(formData.online_amount || 0);
+                if (splitCash < 0 || splitOnline < 0) {
+                    notifyError('Split amounts cannot be negative.');
+                    return;
+                }
+                if (Math.abs((splitCash + splitOnline) - targetAmountForSplitValidation) > 0.01) {
+                    notifyError(`Split amounts (${splitCash} + ${splitOnline}) must equal the paid amount (${targetAmountForSplitValidation}).`);
+                    return;
+                }
+            }
+
             if (formData.id && formData.payment_amount) {
                 const payAmt = Number(formData.payment_amount);
                 if (payAmt > formData.txn_due) {
@@ -311,9 +349,10 @@ const Suppliers = () => {
                 }
                 payload.payment_amount = payAmt;
                 payload.date = formData.payment_date;
+                payload.payment_method = actualPaymentMethod;
+                payload.cash_amount = splitCash;
+                payload.online_amount = splitOnline;
             }
-
-            const finalProductName = formData.product_name || productSearch;
 
             if (modalMode === 'add') {
                 if ((formData.product_id || finalProductName) && Number(formData.quantity) > 0) {
@@ -340,7 +379,10 @@ const Suppliers = () => {
                         quantity: Number(formData.quantity),
                         total_amount: Number(formData.total_amount),
                         paid_amount: Number(formData.paid_amount || 0),
-                        purchase_date: formData.purchase_date
+                        purchase_date: formData.purchase_date,
+                        payment_method: actualPaymentMethod,
+                        cash_amount: splitCash,
+                        online_amount: splitOnline
                     };
 
                     await axios.post('/api/purchases', purchasePayload, {
@@ -378,6 +420,9 @@ const Suppliers = () => {
                     const updatePayload = {};
                     if (formData.add_payment && Number(formData.add_payment) > 0) {
                         updatePayload.add_payment = Number(formData.add_payment);
+                        updatePayload.payment_method = actualPaymentMethod;
+                        updatePayload.cash_amount = splitCash;
+                        updatePayload.online_amount = splitOnline;
                     }
                     if (formData.new_total_amount && Number(formData.new_total_amount) >= 0) {
                         updatePayload.new_total_amount = Number(formData.new_total_amount);
@@ -407,7 +452,10 @@ const Suppliers = () => {
                         quantity: Number(formData.quantity),
                         total_amount: Number(formData.total_amount),
                         paid_amount: Number(formData.paid_amount || 0),
-                        purchase_date: formData.purchase_date
+                        purchase_date: formData.purchase_date,
+                        payment_method: actualPaymentMethod,
+                        cash_amount: splitCash,
+                        online_amount: splitOnline
                     };
 
                     await axios.post('/api/purchases', purchasePayload, {
@@ -816,6 +864,52 @@ const Suppliers = () => {
                                             </div>
                                         </div>
                                     </div>
+
+                                    <hr className="my-4 border-gray-700" />
+                                    <h3 className="text-lg font-medium text-gray-200 mb-4">Payment Method</h3>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <CustomDropdown
+                                                className="minimal-select"
+                                                value={formData.payment_method}
+                                                onChange={(e) => setFormData(prev => ({...prev, payment_method: e.target.value}))}
+                                                options={[
+                                                    { value: 'Cash', label: 'Cash' },
+                                                    { value: 'Online', label: 'Online (Easypaisa/Jazzcash)' },
+                                                    { value: 'Split', label: 'Split (Cash + Online)' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {formData.payment_method === 'Split' && (
+                                        <div className="form-grid" style={{ marginTop: '16px', background: 'rgba(56, 189, 248, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
+                                            <div className="input-group">
+                                                <label>Cash Paid (Rs)</label>
+                                                <input
+                                                    type="number"
+                                                    className="input-field"
+                                                    placeholder="Enter cash amount"
+                                                    name="cash_amount"
+                                                    min="0"
+                                                    value={formData.cash_amount}
+                                                    onChange={handleFormChange}
+                                                />
+                                            </div>
+                                            <div className="input-group">
+                                                <label>Online Paid (Rs)</label>
+                                                <input
+                                                    type="number"
+                                                    className="input-field"
+                                                    placeholder="Enter online amount"
+                                                    name="online_amount"
+                                                    min="0"
+                                                    value={formData.online_amount}
+                                                    onChange={handleFormChange}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </>
                             )}
 

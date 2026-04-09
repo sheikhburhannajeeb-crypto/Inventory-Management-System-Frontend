@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Search, Building2, CreditCard, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { notifySuccess, notifyError } from '../utils/notifications';
 import ScrollableTable from '../components/ScrollableTable';
+import CustomDropdown from '../components/CustomDropdown';
 import './Companies.css';
 
 const Companies = () => {
@@ -13,6 +14,9 @@ const Companies = () => {
     const [selectedCompany, setSelectedCompany] = useState(null);
     const [payModal, setPayModal] = useState(null);
     const [payAmount, setPayAmount] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('Company Payment');
+    const [cashAmount, setCashAmount] = useState('');
+    const [onlineAmount, setOnlineAmount] = useState('');
     const [paying, setPaying] = useState(false);
 
     useEffect(() => { fetchBuyers(); fetchSales(); }, []);
@@ -134,6 +138,9 @@ const Companies = () => {
 
     const openPayModal = (companyName, companyData) => {
         setPayAmount('');
+        setPaymentMethod('Company Payment');
+        setCashAmount('');
+        setOnlineAmount('');
         setPayModal({ companyName, companyData, isCompanyPayment: true });
     };
 
@@ -153,13 +160,29 @@ const Companies = () => {
         
         if (!window.confirm(confirmMessage)) return;
         
+        if (paymentMethod === 'Split') {
+            const splitCash = Number(cashAmount || 0);
+            const splitOnline = Number(onlineAmount || 0);
+            if (splitCash < 0 || splitOnline < 0) {
+                notifyError('Split amounts cannot be negative.');
+                return;
+            }
+            if (Math.abs((splitCash + splitOnline) - amt) > 0.01) {
+                notifyError(`Split amounts (${splitCash} + ${splitOnline}) must equal the paid amount (${amt}).`);
+                return;
+            }
+        }
+        
         try {
             setPaying(true);
             const token = localStorage.getItem('inventory_token');
             await axios.post('/api/buyers/company-payment', {
                 company_name: payModal.companyName,
                 payment_amount: amt,
-                date: new Date().toISOString().split('T')[0]
+                date: new Date().toISOString().split('T')[0],
+                payment_method: paymentMethod,
+                cash_amount: Number(cashAmount || 0),
+                online_amount: Number(onlineAmount || 0)
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -344,12 +367,17 @@ const Companies = () => {
                                                                         <td>{txn.quantity}</td>
                                                                         <td>Rs. {Number(txn.total_amount).toLocaleString()}</td>
                                                                         <td style={{ color: '#4ade80' }}>Rs. {Number(txn.paid_amount).toLocaleString()}</td>
-                                                                        <td>
-                                                                            <span style={{ 
-                                                                                fontSize: '0.75em', padding: '2px 5px', borderRadius: '4px', fontWeight: 600,
-                                                                                background: txn.payment_method === 'Online' ? 'rgba(56,189,248,0.2)' : (txn.payment_method === 'Split' ? 'rgba(234,179,8,0.2)' : 'rgba(74,222,128,0.2)'),
-                                                                                color: txn.payment_method === 'Online' ? '#38bdf8' : (txn.payment_method === 'Split' ? '#facc15' : '#4ade80')
-                                                                            }}>{txn.payment_method || 'Cash'}</span>
+                                                                            <td>
+                                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                                <span style={{ 
+                                                                                    fontSize: '0.75em', padding: '2px 5px', borderRadius: '4px', fontWeight: 600, width: 'fit-content',
+                                                                                    background: txn.payment_method === 'Online' ? 'rgba(56,189,248,0.2)' : (txn.payment_method === 'Split' ? 'rgba(234,179,8,0.2)' : (txn.payment_method === 'Company Payment' ? 'rgba(168,85,247,0.2)' : 'rgba(74,222,128,0.2)')),
+                                                                                    color: txn.payment_method === 'Online' ? '#38bdf8' : (txn.payment_method === 'Split' ? '#facc15' : (txn.payment_method === 'Company Payment' ? '#a855f7' : '#4ade80'))
+                                                                                }}>{txn.payment_method || 'Cash'}</span>
+                                                                                {txn.payment_method === 'Split' && (
+                                                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(C:{txn.cash_amount} O:{txn.online_amount})</span>
+                                                                                )}
+                                                                            </div>
                                                                         </td>
                                                                         <td>
                                                                             <span className={`qty-badge ${rem > 0 ? 'low-stock' : 'in-stock'}`}>
@@ -422,6 +450,48 @@ const Companies = () => {
                                     Maximum amount: Rs. {payModal.companyData.total_remaining.toLocaleString()}
                                 </small>
                             </div>
+
+                            <div className="input-group" style={{ marginTop: '16px' }}>
+                                <label>Payment Method</label>
+                                <CustomDropdown
+                                    className="minimal-select"
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                    options={[
+                                        { value: 'Company Payment', label: 'Company Payment (Default)' },
+                                        { value: 'Cash', label: 'Cash' },
+                                        { value: 'Online', label: 'Online (Easypaisa/Jazzcash)' },
+                                        { value: 'Split', label: 'Split (Cash + Online)' }
+                                    ]}
+                                />
+                            </div>
+
+                            {paymentMethod === 'Split' && (
+                                <div className="form-grid" style={{ marginTop: '16px', background: 'rgba(56, 189, 248, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
+                                    <div className="input-group">
+                                        <label>Cash Paid (Rs)</label>
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            placeholder="Enter cash amount"
+                                            min="0"
+                                            value={cashAmount}
+                                            onChange={(e) => setCashAmount(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label>Online Paid (Rs)</label>
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            placeholder="Enter online amount"
+                                            min="0"
+                                            value={onlineAmount}
+                                            onChange={(e) => setOnlineAmount(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="modal-footer">
                             <button className="btn-secondary" onClick={() => setPayModal(null)}>Cancel</button>
