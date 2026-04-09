@@ -316,7 +316,39 @@ const Billing = () => {
     const total = subtotal;
 
     // Validate that important fields are filled
-    const canProceed = cart.length > 0 && (billType !== 'credit' || (customerName.trim() && buyerPhone.trim()));
+    const canProceed = (() => {
+        // Basic validation
+        if (cart.length === 0) return false;
+        
+        // Credit bill validation
+        if (billType === 'credit') {
+            if (!customerName.trim() || !buyerPhone.trim()) return false;
+            if (!paidAmount || Number(paidAmount) <= 0) return false;
+            if (Number(paidAmount) > total) return false;
+        }
+        
+        // Split payment validation
+        if (paymentMethod === 'Split') {
+            const cash = Number(cashAmount || 0);
+            const online = Number(onlineAmount || 0);
+            const totalPaid = cash + online;
+            
+            if (totalPaid !== total) return false;
+            if (cash < 0 || online < 0) return false;
+        }
+        
+        // Cash payment validation
+        if (paymentMethod === 'Cash' && billType !== 'credit') {
+            // For cash bills, no additional validation needed
+        }
+        
+        // Online payment validation
+        if (paymentMethod === 'Online' && billType !== 'credit') {
+            // For online bills, no additional validation needed
+        }
+        
+        return true;
+    })();
 
     return (
         <div className="billing-container">
@@ -466,6 +498,16 @@ const Billing = () => {
                                         onChange={(e) => setPaidAmount(e.target.value)}
                                     />
                                 </div>
+                                {paidAmount && Number(paidAmount) > 0 && (
+                                    <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px' }}>
+                                            <span style={{ fontSize: '0.9rem', color: '#ef4444' }}>Remaining Balance:</span>
+                                            <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ef4444' }}>
+                                                Rs. {Math.max(0, total - Number(paidAmount)).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
@@ -512,6 +554,18 @@ const Billing = () => {
                                     value={onlineAmount}
                                     onChange={(e) => setOnlineAmount(e.target.value)}
                                 />
+                            </div>
+                            <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(0,0,0,0.1)', borderRadius: '6px' }}>
+                                    <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Total Paid:</span>
+                                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Rs. {(Number(cashAmount || 0) + Number(onlineAmount || 0)).toLocaleString()}</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', marginTop: '4px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px' }}>
+                                    <span style={{ fontSize: '0.9rem', color: '#ef4444' }}>Remaining:</span>
+                                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#ef4444' }}>
+                                        Rs. {Math.max(0, total - (Number(cashAmount || 0) + Number(onlineAmount || 0))).toLocaleString()}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}
