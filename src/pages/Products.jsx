@@ -268,6 +268,33 @@ const Products = () => {
                 return;
             }
 
+            // --- VALIDATIONS ---
+            const paidAmt = parseFloat(formData.paid_amount || 0);
+            const purchaseRate = parseFloat(formData.purchase_rate || 0);
+            const totalQty = parseInt(formData.total_quantity, 10);
+            const supplierDue = purchaseRate > 0 && totalQty > 0 ? purchaseRate * totalQty : 0;
+
+            // Validation 1: paid_amount must not exceed supplier due
+            if (supplierDue > 0 && paidAmt > supplierDue) {
+                notifyError(`Paid amount (Rs. ${paidAmt.toLocaleString()}) cannot exceed supplier due (Rs. ${supplierDue.toLocaleString()}).`);
+                return;
+            }
+
+            // Validation 2: Split — cash + online must equal paid_amount
+            if (formData.payment_method === 'Split' && paidAmt > 0) {
+                const cash = parseFloat(formData.cash_amount || 0);
+                const online = parseFloat(formData.online_amount || 0);
+                if (cash < 0 || online < 0) {
+                    notifyError('Split amounts cannot be negative.');
+                    return;
+                }
+                if (Math.abs((cash + online) - paidAmt) > 0.01) {
+                    notifyError(`Split amounts (Cash: Rs. ${cash} + Online: Rs. ${online}) must equal paid amount (Rs. ${paidAmt}).`);
+                    return;
+                }
+            }
+            // -------------------
+
             // Add to pending list instead of direct database operation
             const dataToSubmit = {
                 name: formData.name.trim(),
