@@ -54,7 +54,10 @@ const Products = () => {
         low_stock_threshold: '10',
         paid_amount: '',
         supplier_phone: '',
-        supplier_company_name: ''
+        supplier_company_name: '',
+        payment_method: 'Cash',
+        cash_amount: '',
+        online_amount: ''
     });
 
     useEffect(() => {
@@ -137,7 +140,10 @@ const Products = () => {
             low_stock_threshold: '10',
             paid_amount: '',
             supplier_phone: '',
-            supplier_company_name: ''
+            supplier_company_name: '',
+            payment_method: 'Cash',
+            cash_amount: '',
+            online_amount: ''
         });
         setIsModalOpen(true);
     };
@@ -274,6 +280,9 @@ const Products = () => {
                 total_quantity: parseInt(formData.total_quantity, 10),
                 quantity_unit: formData.quantity_unit,
                 paid_amount: formData.paid_amount ? parseFloat(formData.paid_amount) : 0,
+                payment_method: formData.payment_method || 'Cash',
+                cash_amount: formData.payment_method === 'Split' ? parseFloat(formData.cash_amount || 0) : 0,
+                online_amount: formData.payment_method === 'Split' ? parseFloat(formData.online_amount || 0) : 0,
                 supplier_phone: formData.supplier_phone,
                 supplier_company_name: formData.supplier_company_name
             };
@@ -998,6 +1007,39 @@ const Products = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {modalMode === 'add' && Number(formData.paid_amount) > 0 && (
+                                <>
+                                    <hr className="my-4 border-gray-700" />
+                                    <h3 className="text-lg font-medium text-gray-200 mb-4">Payment Method</h3>
+                                    <div className="form-grid">
+                                        <div className="input-group">
+                                            <CustomDropdown
+                                                className="minimal-select"
+                                                value={formData.payment_method}
+                                                onChange={(e) => setFormData(prev => ({...prev, payment_method: e.target.value, cash_amount: '', online_amount: ''}))}
+                                                options={[
+                                                    { value: 'Cash', label: 'Cash' },
+                                                    { value: 'Online', label: 'Online (Easypaisa/Jazzcash)' },
+                                                    { value: 'Split', label: 'Split (Cash + Online)' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                    {formData.payment_method === 'Split' && (
+                                        <div className="form-grid" style={{ marginTop: '12px', background: 'rgba(56,189,248,0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.1)' }}>
+                                            <div className="input-group">
+                                                <label>Cash Paid (Rs)</label>
+                                                <input type="number" className="input-field" name="cash_amount" min="0" value={formData.cash_amount} onChange={handleFormChange} placeholder="Enter cash amount" />
+                                            </div>
+                                            <div className="input-group">
+                                                <label>Online Paid (Rs)</label>
+                                                <input type="number" className="input-field" name="online_amount" min="0" value={formData.online_amount} onChange={handleFormChange} placeholder="Enter online amount" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
                             <div className="input-group" style={{ marginBottom: '16px' }}>
                                 <label>Purchase Date</label>

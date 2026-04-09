@@ -807,6 +807,56 @@ const Suppliers = () => {
                                             />
                                         </div>
                                     </div>
+
+                                    {Number(formData.paid_amount) > 0 && (
+                                        <>
+                                            <hr className="my-4 border-gray-700" />
+                                            <h3 className="text-lg font-medium text-gray-200 mb-4">Payment Method</h3>
+                                            <div className="form-grid">
+                                                <div className="input-group">
+                                                    <CustomDropdown
+                                                        className="minimal-select"
+                                                        value={formData.payment_method}
+                                                        onChange={(e) => setFormData(prev => ({...prev, payment_method: e.target.value}))}
+                                                        options={[
+                                                            { value: 'Cash', label: 'Cash' },
+                                                            { value: 'Online', label: 'Online (Easypaisa/Jazzcash)' },
+                                                            { value: 'Split', label: 'Split (Cash + Online)' }
+                                                        ]}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {formData.payment_method === 'Split' && (
+                                                <div className="form-grid" style={{ marginTop: '16px', background: 'rgba(56, 189, 248, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
+                                                    <div className="input-group">
+                                                        <label>Cash Paid (Rs)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="input-field"
+                                                            placeholder="Enter cash amount"
+                                                            name="cash_amount"
+                                                            min="0"
+                                                            value={formData.cash_amount}
+                                                            onChange={handleFormChange}
+                                                        />
+                                                    </div>
+                                                    <div className="input-group">
+                                                        <label>Online Paid (Rs)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="input-field"
+                                                            placeholder="Enter online amount"
+                                                            name="online_amount"
+                                                            min="0"
+                                                            value={formData.online_amount}
+                                                            onChange={handleFormChange}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
                                 </>
                             )}
 
