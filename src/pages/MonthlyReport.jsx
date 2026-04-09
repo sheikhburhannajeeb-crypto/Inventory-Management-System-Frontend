@@ -189,6 +189,20 @@ const MonthlyReport = () => {
                             </div>
                         </div>
 
+                        {/* Product Profit */}
+                        <div className="stat-card-premium green" title="Actual profit from product sale-purchase difference">
+                            <div className="stat-header">
+                                <div className="stat-icon-wrapper">
+                                    <TrendingUp size={24} />
+                                </div>
+                                <h3 className="stat-title">Product Profit</h3>
+                            </div>
+                            <div className="stat-row highlight">
+                                <span>Salesman Profit:</span>
+                                <span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(summary.product_profit || 0).toLocaleString()}</span>
+                            </div>
+                        </div>
+
                         {/* Returns */}
                         <div className="stat-card-premium red">
                             <div className="stat-header">

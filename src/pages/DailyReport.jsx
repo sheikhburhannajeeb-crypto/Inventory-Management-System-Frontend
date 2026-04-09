@@ -149,6 +149,15 @@ const DailyReport = () => {
     const totalCashPaid = salesToday.reduce((sum, s) => sum + Number(s.paid_amount || 0), 0);
     const totalCreditGiven = totalSalesAmount - totalCashPaid;
     
+    // Profit Calculation (Sale Rate - Purchase Rate) * Quantity
+    const totalProfit = salesToday.reduce((sum, s) => {
+        const saleRate = Number(s.products?.price || 0);
+        const purchaseRate = Number(s.products?.purchase_rate || 0);
+        const quantity = Number(s.quantity || 0);
+        const profitPerUnit = saleRate - purchaseRate;
+        return sum + (profitPerUnit * quantity);
+    }, 0);
+    
     // Returns Calculation
     const totalReturnsAmount = returnsToday.reduce((sum, r) => sum + Number(r.total_amount || 0), 0);
     const totalReturnsQty = returnsToday.reduce((sum, r) => sum + Number(r.quantity || 0), 0);
@@ -227,6 +236,10 @@ const DailyReport = () => {
                                 <div className="stat-row highlight">
                                     <span>Given on Credit:</span>
                                     <span className="stat-value" style={{ color: totalCreditGiven > 0 ? 'var(--danger)' : 'var(--text-primary)' }}>Rs. {totalCreditGiven.toLocaleString()}</span>
+                                </div>
+                                <div className="stat-row" style={{ background: 'rgba(34,197,94,0.1)', padding: '8px', borderRadius: '6px', marginTop: '8px' }}>
+                                    <span style={{ fontWeight: 600, color: 'var(--success)' }}>Today's Profit:</span>
+                                    <span className="stat-value" style={{ color: 'var(--success)', fontWeight: 700 }}>Rs. {totalProfit.toLocaleString()}</span>
                                 </div>
                             </div>
 
