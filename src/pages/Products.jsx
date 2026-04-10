@@ -24,6 +24,9 @@ const Products = () => {
     const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
     const [supplierTxnInfo, setSupplierTxnInfo] = useState(null); // { txn_id, total_amount, paid_amount, remaining }
     const [addPaymentAmount, setAddPaymentAmount] = useState('');
+    const [updatePaymentMethod, setUpdatePaymentMethod] = useState('Cash');
+    const [updateCashAmount, setUpdateCashAmount] = useState('');
+    const [updateOnlineAmount, setUpdateOnlineAmount] = useState('');
     const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
     const [showPurchaseRates, setShowPurchaseRates] = useState({});
 
@@ -58,7 +61,10 @@ const Products = () => {
         supplier_company_name: '',
         payment_method: 'Cash',
         cash_amount: '',
-        online_amount: ''
+        online_amount: '',
+        restock_payment_method: 'Cash',
+        restock_cash_amount: '',
+        restock_online_amount: ''
     });
 
     useEffect(() => {
@@ -144,7 +150,10 @@ const Products = () => {
             supplier_company_name: '',
             payment_method: 'Cash',
             cash_amount: '',
-            online_amount: ''
+            online_amount: '',
+            restock_payment_method: 'Cash',
+            restock_cash_amount: '',
+            restock_online_amount: ''
         });
         setIsModalOpen(true);
     };
@@ -172,8 +181,14 @@ const Products = () => {
             low_stock_threshold: product.low_stock_threshold !== undefined && product.low_stock_threshold !== null ? String(product.low_stock_threshold) : '10',
             paid_amount: '',
             supplier_phone: '',
-            supplier_company_name: ''
+            supplier_company_name: '',
+            restock_payment_method: 'Cash',
+            restock_cash_amount: '',
+            restock_online_amount: ''
         });
+        setUpdatePaymentMethod('Cash');
+        setUpdateCashAmount('');
+        setUpdateOnlineAmount('');
 
         // Fetch supplier transactions for this product
         try {
@@ -206,6 +221,9 @@ const Products = () => {
         setShowSupplierDropdown(false);
         setSupplierTxnInfo(null);
         setAddPaymentAmount('');
+        setUpdatePaymentMethod('Cash');
+        setUpdateCashAmount('');
+        setUpdateOnlineAmount('');
         setPaymentDate(new Date().toISOString().split('T')[0]);
     };
 
@@ -346,6 +364,26 @@ const Products = () => {
                         notifyError(`Payment cannot exceed this batch total (Rs. ${batchTotal.toLocaleString()}).`);
                         return;
                     }
+
+                    if (formData.restock_payment_method === 'Split' && paidRestock > 0) {
+                        const rcash = parseFloat(formData.restock_cash_amount || 0);
+                        const ronline = parseFloat(formData.restock_online_amount || 0);
+                        if (rcash < 0 || ronline < 0) { notifyError('Split amounts for restock cannot be negative.'); return; }
+                        if (Math.abs((rcash + ronline) - paidRestock) > 0.01) { notifyError('Split amounts must equal restock paid amount.'); return; }
+                    }
+                }
+
+                if (addPaymentAmount && Number(addPaymentAmount) > 0 && supplierTxnInfo?.txn_id) {
+                    if (Number(addPaymentAmount) > supplierTxnInfo.remaining) {
+                        notifyError('Payment cannot exceed remaining amount: Rs. ' + supplierTxnInfo.remaining);
+                        return;
+                    }
+                    if (updatePaymentMethod === 'Split') {
+                        const ucash = parseFloat(updateCashAmount || 0);
+                        const uonline = parseFloat(updateOnlineAmount || 0);
+                        if (ucash < 0 || uonline < 0) { notifyError('Split amounts for payment update cannot be negative.'); return; }
+                        if (Math.abs((ucash + uonline) - Number(addPaymentAmount)) > 0.01) { notifyError('Split amounts must equal added payment amount.'); return; }
+                    }
                 }
 
                 const dataToSubmit = {
@@ -368,6 +406,11 @@ const Products = () => {
                     dataToSubmit.restock_paid_amount = parseFloat(formData.restock_paid_amount || 0);
                     dataToSubmit.restock_purchase_date =
                         formData.restock_purchase_date || new Date().toISOString().split('T')[0];
+                    if (dataToSubmit.restock_paid_amount > 0) {
+                        dataToSubmit.restock_payment_method = formData.restock_payment_method || 'Cash';
+                        dataToSubmit.restock_cash_amount = formData.restock_payment_method === 'Split' ? parseFloat(formData.restock_cash_amount || 0) : 0;
+                        dataToSubmit.restock_online_amount = formData.restock_payment_method === 'Split' ? parseFloat(formData.restock_online_amount || 0) : 0;
+                    }
                 }
 
                 await axios.put(`/api/products/${formData.id}`, dataToSubmit, {
@@ -375,13 +418,12 @@ const Products = () => {
                 });
 
                 if (addPaymentAmount && Number(addPaymentAmount) > 0 && supplierTxnInfo?.txn_id) {
-                    if (Number(addPaymentAmount) > supplierTxnInfo.remaining) {
-                        notifyError('Payment cannot exceed remaining amount: Rs. ' + supplierTxnInfo.remaining);
-                        return;
-                    }
                     await axios.put(`/api/purchases/${supplierTxnInfo.txn_id}`, {
                         add_payment: Number(addPaymentAmount),
-                        date: paymentDate
+                        date: paymentDate,
+                        payment_method: updatePaymentMethod,
+                        cash_amount: updatePaymentMethod === 'Split' ? Number(updateCashAmount || 0) : 0,
+                        online_amount: updatePaymentMethod === 'Split' ? Number(updateOnlineAmount || 0) : 0
                     }, { headers: { Authorization: `Bearer ${token}` } });
                 }
 
@@ -900,6 +942,38 @@ const Products = () => {
                                                 />
                                             </div>
                                         </div>
+                                        {Number(formData.restock_paid_amount) > 0 && (
+                                            <div style={{ marginTop: '4px', marginBottom: '12px' }}>
+                                                <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Restock Payment Method</label>
+                                                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                                    {['Cash', 'Online', 'Split'].map(pm => (
+                                                        <button key={pm} type="button"
+                                                            onClick={() => setFormData(prev => ({ ...prev, restock_payment_method: pm, restock_cash_amount: '', restock_online_amount: '' }))}
+                                                            style={{
+                                                                flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                                                                background: formData.restock_payment_method === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.15)' : pm === 'Online' ? 'rgba(56,189,248,0.15)' : 'rgba(251,191,36,0.15)') : 'var(--bg-secondary)',
+                                                                color: formData.restock_payment_method === pm ? (pm === 'Cash' ? '#4ade80' : pm === 'Online' ? '#38bdf8' : '#fbbf24') : 'var(--text-secondary)',
+                                                                border: `1px solid ${formData.restock_payment_method === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.4)' : pm === 'Online' ? 'rgba(56,189,248,0.4)' : 'rgba(251,191,36,0.4)') : 'var(--border-color)'}`
+                                                            }}
+                                                        >
+                                                            {pm === 'Cash' ? '💵 Cash' : pm === 'Online' ? '📱 Online' : '🔀 Split'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                {formData.restock_payment_method === 'Split' && (
+                                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                                        <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                                            <label>Cash (Rs)</label>
+                                                            <input type="number" className="input-field" name="restock_cash_amount" min="0" value={formData.restock_cash_amount} onChange={handleFormChange} placeholder="0" />
+                                                        </div>
+                                                        <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                                            <label>Online (Rs)</label>
+                                                            <input type="number" className="input-field" name="restock_online_amount" min="0" value={formData.restock_online_amount} onChange={handleFormChange} placeholder="0" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -1144,6 +1218,38 @@ const Products = () => {
                                                     onChange={e => setPaymentDate(e.target.value)}
                                                 />
                                             </div>
+                                            {Number(addPaymentAmount) > 0 && (
+                                                <div style={{ marginTop: '8px' }}>
+                                                    <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Payment Method</label>
+                                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                                        {['Cash', 'Online', 'Split'].map(pm => (
+                                                            <button key={pm} type="button"
+                                                                onClick={() => { setUpdatePaymentMethod(pm); setUpdateCashAmount(''); setUpdateOnlineAmount(''); }}
+                                                                style={{
+                                                                    flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                                                                    background: updatePaymentMethod === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.15)' : pm === 'Online' ? 'rgba(56,189,248,0.15)' : 'rgba(251,191,36,0.15)') : 'var(--bg-secondary)',
+                                                                    color: updatePaymentMethod === pm ? (pm === 'Cash' ? '#4ade80' : pm === 'Online' ? '#38bdf8' : '#fbbf24') : 'var(--text-secondary)',
+                                                                    border: `1px solid ${updatePaymentMethod === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.4)' : pm === 'Online' ? 'rgba(56,189,248,0.4)' : 'rgba(251,191,36,0.4)') : 'var(--border-color)'}`
+                                                                }}
+                                                            >
+                                                                {pm === 'Cash' ? '💵 Cash' : pm === 'Online' ? '📱 Online' : '🔀 Split'}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    {updatePaymentMethod === 'Split' && (
+                                                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                                                <label>Cash (Rs)</label>
+                                                                <input type="number" className="input-field" min="0" value={updateCashAmount} onChange={e => setUpdateCashAmount(e.target.value)} placeholder="0" />
+                                                            </div>
+                                                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                                                <label>Online (Rs)</label>
+                                                                <input type="number" className="input-field" min="0" value={updateOnlineAmount} onChange={e => setUpdateOnlineAmount(e.target.value)} placeholder="0" />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </>
