@@ -621,32 +621,34 @@ const Buyers = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="input-group">
-                                <label>Phone / Contact</label>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleFormChange}
-                                />
-                            </div>
-                            <div className="input-group">
-                                <label>Address</label>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    name="address"
-                                    value={formData.address}
-                                    onChange={handleFormChange}
-                                />
+                            <div className="form-grid">
+                                <div className="input-group">
+                                    <label>Phone / Contact</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleFormChange}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Address</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        name="address"
+                                        value={formData.address}
+                                        onChange={handleFormChange}
+                                    />
+                                </div>
                             </div>
 
                             {/* Only show transaction fields for Add Mode */}
                             {modalMode === 'add' && (
                                 <>
-                                    <hr className="my-4 border-gray-700" />
-                                    <h3 className="text-lg font-medium text-gray-200 mb-4">Credit / Credit Details (Optional)</h3>
+                                    <hr className="my-2 border-gray-700" />
+                                    <h3 className="text-lg font-medium text-gray-200 mb-2">Credit / Credit Details (Optional)</h3>
 
                                     <div className="form-grid">
                                         <div className="input-group">
@@ -734,8 +736,8 @@ const Buyers = () => {
 
                             {modalMode === 'edit' && formData.txn_id && (
                                 <>
-                                    <hr className="my-4 border-gray-700" />
-                                    <h3 className="text-lg font-medium text-gray-200 mb-4">Update Payment</h3>
+                                    <hr className="my-2 border-gray-700" />
+                                    <h3 className="text-lg font-medium text-gray-200 mb-2">Update Payment</h3>
                                     <div className="form-grid">
                                         <div className="input-group">
                                             <label>Remaining Amount (Rs)</label>
@@ -773,8 +775,8 @@ const Buyers = () => {
 
                             {((modalMode === 'add' && formData.paid_amount > 0) || (modalMode === 'edit' && formData.add_payment > 0)) && (
                                 <>
-                                    <hr className="my-4 border-gray-700" />
-                                    <h3 className="text-lg font-medium text-gray-200 mb-4">Payment Method</h3>
+                                    <hr className="my-2 border-gray-700" />
+                                    <h3 className="text-lg font-medium text-gray-200 mb-2">Payment Method</h3>
                                     <div className="form-grid">
                                         <div className="input-group">
                                             <CustomDropdown
@@ -791,7 +793,7 @@ const Buyers = () => {
                                     </div>
 
                                     {formData.payment_method === 'Split' && (
-                                        <div className="form-grid" style={{ marginTop: '16px', background: 'rgba(56, 189, 248, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
+                                        <div className="form-grid" style={{ marginTop: '8px', background: 'rgba(56, 189, 248, 0.05)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
                                             <div className="input-group">
                                                 <label>Cash Paid (Rs)</label>
                                                 <input
