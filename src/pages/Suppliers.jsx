@@ -632,7 +632,7 @@ const Suppliers = () => {
             {/* Modal for Add / Edit */}
             {isModalOpen && (
                 <div className="modal-overlay">
-                    <div className="modal-content glass-panel animate-fade-in">
+                    <div className="modal-content glass-panel animate-fade-in" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
                         <div className="modal-header">
                             <h2>{modalMode === 'add' ? 'Add New Supplier' : 'Edit Supplier'}</h2>
                             <button className="icon-btn-small" onClick={closeModal}>
@@ -659,7 +659,7 @@ const Suppliers = () => {
 
                             {/* Generic supplier payment — edit mode with outstanding due */}
                             {modalMode === 'edit' && formData.txn_due > 0 && (
-                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '2px' }}>
                                     <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', fontWeight: 700 }}>
                                         💰 Make Payment — Due: Rs. {formData.txn_due.toLocaleString()}
                                     </label>
@@ -721,7 +721,7 @@ const Suppliers = () => {
 
                             {/* Transaction fields — Add Mode OR Edit with no previous txn */}
                             {(modalMode === 'add' || (modalMode === 'edit' && !formData.txn_id)) && (
-                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '2px' }}>
                                     <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', fontWeight: 700 }}>
                                         {modalMode === 'add' ? '📦 Purchase Details (Optional)' : '📦 Add First Purchase'}
                                     </label>
@@ -811,31 +811,20 @@ const Suppliers = () => {
 
                             {/* Update existing transaction payment */}
                             {modalMode === 'edit' && formData.txn_id && (
-                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '2px' }}>
                                     <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', fontWeight: 700 }}>
-                                        💳 Update Transaction Payment
+                                        💳 Update Payment — Due: Rs. {formData.remaining_amount.toLocaleString()}
                                     </label>
-                                    <div className="form-grid" style={{ marginTop: '8px' }}>
-                                        <div className="input-group">
-                                            <label>Remaining Payable</label>
-                                            <input type="text" className="input-field" value={`Rs. ${formData.remaining_amount.toLocaleString()}`} disabled
-                                                style={{ backgroundColor: 'var(--bg-secondary)', color: formData.remaining_amount > 0 ? '#f87171' : '#4ade80', fontWeight: 'bold' }} />
-                                        </div>
-                                        <div className="input-group">
-                                            <label>Update Total (Rs)</label>
-                                            <input type="number" className="input-field" name="new_total_amount" value={formData.new_total_amount} onChange={handleFormChange} min="0" placeholder="New Total..." />
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                                         <input type="number" className="input-field" style={{ flex: 1 }} name="add_payment" value={formData.add_payment}
                                             onChange={e => { handleFormChange(e); setFormData(prev => ({ ...prev, cash_amount: '', online_amount: '' })); }}
                                             min="0" max={formData.remaining_amount} placeholder={`Pay now (max ${formData.remaining_amount})...`} />
+                                        <input type="number" className="input-field" style={{ flex: 1 }} name="new_total_amount" value={formData.new_total_amount} onChange={handleFormChange} min="0" placeholder="New total (optional)..." />
                                         <input type="date" className="input-field" style={{ width: '140px' }} name="payment_date" value={formData.payment_date} onChange={handleFormChange} />
                                     </div>
 
                                     {Number(formData.add_payment) > 0 && (
-                                        <div style={{ marginTop: '10px' }}>
+                                        <div style={{ marginTop: '8px' }}>
                                             <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Payment Method</label>
                                             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                                                 {['Cash', 'Online', 'Split'].map(pm => (
