@@ -19,6 +19,7 @@ const Suppliers = () => {
     const [isSideListOpen, setIsSideListOpen] = useState(false);
     const [pendingItems, setPendingItems] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -273,35 +274,35 @@ const Suppliers = () => {
 
     const handleFormSubmit = async (e) => {
         e.preventDefault();
-        
-        if (modalMode === 'add') {
-            // Check if supplier with same name already exists in pending list
-            if (isSupplierIdInPendingList(formData.name)) {
-                notifyError('This supplier is already in the pending list.');
+        setIsSubmitting(true);
+        try {
+            if (modalMode === 'add') {
+                // Check if supplier with same name already exists in pending list
+                if (isSupplierIdInPendingList(formData.name)) {
+                    notifyError('This supplier is already in the pending list.');
+                    return;
+                }
+                
+                // For new suppliers, add to pending list instead of direct save
+                const payload = {
+                    name: formData.name,
+                    phone: formData.phone,
+                    company_name: formData.company_name
+                };
+
+                const newItem = {
+                    action: 'add',
+                    name: formData.name,
+                    data: payload
+                };
+                
+                setPendingItems(prev => [...prev, newItem]);
+                setIsSideListOpen(true);
+                closeModal();
                 return;
             }
-            
-            // For new suppliers, add to pending list instead of direct save
-            const payload = {
-                name: formData.name,
-                phone: formData.phone,
-                company_name: formData.company_name
-            };
-
-            const newItem = {
-                action: 'add',
-                name: formData.name,
-                data: payload
-            };
-            
-            setPendingItems(prev => [...prev, newItem]);
-            setIsSideListOpen(true);
-            closeModal();
-            return;
-        }
         
-        // For existing suppliers (edit mode), keep the original logic
-        try {
+            // For existing suppliers (edit mode), keep the original logic
             const token = localStorage.getItem('inventory_token');
             const payload = {
                 name: formData.name,
@@ -390,14 +391,12 @@ const Suppliers = () => {
                     });
                 }
             } else {
-                // UPDATE EXSITING SUPPLIER
-                // First update supplier basic info
+                // UPDATE EXISTING SUPPLIER
                 await axios.put(`/api/suppliers/${formData.id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
                 if (formData.txn_id) {
-                    // Updating an existing transaction payment
                     let final_paid_amount = Number(formData.txn_paid_amount || 0);
                     let final_total_amount = Number(formData.txn_total_amount || 0);
 
@@ -435,7 +434,6 @@ const Suppliers = () => {
                         });
                     }
                 } else if ((formData.product_id || finalProductName) && Number(formData.quantity) > 0) {
-                    // User is adding their first transaction via the Edit modal
                     if (Number(formData.paid_amount || 0) > Number(formData.total_amount)) {
                         notifyError("Paid amount cannot exceed total amount.");
                         return;
@@ -468,6 +466,8 @@ const Suppliers = () => {
         } catch (err) {
             console.error('Error saving supplier:', err);
             notifyError(err.response?.data?.error || 'Failed to save supplier.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -860,8 +860,8 @@ const Suppliers = () => {
 
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
-                                <button type="submit" className="btn-primary">
-                                    {modalMode === 'add' ? 'Save Supplier' : 'Update Supplier'}
+                                <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
+                                    {isSubmitting ? '⏳ Saving...' : (modalMode === 'add' ? 'Save Supplier' : 'Update Supplier')}
                                 </button>
                             </div>
                         </form>

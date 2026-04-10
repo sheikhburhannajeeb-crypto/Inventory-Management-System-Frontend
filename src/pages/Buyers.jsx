@@ -20,6 +20,7 @@ const Buyers = () => {
     const [isSideListOpen, setIsSideListOpen] = useState(false);
     const [pendingItems, setPendingItems] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -255,6 +256,7 @@ const Buyers = () => {
         }
         
         // For existing customers (edit mode), keep the original logic
+        setIsSubmitting(true);
         try {
             const token = localStorage.getItem('inventory_token');
             const payload = {
@@ -317,6 +319,8 @@ const Buyers = () => {
         } catch (err) {
             console.error('Error saving customer:', err);
             notifyError(err.response?.data?.error || 'Failed to save customer.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -743,8 +747,8 @@ const Buyers = () => {
 
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
-                                <button type="submit" className="btn-primary">
-                                    {modalMode === 'add' ? 'Save Customer' : 'Update Customer'}
+                                <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
+                                    {isSubmitting ? '⏳ Saving...' : (modalMode === 'add' ? 'Save Customer' : 'Update Customer')}
                                 </button>
                             </div>
                         </form>

@@ -31,6 +31,7 @@ const Products = () => {
     const [isSideListOpen, setIsSideListOpen] = useState(false);
     const [pendingItems, setPendingItems] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const formatProductId = (id) => {
         if (!id) return '';
@@ -325,6 +326,7 @@ const Products = () => {
             closeModal();
         } else {
             // Edit mode remains the same (direct database operation)
+            setIsSubmitting(true);
             try {
                 const token = localStorage.getItem('inventory_token');
                 const addQ = formData.add_quantity !== '' && formData.add_quantity != null
@@ -388,6 +390,8 @@ const Products = () => {
             } catch (err) {
                 console.error('Error saving product:', err);
                 notifyError(err.response?.data?.error || 'Failed to save product.');
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
@@ -1153,8 +1157,8 @@ const Products = () => {
 
                             <div className="modal-footer">
                                 <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
-                                <button type="submit" className="btn-primary">
-                                    {modalMode === 'add' ? 'Save' : 'Update'}
+                                <button type="submit" className="btn-primary" disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
+                                    {isSubmitting ? '⏳ Saving...' : (modalMode === 'add' ? 'Save' : 'Update')}
                                 </button>
                             </div>
                         </form>
