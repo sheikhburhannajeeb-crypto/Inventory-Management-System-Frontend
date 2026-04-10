@@ -644,40 +644,26 @@ const Buyers = () => {
                                 </div>
                             </div>
 
-                            {/* Only show transaction fields for Add Mode */}
+                            {/* Add Mode: Optional credit transaction */}
                             {modalMode === 'add' && (
-                                <>
-                                    <hr className="my-2 border-gray-700" />
-                                    <h3 className="text-lg font-medium text-gray-200 mb-2">Credit / Credit Details (Optional)</h3>
-
-                                    <div className="form-grid">
+                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '4px' }}>
+                                    <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                                        🛒 Credit Details (Optional)
+                                    </label>
+                                    <div className="form-grid" style={{ marginTop: '8px' }}>
                                         <div className="input-group">
-                                            <label>Select Product</label>
+                                            <label>Product</label>
                                             <div className="custom-searchable-dropdown">
-                                                <input
-                                                    type="text"
-                                                    className="input-field"
-                                                    placeholder="Search or enter product..."
-                                                    value={productSearch}
-                                                    onChange={(e) => {
-                                                        setProductSearch(e.target.value);
-                                                        setShowProductDropdown(true);
-                                                    }}
-                                                    onClick={() => setShowProductDropdown(true)}
-                                                />
+                                                <input type="text" className="input-field" placeholder="Search or enter product..." value={productSearch}
+                                                    onChange={(e) => { setProductSearch(e.target.value); setShowProductDropdown(true); }}
+                                                    onClick={() => setShowProductDropdown(true)} />
                                                 {showProductDropdown && (
                                                     <div className="dropdown-options glass-panel">
-                                                        {productsList
-                                                            .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()))
-                                                            .map(p => (
-                                                                <div
-                                                                    key={p.id}
-                                                                    className="dropdown-option"
-                                                                    onClick={() => handleProductSelect(p)}
-                                                                >
-                                                                    {p.name} <span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>(Qty: {p.remaining_quantity})</span>
-                                                                </div>
-                                                            ))}
+                                                        {productsList.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).map(p => (
+                                                            <div key={p.id} className="dropdown-option" onClick={() => handleProductSelect(p)}>
+                                                                {p.name} <span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>(Qty: {p.remaining_quantity})</span>
+                                                            </div>
+                                                        ))}
                                                         {productsList.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
                                                             <div className="dropdown-option text-muted">No products found</div>
                                                         )}
@@ -687,140 +673,72 @@ const Buyers = () => {
                                         </div>
                                         <div className="input-group">
                                             <label>Quantity</label>
-                                            <input
-                                                type="number"
-                                                className="input-field"
-                                                name="quantity"
-                                                value={formData.quantity}
-                                                onChange={handleFormChange}
-                                                min="1"
-                                            />
+                                            <input type="number" className="input-field" name="quantity" value={formData.quantity} onChange={handleFormChange} min="1" />
                                         </div>
                                     </div>
-
                                     <div className="form-grid">
                                         <div className="input-group">
                                             <label>Total Amount (Rs)</label>
-                                            <input
-                                                type="number"
-                                                className="input-field"
-                                                name="total_amount"
-                                                value={formData.total_amount}
-                                                onChange={handleFormChange}
-                                                min="0"
-                                            />
+                                            <input type="number" className="input-field" name="total_amount" value={formData.total_amount} onChange={handleFormChange} min="0" />
                                         </div>
                                         <div className="input-group">
                                             <label>Paid Amount (Rs)</label>
-                                            <input
-                                                type="number"
-                                                className="input-field"
-                                                name="paid_amount"
-                                                value={formData.paid_amount}
-                                                onChange={handleFormChange}
-                                                min="0"
-                                            />
+                                            <input type="number" className="input-field" name="paid_amount" value={formData.paid_amount} onChange={handleFormChange} min="0" />
                                         </div>
                                     </div>
-
                                     <div className="input-group">
-                                        <CustomDatePicker
-                                            value={formData.purchase_date}
-                                            onChange={(value) => setFormData({ ...formData, purchase_date: value })}
-                                            label="Purchase Date"
-                                            className="purchase-date-picker"
-                                        />
+                                        <CustomDatePicker value={formData.purchase_date} onChange={(value) => setFormData({ ...formData, purchase_date: value })} label="Purchase Date" className="purchase-date-picker" />
                                     </div>
-                                </>
+                                </div>
                             )}
 
+                            {/* Edit Mode: Update payment */}
                             {modalMode === 'edit' && formData.txn_id && (
-                                <>
-                                    <hr className="my-2 border-gray-700" />
-                                    <h3 className="text-lg font-medium text-gray-200 mb-2">Update Payment</h3>
-                                    <div className="form-grid">
-                                        <div className="input-group">
-                                            <label>Remaining Amount (Rs)</label>
-                                            <input
-                                                type="text"
-                                                className="input-field"
-                                                value={formData.remaining_amount}
-                                                disabled
-                                                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }}
-                                            />
-                                        </div>
-                                        <div className="input-group">
-                                            <label>Add New Payment (Rs)</label>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <input
-                                                    type="number"
-                                                    className="input-field"
-                                                    name="add_payment"
-                                                    value={formData.add_payment}
-                                                    onChange={handleFormChange}
-                                                    min="0"
-                                                    placeholder="Amount to pay..."
-                                                />
-                                                <CustomDatePicker
-                                                    value={formData.payment_date}
-                                                    onChange={(value) => setFormData({ ...formData, payment_date: value })}
-                                                    label="Payment Date"
-                                                    className="payment-date-picker"
-                                                />
-                                            </div>
-                                        </div>
+                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '4px' }}>
+                                    <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', fontWeight: 700 }}>
+                                        💳 Make Payment — Due: Rs. {Number(formData.remaining_amount || 0).toLocaleString()}
+                                    </label>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                        <input type="number" className="input-field" style={{ flex: 1 }} name="add_payment"
+                                            value={formData.add_payment} onChange={handleFormChange} min="0"
+                                            placeholder={`Max: Rs. ${formData.remaining_amount}`} />
+                                        <CustomDatePicker value={formData.payment_date} onChange={(value) => setFormData({ ...formData, payment_date: value })} label="Date" className="payment-date-picker" />
                                     </div>
-                                </>
+                                </div>
                             )}
 
-                            {((modalMode === 'add' && formData.paid_amount > 0) || (modalMode === 'edit' && formData.add_payment > 0)) && (
-                                <>
-                                    <hr className="my-2 border-gray-700" />
-                                    <h3 className="text-lg font-medium text-gray-200 mb-2">Payment Method</h3>
-                                    <div className="form-grid">
-                                        <div className="input-group">
-                                            <CustomDropdown
-                                                className="minimal-select"
-                                                value={formData.payment_method}
-                                                onChange={(e) => setFormData(prev => ({...prev, payment_method: e.target.value}))}
-                                                options={[
-                                                    { value: 'Cash', label: 'Cash' },
-                                                    { value: 'Online', label: 'Online (Easypaisa/Jazzcash)' },
-                                                    { value: 'Split', label: 'Split (Cash + Online)' }
-                                                ]}
-                                            />
-                                        </div>
+                            {/* Payment Method pills — shown when there's a payment amount */}
+                            {((modalMode === 'add' && Number(formData.paid_amount) > 0) || (modalMode === 'edit' && Number(formData.add_payment) > 0)) && (
+                                <div style={{ marginTop: '10px' }}>
+                                    <label style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Payment Method</label>
+                                    <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                        {['Cash', 'Online', 'Split'].map(pm => (
+                                            <button key={pm} type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, payment_method: pm, cash_amount: '', online_amount: '' }))}
+                                                style={{
+                                                    flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+                                                    background: formData.payment_method === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.15)' : pm === 'Online' ? 'rgba(56,189,248,0.15)' : 'rgba(251,191,36,0.15)') : 'var(--bg-secondary)',
+                                                    color: formData.payment_method === pm ? (pm === 'Cash' ? '#4ade80' : pm === 'Online' ? '#38bdf8' : '#fbbf24') : 'var(--text-secondary)',
+                                                    border: `1px solid ${formData.payment_method === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.4)' : pm === 'Online' ? 'rgba(56,189,248,0.4)' : 'rgba(251,191,36,0.4)') : 'var(--border-color)'}`
+                                                }}
+                                            >
+                                                {pm === 'Cash' ? '💵 Cash' : pm === 'Online' ? '📱 Online' : '🔀 Split'}
+                                            </button>
+                                        ))}
                                     </div>
-
                                     {formData.payment_method === 'Split' && (
-                                        <div className="form-grid" style={{ marginTop: '8px', background: 'rgba(56, 189, 248, 0.05)', padding: '8px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
-                                            <div className="input-group">
-                                                <label>Cash Paid (Rs)</label>
-                                                <input
-                                                    type="number"
-                                                    className="input-field"
-                                                    placeholder="Enter cash amount"
-                                                    name="cash_amount"
-                                                    min="0"
-                                                    value={formData.cash_amount}
-                                                    onChange={handleFormChange}
-                                                />
+                                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                                <label>Cash (Rs)</label>
+                                                <input type="number" className="input-field" name="cash_amount" min="0" value={formData.cash_amount} onChange={handleFormChange} placeholder="0" />
                                             </div>
-                                            <div className="input-group">
-                                                <label>Online Paid (Rs)</label>
-                                                <input
-                                                    type="number"
-                                                    className="input-field"
-                                                    placeholder="Enter online amount"
-                                                    name="online_amount"
-                                                    min="0"
-                                                    value={formData.online_amount}
-                                                    onChange={handleFormChange}
-                                                />
+                                            <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                                                <label>Online (Rs)</label>
+                                                <input type="number" className="input-field" name="online_amount" min="0" value={formData.online_amount} onChange={handleFormChange} placeholder="0" />
                                             </div>
                                         </div>
                                     )}
-                                </>
+                                </div>
                             )}
 
                             <div className="modal-footer">
