@@ -14,6 +14,8 @@ const Buyers = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [sortOption, setSortOption] = useState('date_desc');
+    const [filterOption, setFilterOption] = useState('all');
     const [totalOutstanding, setTotalOutstanding] = useState(0);
 
     // Side List State
@@ -411,24 +413,55 @@ const Buyers = () => {
     };
 
     const flattenedData = useMemo(() => {
-        const filtered = buyers.filter(buyer =>
+        let filtered = buyers.filter(buyer =>
             buyer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (buyer.company_name && buyer.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
         );
 
-        const flattened = [];
+        let flattened = [];
         filtered.forEach(buyer => {
             if (buyer.buyer_transactions && buyer.buyer_transactions.length > 0) {
                 buyer.buyer_transactions.forEach(txn => {
                     flattened.push({ ...buyer, txn });
                 });
             } else {
-                // Buyer with no transactions yet
                 flattened.push({ ...buyer, txn: null });
             }
         });
+
+        // Apply Category/Filter
+        if (filterOption !== 'all') {
+            flattened = flattened.filter(row => {
+                const remaining = row.txn ? (Number(row.txn.total_amount || 0) - Number(row.txn.paid_amount || 0)) : 0;
+                if (filterOption === 'pending_udhar') return remaining > 0;
+                if (filterOption === 'cleared') return remaining <= 0 && row.txn;
+                if (filterOption === 'method_cash') return row.txn && row.txn.payment_method === 'Cash';
+                if (filterOption === 'method_online') return row.txn && row.txn.payment_method === 'Online';
+                if (filterOption === 'method_split') return row.txn && row.txn.payment_method === 'Split';
+                return true;
+            });
+        }
+
+        // Apply Sort
+        flattened.sort((a, b) => {
+            if (sortOption === 'name_asc') return a.name.localeCompare(b.name);
+            if (sortOption === 'name_desc') return b.name.localeCompare(a.name);
+            if (sortOption === 'udhar_desc' || sortOption === 'udhar_asc') {
+                const remA = a.txn ? (Number(a.txn.total_amount || 0) - Number(a.txn.paid_amount || 0)) : 0;
+                const remB = b.txn ? (Number(b.txn.total_amount || 0) - Number(b.txn.paid_amount || 0)) : 0;
+                return sortOption === 'udhar_desc' ? remB - remA : remA - remB;
+            }
+            if (sortOption === 'date_asc' || sortOption === 'date_desc') {
+                const dateA = a.txn?.date ? new Date(a.txn.date).getTime() : 0;
+                const dateB = b.txn?.date ? new Date(b.txn.date).getTime() : 0;
+                if (dateA === 0 && dateB === 0) return sortOption === 'date_desc' ? b.id - a.id : a.id - b.id; // fallback to ID
+                return sortOption === 'date_desc' ? dateB - dateA : dateA - dateB;
+            }
+            return 0;
+        });
+
         return flattened;
-    }, [buyers, searchQuery]);
+    }, [buyers, searchQuery, filterOption, sortOption]);
 
     return (
         <>
@@ -459,8 +492,8 @@ const Buyers = () => {
             {error && <div className="error-message">{error}</div>}
 
             <ScrollableTable className="table-container glass-panel">
-                <div className="table-header-controls">
-                    <div className="search-wrapper">
+                <div className="table-header-controls" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div className="search-wrapper" style={{ flex: '1', minWidth: '300px' }}>
                         <Search className="search-icon" size={20} />
                         <input
                             type="text"
@@ -469,6 +502,34 @@ const Buyers = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
+                    </div>
+                    <div className="filter-sort-wrapper" style={{ display: 'flex', gap: '10px' }}>
+                        <select 
+                            className="input-field" 
+                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                            value={filterOption} 
+                            onChange={(e) => setFilterOption(e.target.value)}
+                        >
+                            <option value="all">All Customers</option>
+                            <option value="pending_udhar">Pending Udhar</option>
+                            <option value="cleared">Cleared</option>
+                            <option value="method_cash">Paid in Cash</option>
+                            <option value="method_online">Paid in Online</option>
+                            <option value="method_split">Split Payment</option>
+                        </select>
+                        <select 
+                            className="input-field" 
+                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                            value={sortOption} 
+                            onChange={(e) => setSortOption(e.target.value)}
+                        >
+                            <option value="date_desc">Newest First</option>
+                            <option value="date_asc">Oldest First</option>
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                            <option value="udhar_desc">Highest Udhar First</option>
+                            <option value="udhar_asc">Lowest Udhar First</option>
+                        </select>
                     </div>
                 </div>
 

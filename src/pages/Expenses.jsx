@@ -15,6 +15,8 @@ const Expenses = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentExpense, setCurrentExpense] = useState({ id: null, category: 'Petrol', amount: '', description: '', date: new Date().toISOString().split('T')[0] });
     const [searchTerm, setSearchTerm] = useState('');
+    const [sortOption, setSortOption] = useState('date_desc');
+    const [filterCategory, setFilterCategory] = useState('all');
 
     // Separate state for Year and Month
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -95,14 +97,32 @@ const Expenses = () => {
         }
     };
 
+    const uniqueCategories = useMemo(() => {
+        return Array.from(new Set(expenses.map(e => e.category))).sort();
+    }, [expenses]);
+
     const { filteredExpenses, totalExpenses } = useMemo(() => {
-        const filtered = expenses.filter(exp =>
-            exp.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (exp.description && exp.description.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
+        let filtered = expenses.filter(exp => {
+            const matchesSearch = exp.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (exp.description && exp.description.toLowerCase().includes(searchTerm.toLowerCase()));
+            
+            if (!matchesSearch) return false;
+            if (filterCategory !== 'all' && exp.category !== filterCategory) return false;
+            
+            return true;
+        });
+
+        filtered.sort((a, b) => {
+            if (sortOption === 'date_desc') return new Date(b.date) - new Date(a.date);
+            if (sortOption === 'date_asc') return new Date(a.date) - new Date(b.date);
+            if (sortOption === 'amount_desc') return Number(b.amount) - Number(a.amount);
+            if (sortOption === 'amount_asc') return Number(a.amount) - Number(b.amount);
+            return 0;
+        });
+
         const total = filtered.reduce((sum, exp) => sum + Number(exp.amount), 0);
         return { filteredExpenses: filtered, totalExpenses: total };
-    }, [expenses, searchTerm]);
+    }, [expenses, searchTerm, sortOption, filterCategory]);
 
     return (
         <div className="expenses-container page-container fade-in">
@@ -118,7 +138,7 @@ const Expenses = () => {
             </header>
 
             <div className="filters-section glass-panel" style={{ position: 'relative', zIndex: 10 }}>
-                <div className="search-box">
+                <div className="search-box" style={{ flex: '1', minWidth: '300px' }}>
                     <Search className="search-icon" size={20} />
                     <input
                         type="text"
@@ -129,8 +149,33 @@ const Expenses = () => {
                         style={{ paddingLeft: '40px', background: 'rgba(255, 255, 255, 0.05)' }}
                     />
                 </div>
+                
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <select 
+                        className="input-field minimal-select" 
+                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                        value={filterCategory} 
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                    >
+                        <option value="all">All Categories</option>
+                        {uniqueCategories.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                    <select 
+                        className="input-field minimal-select" 
+                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                        value={sortOption} 
+                        onChange={(e) => setSortOption(e.target.value)}
+                    >
+                        <option value="date_desc">Newest First</option>
+                        <option value="date_asc">Oldest First</option>
+                        <option value="amount_desc">Highest Amount First</option>
+                        <option value="amount_asc">Lowest Amount First</option>
+                    </select>
+                </div>
 
-                <div className="filter-group" style={{ display: 'flex', gap: '10px' }}>
+                <div className="filter-group" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                     <CustomDatePicker
                         value={selectedDate.toISOString().split('T')[0]}
                         onChange={(value) => setSelectedDate(new Date(value))}

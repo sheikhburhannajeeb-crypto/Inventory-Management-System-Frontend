@@ -39,6 +39,8 @@ const RecentSales = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [sortOption, setSortOption] = useState('date_desc');
+    const [filterOption, setFilterOption] = useState('all');
     const [activeFilter, setActiveFilter] = useState('1m');
 
     useEffect(() => {
@@ -113,13 +115,32 @@ const RecentSales = () => {
     const { filteredSales, totalRevenue, totalPaid, totalPending } = useMemo(() => {
         const threshold = getDateThreshold(activeFilter);
         
-        const filtered = sales.filter(sale => {
+        let filtered = sales.filter(sale => {
             const saleDate = new Date(sale.purchase_date);
             const withinDate = saleDate >= threshold;
             const matchesSearch =
                 (sale.products?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (sale.buyers?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-            return withinDate && matchesSearch;
+            
+            if (!(withinDate && matchesSearch)) return false;
+
+            const pending = Number(sale.total_amount || 0) - Number(sale.paid_amount || 0);
+
+            if (filterOption === 'credit_sales') return pending > 0;
+            if (filterOption === 'fully_paid') return pending <= 0;
+            if (filterOption === 'method_cash') return sale.payment_method === 'Cash';
+            if (filterOption === 'method_online') return sale.payment_method === 'Online';
+            if (filterOption === 'method_split') return sale.payment_method === 'Split';
+            
+            return true;
+        });
+
+        filtered.sort((a, b) => {
+            if (sortOption === 'date_desc') return new Date(b.purchase_date) - new Date(a.purchase_date);
+            if (sortOption === 'date_asc') return new Date(a.purchase_date) - new Date(b.purchase_date);
+            if (sortOption === 'amount_desc') return Number(b.total_amount || 0) - Number(a.total_amount || 0);
+            if (sortOption === 'amount_asc') return Number(a.total_amount || 0) - Number(b.total_amount || 0);
+            return 0;
         });
 
         const rev = filtered.reduce((sum, s) => sum + Number(s.total_amount || 0), 0);
@@ -132,7 +153,7 @@ const RecentSales = () => {
             totalPaid: paid,
             totalPending: pend
         };
-    }, [sales, searchQuery, activeFilter]);
+    }, [sales, searchQuery, activeFilter, sortOption, filterOption]);
 
     return (
         <div className="page-container recent-sales-page">
@@ -214,8 +235,8 @@ const RecentSales = () => {
             </div>
 
             {/* Search */}
-            <div className="controls-bar glass-panel">
-                <div className="search-wrapper">
+            <div className="controls-bar glass-panel" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div className="search-wrapper" style={{ flex: '1', minWidth: '300px' }}>
                     <Search className="search-icon" size={20} />
                     <input
                         type="text"
@@ -224,6 +245,32 @@ const RecentSales = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
+                </div>
+                <div className="filter-sort-wrapper" style={{ display: 'flex', gap: '10px' }}>
+                    <select 
+                        className="input-field" 
+                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                        value={filterOption} 
+                        onChange={(e) => setFilterOption(e.target.value)}
+                    >
+                        <option value="all">All Sales</option>
+                        <option value="credit_sales">Credit Sales (Udhar)</option>
+                        <option value="fully_paid">Fully Paid (Cash Bill)</option>
+                        <option value="method_cash">Paid in Cash</option>
+                        <option value="method_online">Paid in Online</option>
+                        <option value="method_split">Split Payment</option>
+                    </select>
+                    <select 
+                        className="input-field" 
+                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                        value={sortOption} 
+                        onChange={(e) => setSortOption(e.target.value)}
+                    >
+                        <option value="date_desc">Newest First</option>
+                        <option value="date_asc">Oldest First</option>
+                        <option value="amount_desc">Highest Amount First</option>
+                        <option value="amount_asc">Lowest Amount First</option>
+                    </select>
                 </div>
             </div>
 

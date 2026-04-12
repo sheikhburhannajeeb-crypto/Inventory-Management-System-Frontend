@@ -13,6 +13,8 @@ const Suppliers = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [sortOption, setSortOption] = useState('udhar_desc');
+    const [filterOption, setFilterOption] = useState('all');
     const [totalPayables, setTotalPayables] = useState(0);
 
     // Side List State
@@ -100,23 +102,36 @@ const Suppliers = () => {
     };
 
     const filteredSuppliers = suppliers
-        .filter(supplier =>
-            supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase()))
-        )
+        .filter(supplier => {
+            const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase()));
+            
+            if(!matchesSearch) return false;
+
+            const remaining = Number(supplier.total_amount || 0) - Number(supplier.paid_amount || 0);
+
+            if (filterOption === 'pending_udhar') return remaining > 0;
+            if (filterOption === 'cleared') return remaining <= 0;
+            if (filterOption === 'method_cash') return supplier.supplier_transactions?.some(t => t.payment_method === 'Cash');
+            if (filterOption === 'method_online') return supplier.supplier_transactions?.some(t => t.payment_method === 'Online');
+            if (filterOption === 'method_split') return supplier.supplier_transactions?.some(t => t.payment_method === 'Split');
+            return true;
+        })
         .sort((a, b) => {
-            // Calculate remaining amounts for both suppliers
             const aRemaining = Number(a.total_amount || 0) - Number(a.paid_amount || 0);
             const bRemaining = Number(b.total_amount || 0) - Number(b.paid_amount || 0);
             
-            // If one has outstanding and other doesn't, outstanding comes first
+            if (sortOption === 'name_asc') return a.name.localeCompare(b.name);
+            if (sortOption === 'name_desc') return b.name.localeCompare(a.name);
+            if (sortOption === 'udhar_desc') return bRemaining - aRemaining;
+            if (sortOption === 'udhar_asc') return aRemaining - bRemaining;
+            if (sortOption === 'date_asc') return a.id - b.id; // approximate oldest
+            if (sortOption === 'date_desc') return b.id - a.id; // approximate newest
+
+            // Default fallback
             if (aRemaining > 0 && bRemaining <= 0) return -1;
             if (aRemaining <= 0 && bRemaining > 0) return 1;
-            
-            // If both have outstanding, sort by higher outstanding amount
             if (aRemaining > 0 && bRemaining > 0) return bRemaining - aRemaining;
-            
-            // If both are cleared, sort alphabetically
             return a.name.localeCompare(b.name);
         });
 
@@ -594,8 +609,8 @@ const Suppliers = () => {
             {error && <div className="error-message">{error}</div>}
 
             <div className="suppliers-list-container glass-panel">
-                <div className="table-header-controls">
-                    <div className="search-wrapper">
+                <div className="table-header-controls" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div className="search-wrapper" style={{ flex: '1', minWidth: '300px' }}>
                         <Search className="search-icon" size={20} />
                         <input
                             type="text"
@@ -604,6 +619,34 @@ const Suppliers = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
+                    </div>
+                    <div className="filter-sort-wrapper" style={{ display: 'flex', gap: '10px' }}>
+                        <select 
+                            className="input-field" 
+                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                            value={filterOption} 
+                            onChange={(e) => setFilterOption(e.target.value)}
+                        >
+                            <option value="all">All Suppliers</option>
+                            <option value="pending_udhar">Pending Payables</option>
+                            <option value="cleared">Cleared</option>
+                            <option value="method_cash">Paid in Cash</option>
+                            <option value="method_online">Paid in Online</option>
+                            <option value="method_split">Split Payment</option>
+                        </select>
+                        <select 
+                            className="input-field" 
+                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                            value={sortOption} 
+                            onChange={(e) => setSortOption(e.target.value)}
+                        >
+                            <option value="udhar_desc">Highest Payables First</option>
+                            <option value="udhar_asc">Lowest Payables First</option>
+                            <option value="date_desc">Newest First</option>
+                            <option value="date_asc">Oldest First</option>
+                            <option value="name_asc">Name (A-Z)</option>
+                            <option value="name_desc">Name (Z-A)</option>
+                        </select>
                     </div>
                 </div>
 

@@ -460,8 +460,23 @@ const Products = () => {
             return matchesSearch && matchesCategory;
         }).sort((a, b) => {
             if (sortBy === 'nameAsc') return (a.name || '').localeCompare(b.name || '');
+            if (sortBy === 'nameDesc') return (b.name || '').localeCompare(a.name || '');
             if (sortBy === 'priceAsc') return parseFloat(a.price || 0) - parseFloat(b.price || 0);
+            if (sortBy === 'priceDesc') return parseFloat(b.price || 0) - parseFloat(a.price || 0);
             if (sortBy === 'stockAsc') return parseInt(a.remaining_quantity || 0) - parseInt(b.remaining_quantity || 0);
+            if (sortBy === 'stockDesc') return parseInt(b.remaining_quantity || 0) - parseInt(a.remaining_quantity || 0);
+            if (sortBy === 'dateDesc') {
+                const dA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
+                const dB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
+                if (dA.getTime() === dB.getTime()) return b.id - a.id;
+                return dB - dA;
+            }
+            if (sortBy === 'dateAsc') {
+                const dA = a.purchase_date ? new Date(a.purchase_date) : new Date(0);
+                const dB = b.purchase_date ? new Date(b.purchase_date) : new Date(0);
+                if (dA.getTime() === dB.getTime()) return a.id - b.id;
+                return dA - dB;
+            }
             return 0;
         });
     }, [products, searchQuery, activeCategory, sortBy]);
@@ -557,7 +572,15 @@ const Products = () => {
         setIsSideListOpen(!isSideListOpen);
     };
 
-    const categories = ['All', 'Paint', 'Electric', 'Hardware', 'Low Stock', 'Out of Stock'];
+    const uniqueCategories = useMemo(() => {
+        const cats = new Set(['All', 'Paint', 'Electric', 'Hardware', 'Low Stock', 'Out of Stock']);
+        products.forEach(p => {
+             if (p.category && p.category.trim() !== '') {
+                 cats.add(p.category.trim());
+             }
+        });
+        return Array.from(cats);
+    }, [products]);
 
     return (
         <div className="page-container">
@@ -591,7 +614,7 @@ const Products = () => {
                         style={{ minWidth: '150px' }}
                         value={activeCategory}
                         onChange={(e) => setActiveCategory(e.target.value)}
-                        options={categories.map(cat => ({ value: cat, label: cat }))}
+                        options={uniqueCategories.map(cat => ({ value: cat, label: cat }))}
                     />
                 </div>
 
@@ -604,8 +627,13 @@ const Products = () => {
                         onChange={(e) => setSortBy(e.target.value)}
                         options={[
                             { value: 'default', label: 'Default' },
+                            { value: 'dateDesc', label: 'Newest Added' },
+                            { value: 'dateAsc', label: 'Oldest Added' },
                             { value: 'nameAsc', label: 'Name (A-Z)' },
+                            { value: 'nameDesc', label: 'Name (Z-A)' },
+                            { value: 'priceDesc', label: 'Price (High to Low)' },
                             { value: 'priceAsc', label: 'Price (Low to High)' },
+                            { value: 'stockDesc', label: 'Stock (High to Low)' },
                             { value: 'stockAsc', label: 'Stock (Low to High)' }
                         ]}
                     />
