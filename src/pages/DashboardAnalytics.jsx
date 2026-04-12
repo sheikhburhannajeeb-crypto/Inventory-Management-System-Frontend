@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
-import { RefreshCw, BarChart2, TrendingUp, DollarSign, Activity } from 'lucide-react';
+import { RefreshCw, BarChart2, TrendingUp, DollarSign, Activity, PieChart as PieIcon, CreditCard } from 'lucide-react';
 import { notifyError } from '../utils/notifications';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, Brush, PieChart, Pie, Cell
 } from 'recharts';
 import CustomDatePicker from '../components/CustomDatePicker';
 import './DashboardAnalytics.css';
@@ -47,7 +47,7 @@ const DashboardAnalytics = () => {
 
     if (!reportData) return <div className="page-container">No Data Available</div>;
 
-    const { summary, daily_breakdown, company_wise_summary } = reportData;
+    const { summary, daily_breakdown, company_wise_summary, expense_breakdown } = reportData;
 
     // Formatting daily breakdown for the charts
     const chartData = (daily_breakdown || []).map(day => ({
@@ -63,6 +63,16 @@ const DashboardAnalytics = () => {
         Sales: c.total_sales || 0,
         Collected: c.total_collected || 0
     }));
+
+    // Data for Pie Charts
+    const paymentSplitData = [
+        { name: 'Cash', value: summary.payment_split?.cash || 0 },
+        { name: 'Online', value: summary.payment_split?.online || 0 }
+    ].filter(i => i.value > 0);
+    const P_COLORS = ['#22c55e', '#38bdf8']; // Green for cash, Blue for online
+
+    const expenseBreakdownData = Object.entries(expense_breakdown || {}).map(([name, value]) => ({ name, value }));
+    const E_COLORS = ['#ef4444', '#f97316', '#eab308', '#a855f7', '#3b82f6', '#ec4899']; // Variety of colors for expenses
 
     return (
         <div className="dashboard-container page-container fade-in">
@@ -115,14 +125,17 @@ const DashboardAnalytics = () => {
                 </div>
             </div>
 
-            {/* Main Daily Graph Area */}
+            {/* Main Daily Graph Area with Brush for zooming */}
             <div className="chart-section" style={{ marginTop: '30px' }}>
-                <h3 className="chart-title"><BarChart2 size={20} /> Daily Sales vs Expenses</h3>
+                <h3 className="chart-title"><BarChart2 size={20} /> Daily Sales vs Expenses Trend</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '15px' }}>
+                    You can drag the timeline slider below the chart to zoom into specific dates.
+                </p>
                 <div className="chart-wrapper">
                     {chartData.length === 0 ? (
                         <div className="no-data-msg">No data this month</div>
                     ) : (
-                        <ResponsiveContainer width="100%" height={350}>
+                        <ResponsiveContainer width="100%" height={400}>
                             <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
@@ -141,21 +154,23 @@ const DashboardAnalytics = () => {
                                     contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--glass-border)', color: 'var(--text-primary)', borderRadius: '8px' }}
                                     itemStyle={{ fontWeight: 600 }}
                                 />
-                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                                <Legend wrapperStyle={{ paddingTop: '10px' }} verticalAlign="top" />
                                 <Area type="monotone" dataKey="Sales" stroke="#38bdf8" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
                                 <Area type="monotone" dataKey="Expenses" stroke="#ef4444" strokeWidth={3} fillOpacity={1} fill="url(#colorExp)" />
+                                {/* Interactive Brush/Slider */}
+                                <Brush dataKey="date" height={30} stroke="var(--accent-primary)" fill="var(--bg-primary)" tickFormatter={() => ''} />
                             </AreaChart>
                         </ResponsiveContainer>
                     )}
                 </div>
             </div>
 
-            {/* Bottom Row Charts */}
+            {/* Bottom Row Charts - 2 Columns */}
             <div className="bottom-charts-grid" style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
                 
                 {/* Daily Profit Bar Chart */}
                 <div className="chart-section">
-                    <h3 className="chart-title"><TrendingUp size={20} /> Daily Profit Trend</h3>
+                    <h3 className="chart-title"><TrendingUp size={20} /> Daily Profit History</h3>
                     <div className="chart-wrapper">
                         {chartData.length === 0 ? (
                             <div className="no-data-msg">No data this month</div>
@@ -170,6 +185,7 @@ const DashboardAnalytics = () => {
                                         contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--glass-border)', borderRadius: '8px' }}
                                     />
                                     <Bar dataKey="Profit" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                    <Brush dataKey="date" height={20} stroke="#10b981" fill="var(--bg-primary)" tickFormatter={() => ''} />
                                 </BarChart>
                             </ResponsiveContainer>
                         )}
@@ -196,6 +212,66 @@ const DashboardAnalytics = () => {
                                     <Bar dataKey="Sales" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
                                     <Bar dataKey="Collected" fill="#10b981" radius={[0, 4, 4, 0]} />
                                 </BarChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                </div>
+
+                {/* Payment Method Pie Chart */}
+                <div className="chart-section">
+                    <h3 className="chart-title"><CreditCard size={20} /> Payment Method Distribution</h3>
+                    <div className="chart-wrapper">
+                        {paymentSplitData.length === 0 ? (
+                            <div className="no-data-msg">No payment data</div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                    <Pie
+                                        data={paymentSplitData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={100}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                    >
+                                        {paymentSplitData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={P_COLORS[index % P_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--glass-border)', borderRadius: '8px' }} />
+                                    <Legend verticalAlign="bottom" height={36}/>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
+                    </div>
+                </div>
+
+                {/* Expense Breakdown Pie Chart */}
+                <div className="chart-section">
+                    <h3 className="chart-title"><PieIcon size={20} /> Expense Breakdown</h3>
+                    <div className="chart-wrapper">
+                        {expenseBreakdownData.length === 0 ? (
+                            <div className="no-data-msg">No expense data</div>
+                        ) : (
+                            <ResponsiveContainer width="100%" height={300}>
+                                <PieChart>
+                                    <Pie
+                                        data={expenseBreakdownData}
+                                        cx="50%"
+                                        cy="50%"
+                                        outerRadius={100}
+                                        dataKey="value"
+                                        label={({name, percent}) => percent > 0.05 ? `${name}` : ''}
+                                    >
+                                        {expenseBreakdownData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={E_COLORS[index % E_COLORS.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--glass-border)', borderRadius: '8px', zIndex: 1000 }} />
+                                    <Legend verticalAlign="bottom" height={36}/>
+                                </PieChart>
                             </ResponsiveContainer>
                         )}
                     </div>
