@@ -5,6 +5,7 @@ import { downloadSalesAnalyticsPdf } from '../utils/salesAnalyticsPdf';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
 import Swal from 'sweetalert2';
 import ScrollableTable from '../components/ScrollableTable';
+import CustomDropdown from '../components/CustomDropdown';
 import './RecentSales.css';
 
 const TIME_FILTERS = [
@@ -247,30 +248,32 @@ const RecentSales = () => {
                     />
                 </div>
                 <div className="filter-sort-wrapper" style={{ display: 'flex', gap: '10px' }}>
-                    <select 
-                        className="input-field" 
-                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                    <CustomDropdown 
+                        className="minimal-select" 
+                        style={{ minWidth: '150px' }}
                         value={filterOption} 
                         onChange={(e) => setFilterOption(e.target.value)}
-                    >
-                        <option value="all">All Sales</option>
-                        <option value="credit_sales">Credit Sales (Udhar)</option>
-                        <option value="fully_paid">Fully Paid (Cash Bill)</option>
-                        <option value="method_cash">Paid in Cash</option>
-                        <option value="method_online">Paid in Online</option>
-                        <option value="method_split">Split Payment</option>
-                    </select>
-                    <select 
-                        className="input-field" 
-                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                        options={[
+                            { value: "all", label: "All Sales" },
+                            { value: "credit_sales", label: "Credit Sales (Udhar)" },
+                            { value: "fully_paid", label: "Fully Paid (Cash Bill)" },
+                            { value: "method_cash", label: "Paid in Cash" },
+                            { value: "method_online", label: "Paid in Online" },
+                            { value: "method_split", label: "Split Payment" }
+                        ]}
+                    />
+                    <CustomDropdown 
+                        className="minimal-select" 
+                        style={{ minWidth: '150px' }}
                         value={sortOption} 
                         onChange={(e) => setSortOption(e.target.value)}
-                    >
-                        <option value="date_desc">Newest First</option>
-                        <option value="date_asc">Oldest First</option>
-                        <option value="amount_desc">Highest Amount First</option>
-                        <option value="amount_asc">Lowest Amount First</option>
-                    </select>
+                        options={[
+                            { value: "date_desc", label: "Newest First" },
+                            { value: "date_asc", label: "Oldest First" },
+                            { value: "amount_desc", label: "Highest Amount First" },
+                            { value: "amount_asc", label: "Lowest Amount First" }
+                        ]}
+                    />
                 </div>
             </div>
 

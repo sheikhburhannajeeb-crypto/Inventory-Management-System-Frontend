@@ -260,27 +260,29 @@ const Companies = () => {
                         />
                     </div>
                     <div className="filter-sort-wrapper" style={{ display: 'flex', gap: '10px' }}>
-                        <select 
-                            className="input-field" 
-                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                        <CustomDropdown 
+                            className="minimal-select" 
+                            style={{ minWidth: '150px' }}
                             value={filterOption} 
                             onChange={(e) => setFilterOption(e.target.value)}
-                        >
-                            <option value="all">All Companies</option>
-                            <option value="pending_udhar">Pending Outstanding</option>
-                            <option value="cleared">Cleared</option>
-                        </select>
-                        <select 
-                            className="input-field" 
-                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                            options={[
+                                { value: "all", label: "All Companies" },
+                                { value: "pending_udhar", label: "Pending Outstanding" },
+                                { value: "cleared", label: "Cleared" }
+                            ]}
+                        />
+                        <CustomDropdown 
+                            className="minimal-select" 
+                            style={{ minWidth: '150px' }}
                             value={sortOption} 
                             onChange={(e) => setSortOption(e.target.value)}
-                        >
-                            <option value="name_asc">Name (A-Z)</option>
-                            <option value="name_desc">Name (Z-A)</option>
-                            <option value="udhar_desc">Highest Outstanding</option>
-                            <option value="udhar_asc">Lowest Outstanding</option>
-                        </select>
+                            options={[
+                                { value: "name_asc", label: "Name (A-Z)" },
+                                { value: "name_desc", label: "Name (Z-A)" },
+                                { value: "udhar_desc", label: "Highest Outstanding" },
+                                { value: "udhar_asc", label: "Lowest Outstanding" }
+                            ]}
+                        />
                     </div>
                 </div>
 

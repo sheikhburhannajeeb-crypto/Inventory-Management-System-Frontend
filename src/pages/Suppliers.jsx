@@ -622,32 +622,34 @@ const Suppliers = () => {
                         />
                     </div>
                     <div className="filter-sort-wrapper" style={{ display: 'flex', gap: '10px' }}>
-                        <select 
-                            className="input-field" 
-                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                        <CustomDropdown 
+                            className="minimal-select" 
+                            style={{ minWidth: '150px' }}
                             value={filterOption} 
                             onChange={(e) => setFilterOption(e.target.value)}
-                        >
-                            <option value="all">All Suppliers</option>
-                            <option value="pending_udhar">Pending Payables</option>
-                            <option value="cleared">Cleared</option>
-                            <option value="method_cash">Paid in Cash</option>
-                            <option value="method_online">Paid in Online</option>
-                            <option value="method_split">Split Payment</option>
-                        </select>
-                        <select 
-                            className="input-field" 
-                            style={{ padding: '8px 12px', minWidth: '150px' }}
+                            options={[
+                                { value: "all", label: "All Suppliers" },
+                                { value: "pending_udhar", label: "Pending Payables" },
+                                { value: "cleared", label: "Cleared" },
+                                { value: "method_cash", label: "Paid in Cash" },
+                                { value: "method_online", label: "Paid in Online" },
+                                { value: "method_split", label: "Split Payment" }
+                            ]}
+                        />
+                        <CustomDropdown 
+                            className="minimal-select" 
+                            style={{ minWidth: '150px' }}
                             value={sortOption} 
                             onChange={(e) => setSortOption(e.target.value)}
-                        >
-                            <option value="udhar_desc">Highest Payables First</option>
-                            <option value="udhar_asc">Lowest Payables First</option>
-                            <option value="date_desc">Newest First</option>
-                            <option value="date_asc">Oldest First</option>
-                            <option value="name_asc">Name (A-Z)</option>
-                            <option value="name_desc">Name (Z-A)</option>
-                        </select>
+                            options={[
+                                { value: "udhar_desc", label: "Highest Payables First" },
+                                { value: "udhar_asc", label: "Lowest Payables First" },
+                                { value: "date_desc", label: "Newest First" },
+                                { value: "date_asc", label: "Oldest First" },
+                                { value: "name_asc", label: "Name (A-Z)" },
+                                { value: "name_desc", label: "Name (Z-A)" }
+                            ]}
+                        />
                     </div>
                 </div>
 

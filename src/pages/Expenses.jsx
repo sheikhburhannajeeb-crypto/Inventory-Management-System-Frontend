@@ -151,28 +151,28 @@ const Expenses = () => {
                 </div>
                 
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <select 
-                        className="input-field minimal-select" 
-                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                    <CustomDropdown 
+                        className="minimal-select" 
+                        style={{ minWidth: '150px' }}
                         value={filterCategory} 
                         onChange={(e) => setFilterCategory(e.target.value)}
-                    >
-                        <option value="all">All Categories</option>
-                        {uniqueCategories.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
-                    <select 
-                        className="input-field minimal-select" 
-                        style={{ padding: '8px 12px', minWidth: '150px' }}
+                        options={[
+                            { value: "all", label: "All Categories" },
+                            ...uniqueCategories.map(cat => ({ value: cat, label: cat }))
+                        ]}
+                    />
+                    <CustomDropdown 
+                        className="minimal-select" 
+                        style={{ minWidth: '150px' }}
                         value={sortOption} 
                         onChange={(e) => setSortOption(e.target.value)}
-                    >
-                        <option value="date_desc">Newest First</option>
-                        <option value="date_asc">Oldest First</option>
-                        <option value="amount_desc">Highest Amount First</option>
-                        <option value="amount_asc">Lowest Amount First</option>
-                    </select>
+                        options={[
+                            { value: "date_desc", label: "Newest First" },
+                            { value: "date_asc", label: "Oldest First" },
+                            { value: "amount_desc", label: "Highest Amount First" },
+                            { value: "amount_asc", label: "Lowest Amount First" }
+                        ]}
+                    />
                 </div>
 
                 <div className="filter-group" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
