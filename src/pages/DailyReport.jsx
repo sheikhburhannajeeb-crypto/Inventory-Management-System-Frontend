@@ -215,11 +215,27 @@ const DailyReport = () => {
                             <div className="stat-card-premium green">
                                 <div className="stat-header">
                                     <div className="stat-icon-wrapper"><CreditCard size={24} /></div>
-                                    <h3 className="stat-title">Payment Method Split</h3>
+                                    <h3 className="stat-title">Payment Method Breakdown</h3>
                                 </div>
-                                <div className="stat-row"><span>💵 Cash Received:</span><span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {cashReceived.toLocaleString()}</span></div>
-                                <div className="stat-row"><span>📱 Online Received:</span><span className="stat-value" style={{ color: '#38bdf8' }}>Rs. {onlineReceived.toLocaleString()}</span></div>
-                                <div className="stat-row highlight"><span>Total Collected:</span><span className="stat-value">Rs. {(cashReceived + onlineReceived).toLocaleString()}</span></div>
+                                <div className="stat-row">
+                                    <span>💵 Cash Only ({salesToday.filter(s => (s.payment_method || 'Cash').toLowerCase() === 'cash').length} log):</span>
+                                    <span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {cashReceived.toLocaleString()}</span>
+                                </div>
+                                <div className="stat-row">
+                                    <span>📱 Online Only ({salesToday.filter(s => (s.payment_method || '').toLowerCase() === 'online').length} log):</span>
+                                    <span className="stat-value" style={{ color: '#38bdf8' }}>Rs. {onlineReceived.toLocaleString()}</span>
+                                </div>
+                                <div className="stat-row">
+                                    <span>🔀 Split ({salesToday.filter(s => (s.payment_method || '').toLowerCase() === 'split').length} log):</span>
+                                    <span className="stat-value" style={{ color: '#f59e0b', fontSize: '0.8rem' }}>Cash + Online ↓</span>
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '10px' }}>
+                                    ↳ Split ka Cash → 💵 mein add | Split ka Online → 📱 mein add
+                                </div>
+                                <div className="stat-row highlight" style={{ marginTop: '8px' }}>
+                                    <span style={{ fontWeight: 700 }}>💰 Grand Total Received:</span>
+                                    <span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(cashReceived + onlineReceived).toLocaleString()}</span>
+                                </div>
                             </div>
 
                             {/* Profit */}

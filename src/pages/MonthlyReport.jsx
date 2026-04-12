@@ -154,14 +154,31 @@ const MonthlyReport = () => {
                         <div className="stat-card-premium purple">
                             <div className="stat-header">
                                 <div className="stat-icon-wrapper"><CreditCard size={24} /></div>
-                                <h3 className="stat-title">Payment Received By Method</h3>
+                                <h3 className="stat-title">Payment Method Breakdown</h3>
                             </div>
-                            <div className="stat-row"><span>💵 Cash Received:</span><span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(paymentSplit.cash || 0).toLocaleString()}</span></div>
-                            <div className="stat-row"><span>📱 Online Received:</span><span className="stat-value" style={{ color: '#38bdf8' }}>Rs. {(paymentSplit.online || 0).toLocaleString()}</span></div>
-                            <div className="stat-row"><span>Split Transactions:</span><span className="stat-value">{paymentSplit.split_count || 0}</span></div>
-                            <div className="stat-row highlight">
-                                <span>Total Collected:</span>
-                                <span className="stat-value">Rs. {((paymentSplit.cash || 0) + (paymentSplit.online || 0)).toLocaleString()}</span>
+                            <div className="stat-row">
+                                <span>💵 Cash Only ({paymentSplit.cash_count || 0} log):</span>
+                                <span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(paymentSplit.cash || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="stat-row">
+                                <span>📱 Online Only ({paymentSplit.online_count || 0} log):</span>
+                                <span className="stat-value" style={{ color: '#38bdf8' }}>Rs. {(paymentSplit.online || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="stat-row">
+                                <span>🔀 Split ({paymentSplit.split_count || 0} log):</span>
+                                <span className="stat-value" style={{ color: '#f59e0b' }}>Cash+Online mila k</span>
+                            </div>
+                            <div className="stat-row" style={{ borderTop: '1px dashed var(--glass-border)', marginTop: '6px', paddingTop: '6px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                <span>↳ Split ka Cash iss mein:</span>
+                                <span style={{ color: 'var(--success)', fontWeight: 600 }}>✓ Included</span>
+                            </div>
+                            <div className="stat-row" style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                                <span>↳ Split ka Online iss mein:</span>
+                                <span style={{ color: '#38bdf8', fontWeight: 600 }}>✓ Included</span>
+                            </div>
+                            <div className="stat-row highlight" style={{ marginTop: '8px' }}>
+                                <span style={{ fontWeight: 700 }}>💰 Grand Total Received:</span>
+                                <span className="stat-value" style={{ color: 'var(--success)', fontSize: '1.2rem' }}>Rs. {(paymentSplit.grand_total || 0).toLocaleString()}</span>
                             </div>
                         </div>
 
@@ -319,9 +336,21 @@ const MonthlyReport = () => {
                                 <div className="stat-row"><span>Total Sales Invoices Made:</span><span className="stat-value">Rs. {summary.total_sales_created_value.toLocaleString()}</span></div>
                                 <div className="stat-row"><span>Cash Sales (Fully Paid):</span><span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(summary.total_cash_sales_this_month || 0).toLocaleString()}</span></div>
                                 <div className="stat-row"><span>Credit Installments Received:</span><span className="stat-value" style={{ color: 'var(--info)' }}>Rs. {summary.total_sales_collected_this_month.toLocaleString()}</span></div>
-                                <div className="stat-row"><span>💵 Cash Received:</span><span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(paymentSplit.cash || 0).toLocaleString()}</span></div>
-                                <div className="stat-row"><span>📱 Online Received:</span><span className="stat-value" style={{ color: '#38bdf8' }}>Rs. {(paymentSplit.online || 0).toLocaleString()}</span></div>
-                                <div className="stat-row"><span>Total Value Refunded (Returns):</span><span className="stat-value" style={{ color: 'var(--danger)' }}>Rs. {(summary.total_returns_this_month || 0).toLocaleString()}</span></div>
+                                <div style={{ margin: '10px 0 4px', padding: '10px', background: 'rgba(16,185,129,0.06)', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.15)' }}>
+                                    <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: '8px', color: 'var(--text-primary)' }}>💳 Payment Method Breakdown:</div>
+                                    <div className="stat-row"><span>💵 Cash Only ({paymentSplit.cash_count || 0} log):</span><span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(paymentSplit.cash || 0).toLocaleString()}</span></div>
+                                    <div className="stat-row"><span>📱 Online Only ({paymentSplit.online_count || 0} log):</span><span className="stat-value" style={{ color: '#38bdf8' }}>Rs. {(paymentSplit.online || 0).toLocaleString()}</span></div>
+                                    <div className="stat-row"><span>🔀 Split ({paymentSplit.split_count || 0} log):</span><span className="stat-value" style={{ color: '#f59e0b', fontSize: '0.8rem' }}>Cash + Online ↓</span></div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '12px' }}>
+                                        <span>↳ Split ka Cash (💵 mein shamil):</span>
+                                        <span style={{ color: 'var(--success)' }}>✓</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted)', paddingLeft: '12px', marginBottom: '6px' }}>
+                                        <span>↳ Split ka Online (📱 mein shamil):</span>
+                                        <span style={{ color: '#38bdf8' }}>✓</span>
+                                    </div>
+                                    <div className="stat-row highlight"><span style={{ fontWeight: 700 }}>💰 Grand Total Received:</span><span className="stat-value" style={{ color: 'var(--success)' }}>Rs. {(paymentSplit.grand_total || 0).toLocaleString()}</span></div>
+                                </div>
                                 <div className="stat-row highlight"><span>New Credit Given:</span><span className="stat-value" style={{ color: 'var(--warning)' }}>Rs. {summary.total_credit_given_this_month.toLocaleString()}</span></div>
                             </div>
 
