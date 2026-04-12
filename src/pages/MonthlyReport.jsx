@@ -186,10 +186,9 @@ const MonthlyReport = () => {
                                 <h3 className="stat-title">Returns & Dues</h3>
                             </div>
                             <div className="stat-row"><span>Returns Refunded:</span><span className="stat-value" style={{ color: 'var(--danger)' }}>Rs. {(summary.total_returns_this_month || 0).toLocaleString()}</span></div>
-                            <div className="stat-row"><span>New Credit Given:</span><span className="stat-value" style={{ color: 'var(--warning)' }}>Rs. {summary.total_credit_given_this_month.toLocaleString()}</span></div>
                             <div className="stat-row highlight">
-                                <span>All-Time Customer Dues:</span>
-                                <span className="stat-value" style={{ color: 'var(--danger)' }}>Rs. {summary.total_all_time_dues_from_buyers.toLocaleString()}</span>
+                                <span>New Credit Given:</span>
+                                <span className="stat-value" style={{ color: 'var(--warning)' }}>Rs. {summary.total_credit_given_this_month.toLocaleString()}</span>
                             </div>
                         </div>
 
@@ -458,30 +457,7 @@ const MonthlyReport = () => {
                         )}
                     </div>
 
-                    {/* ALL-TIME DUES */}
-                    <div className="premium-table-wrap" style={{ marginTop: '30px', borderColor: 'rgba(234, 179, 8, 0.3)' }}>
-                        <h3 style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', margin: 0, fontSize: '1.1rem', color: '#eab308' }}>
-                            ⚠️ Action Required: Customers with Outstanding Dues (All-Time)
-                        </h3>
-                        {activity_lists.all_time_buyers_with_dues.length === 0 ? (
-                            <div style={{ padding: '2rem', textAlign: 'center' }}><p style={{ color: 'var(--success)', fontWeight: '500' }}>Great! No pending dues from any customers.</p></div>
-                        ) : (
-                            <ScrollableTable>
-                                <table className="premium-table">
-                                    <thead><tr><th>Customer Name</th><th>Phone Number</th><th style={{ textAlign: 'right' }}>Total Remaining</th></tr></thead>
-                                    <tbody>
-                                        {activity_lists.all_time_buyers_with_dues.map(b => (
-                                            <tr key={b.id}>
-                                                <td style={{ fontWeight: '500' }}>{b.name}</td>
-                                                <td><a href={`tel:${b.phone}`} style={{ color: 'var(--info)', textDecoration: 'none' }}>{b.phone}</a></td>
-                                                <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: '600' }}>Rs. {b.remaining_due.toLocaleString()}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </ScrollableTable>
-                        )}
-                    </div>
+                    {/* ALL-TIME DUES section was removed to optimize database bandwidth */}
                 </div>
 
                 {/* ====== DAILY SUMMARIES MODE ====== */}
