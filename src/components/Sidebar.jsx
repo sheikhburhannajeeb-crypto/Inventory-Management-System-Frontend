@@ -42,6 +42,7 @@ const Sidebar = () => {
         { path: '/expenses', name: 'Expenses', icon: <Receipt size={20} /> },
         { path: '/daily-report', name: 'Daily Report', icon: <ClipboardList size={20} /> },
         { path: '/monthly-report', name: 'Monthly Report', icon: <CalendarDays size={20} /> },
+        { path: '/dashboard', name: 'Overview Dashboard', icon: <LayoutDashboard size={20} /> },
         { path: '/database-export', name: 'Database Export', icon: <Database size={20} />, danger: true },
         { path: '/settings', name: 'Shop Settings', icon: <Settings size={20} /> },
     ];

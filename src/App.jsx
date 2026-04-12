@@ -9,6 +9,7 @@ import useKeepAlive from './hooks/useKeepAlive';
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 const DeveloperDashboard = lazy(() => import('./pages/DeveloperDashboard'));
+const DashboardAnalytics = lazy(() => import('./pages/DashboardAnalytics'));
 const Products = lazy(() => import('./pages/Products'));
 const Buyers = lazy(() => import('./pages/Buyers'));
 const Suppliers = lazy(() => import('./pages/Suppliers'));
@@ -53,7 +54,8 @@ function App() {
           {/* Protected Routes Wrapper */}
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/products" replace />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<DashboardAnalytics />} />
               <Route path="products" element={<Products />} />
               <Route path="buyers" element={<Buyers />} />
               <Route path="suppliers" element={<Suppliers />} />
