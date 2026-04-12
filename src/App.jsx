@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
@@ -41,6 +41,17 @@ const PageLoader = () => (
 function App() {
   // Pings /api/health every 14 min to keep Render free tier warm
   useKeepAlive();
+
+  // Prevent mouse wheel from changing input type="number" values
+  useEffect(() => {
+    const handleWheel = (e) => {
+      if (document.activeElement.type === 'number') {
+        document.activeElement.blur();
+      }
+    };
+    document.addEventListener('wheel', handleWheel);
+    return () => document.removeEventListener('wheel', handleWheel);
+  }, []);
 
   return (
     <BrowserRouter>

@@ -666,7 +666,16 @@ const Billing = () => {
                                     placeholder="Enter cash amount"
                                     min="0"
                                     value={cashAmount}
-                                    onChange={(e) => setCashAmount(e.target.value)}
+                                    onChange={(e) => {
+                                        const cash = e.target.value;
+                                        setCashAmount(cash);
+                                        const targetTotal = billType === 'credit' ? Number(paidAmount || 0) : total;
+                                        if (cash === '') {
+                                            setOnlineAmount(String(targetTotal));
+                                        } else if (Number(cash) >= 0) {
+                                            setOnlineAmount(String(Math.max(0, targetTotal - Number(cash))));
+                                        }
+                                    }}
                                 />
                             </div>
                             <div className="input-group">
@@ -677,7 +686,16 @@ const Billing = () => {
                                     placeholder="Enter online amount"
                                     min="0"
                                     value={onlineAmount}
-                                    onChange={(e) => setOnlineAmount(e.target.value)}
+                                    onChange={(e) => {
+                                        const online = e.target.value;
+                                        setOnlineAmount(online);
+                                        const targetTotal = billType === 'credit' ? Number(paidAmount || 0) : total;
+                                        if (online === '') {
+                                            setCashAmount(String(targetTotal));
+                                        } else if (Number(online) >= 0) {
+                                            setCashAmount(String(Math.max(0, targetTotal - Number(online))));
+                                        }
+                                    }}
                                 />
                             </div>
                             <div style={{ gridColumn: '1 / -1', marginTop: '8px' }}>
