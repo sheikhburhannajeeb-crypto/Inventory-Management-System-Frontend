@@ -43,6 +43,8 @@ const RecentSales = () => {
     const [sortOption, setSortOption] = useState('date_desc');
     const [filterOption, setFilterOption] = useState('all');
     const [activeFilter, setActiveFilter] = useState('1m');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 30;
 
     useEffect(() => {
         fetchSales();
@@ -155,6 +157,14 @@ const RecentSales = () => {
             totalPending: pend
         };
     }, [sales, searchQuery, activeFilter, sortOption, filterOption]);
+
+    // Reset pagination to page 1 whenever filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, activeFilter, sortOption, filterOption]);
+
+    const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
+    const paginatedSales = filteredSales.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
         <div className="page-container recent-sales-page">
@@ -310,11 +320,12 @@ const RecentSales = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredSales.map((sale, idx) => {
+                            {paginatedSales.map((sale, idx) => {
                                 const pending = Number(sale.total_amount || 0) - Number(sale.paid_amount || 0);
+                                const itemIndex = (currentPage - 1) * ITEMS_PER_PAGE + idx + 1;
                                 return (
                                     <tr key={sale.id} className="animate-fade-in">
-                                        <td>{idx + 1}</td>
+                                        <td>{itemIndex}</td>
                                         <td style={{ fontFamily: 'monospace', color: 'var(--accent-primary)', fontWeight: 600 }}>#{sale.id}</td>
                                         <td>{sale.purchase_date ? new Date(sale.purchase_date).toLocaleDateString() : '-'}</td>
                                         <td>
@@ -361,6 +372,67 @@ const RecentSales = () => {
                             })}
                         </tbody>
                     </table>
+                )}
+
+                {/* Pagination Controls */}
+                {!loading && totalPages > 1 && (
+                    <div className="pagination-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderTop: '1px solid var(--border-color)', marginTop: 'auto' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredSales.length)} of {filteredSales.length} entries
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button 
+                                className="btn-secondary" 
+                                style={{ padding: '6px 12px', fontSize: '0.9rem' }}
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            >
+                                Previous
+                            </button>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                {[...Array(totalPages)].map((_, i) => {
+                                    const pageNum = i + 1;
+                                    // Show first, last, and current ± 1
+                                    if (
+                                        pageNum === 1 || 
+                                        pageNum === totalPages || 
+                                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                                    ) {
+                                        return (
+                                            <button 
+                                                key={pageNum}
+                                                className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                                                style={{ 
+                                                    width: '32px', height: '32px', borderRadius: '6px', border: '1px solid var(--border-color)',
+                                                    background: currentPage === pageNum ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                                    color: currentPage === pageNum ? '#fff' : 'var(--text-primary)',
+                                                    fontWeight: currentPage === pageNum ? 'bold' : 'normal',
+                                                    cursor: 'pointer'
+                                                }}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    } else if (
+                                        pageNum === currentPage - 2 || 
+                                        pageNum === currentPage + 2
+                                    ) {
+                                        return <span key={pageNum} style={{ color: 'var(--text-secondary)' }}>...</span>;
+                                    }
+                                    return null;
+                                })}
+                            </div>
+                            <button 
+                                className="btn-secondary" 
+                                style={{ padding: '6px 12px', fontSize: '0.9rem' }}
+                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
                 )}
             </ScrollableTable>
         </div>
