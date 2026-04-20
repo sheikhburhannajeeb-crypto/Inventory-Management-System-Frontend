@@ -109,6 +109,10 @@ const ExpandableSupplierCard = ({
                             <h4 className="history-title">📦 PURCHASE HISTORY</h4>
                             <div className="transactions-list">
                                 {transactions.map((txn, idx) => {
+                                    const isOpeningBalance = txn.products?.name === '__opening_balance__';
+                                    const displayProductName = isOpeningBalance
+                                        ? '💰 Opening Balance'
+                                        : (txn.products?.name || `Product #${txn.product_id}`);
                                     const purchaseRate = txn.quantity > 0 ? Math.round(Number(txn.total_amount) / Number(txn.quantity)) : 0;
                                     const remaining = Number(txn.total_amount || 0) - Number(txn.paid_amount || 0);
                                     const isPaid = remaining <= 0;
@@ -118,7 +122,7 @@ const ExpandableSupplierCard = ({
                                             <div className="transaction-header">
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                     <span className="product-name">
-                                                        {txn.products?.name || `Product #${txn.product_id}`}
+                                                        {displayProductName}
                                                     </span>
                                                     {txn.payment_method && (
                                                         <span className={`payment-badge ${txn.payment_method.toLowerCase()}`}>
@@ -135,14 +139,18 @@ const ExpandableSupplierCard = ({
                                                 </span>
                                             </div>
                                             <div className="transaction-details">
-                                                <div className="detail-cell">
-                                                    <span className="cell-label">Qty</span>
-                                                    <span className="cell-value">{txn.quantity}</span>
-                                                </div>
-                                                <div className="detail-cell">
-                                                    <span className="cell-label">Rate/Unit</span>
-                                                    <span className="cell-value">Rs. {purchaseRate.toLocaleString()}</span>
-                                                </div>
+                                                {!isOpeningBalance && (
+                                                    <>
+                                                        <div className="detail-cell">
+                                                            <span className="cell-label">Qty</span>
+                                                            <span className="cell-value">{txn.quantity}</span>
+                                                        </div>
+                                                        <div className="detail-cell">
+                                                            <span className="cell-label">Rate/Unit</span>
+                                                            <span className="cell-value">Rs. {purchaseRate.toLocaleString()}</span>
+                                                        </div>
+                                                    </>
+                                                )}
                                                 <div className="detail-cell">
                                                     <span className="cell-label">Total</span>
                                                     <span className="cell-value">Rs. {Number(txn.total_amount).toLocaleString()}</span>

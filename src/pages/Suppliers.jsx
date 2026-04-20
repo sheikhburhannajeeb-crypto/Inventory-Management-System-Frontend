@@ -312,6 +312,60 @@ const Suppliers = () => {
                     data: payload
                 };
                 
+                let actualPaymentMethod = formData.payment_method || 'Cash';
+                let targetAmountForSplitValidation = Number(formData.paid_amount || 0);
+                let splitCash = 0;
+                let splitOnline = 0;
+
+                if (actualPaymentMethod === 'Split' && targetAmountForSplitValidation > 0) {
+                    splitCash = Number(formData.cash_amount || 0);
+                    splitOnline = Number(formData.online_amount || 0);
+                    if (splitCash < 0 || splitOnline < 0) {
+                        notifyError('Split amounts cannot be negative.');
+                        return;
+                    }
+                    if (Math.abs((splitCash + splitOnline) - targetAmountForSplitValidation) > 0.01) {
+                        notifyError(`Split amounts (${splitCash} + ${splitOnline}) must equal the paid amount (${targetAmountForSplitValidation}).`);
+                        return;
+                    }
+                }
+
+                const finalProductName = formData.product_name || productSearch;
+                let payloadProductName = finalProductName;
+                let payloadQuantity = Number(formData.quantity);
+                let isCreatingPurchase = false;
+
+                if (!(formData.product_id || finalProductName) && Number(formData.total_amount) > 0) {
+                    isCreatingPurchase = true;
+                    payloadProductName = "Opening Balance";
+                    payloadQuantity = 1;
+                } else if ((formData.product_id || finalProductName) && Number(formData.quantity) > 0) {
+                    isCreatingPurchase = true;
+                }
+
+                if (isCreatingPurchase) {
+                    if (Number(formData.paid_amount || 0) > Number(formData.total_amount)) {
+                        notifyError("Paid amount cannot exceed total amount.");
+                        return;
+                    }
+                    if (Number(formData.paid_amount || 0) < 0 || Number(formData.total_amount) < 0 || payloadQuantity <= 0) {
+                        notifyError("Amounts and quantity must be valid positive numbers.");
+                        return;
+                    }
+                    
+                    newItem.purchaseData = {
+                        product_id: formData.product_id || null,
+                        product_name: payloadProductName,
+                        quantity: payloadQuantity,
+                        total_amount: Number(formData.total_amount),
+                        paid_amount: Number(formData.paid_amount || 0),
+                        purchase_date: formData.purchase_date,
+                        payment_method: actualPaymentMethod,
+                        cash_amount: splitCash,
+                        online_amount: splitOnline
+                    };
+                }
+                
                 setPendingItems(prev => [...prev, newItem]);
                 setIsSideListOpen(true);
                 closeModal();
@@ -371,90 +425,67 @@ const Suppliers = () => {
                 payload.online_amount = splitOnline;
             }
 
-            if (modalMode === 'add') {
-                if ((formData.product_id || finalProductName) && Number(formData.quantity) > 0) {
-                    if (Number(formData.paid_amount || 0) > Number(formData.total_amount)) {
-                        notifyError("Paid amount cannot exceed total amount.");
-                        return;
-                    }
-                    if (Number(formData.paid_amount || 0) < 0 || Number(formData.total_amount) < 0 || Number(formData.quantity) <= 0) {
-                        notifyError("Amounts and quantity must be valid positive numbers.");
-                        return;
-                    }
+            // UPDATE EXISTING SUPPLIER
+            await axios.put(`/api/suppliers/${formData.id}`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (formData.txn_id) {
+                let final_paid_amount = Number(formData.txn_paid_amount || 0);
+                let final_total_amount = Number(formData.txn_total_amount || 0);
+
+                if (formData.add_payment && Number(formData.add_payment) > 0) {
+                    final_paid_amount += Number(formData.add_payment);
                 }
-                const supplierRes = await axios.post('/api/suppliers', payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                if (formData.new_total_amount !== '' && Number(formData.new_total_amount) >= 0) {
+                    final_total_amount = Number(formData.new_total_amount);
+                }
 
-                const newSupplier = supplierRes.data.data?.[0];
+                if (final_paid_amount > final_total_amount) {
+                    notifyError("Total paid amount cannot exceed the total amount payable.");
+                    return;
+                }
+                if (final_paid_amount < 0 || final_total_amount < 0) {
+                    notifyError("Amounts cannot be negative.");
+                    return;
+                }
 
-                if (newSupplier && (formData.product_id || finalProductName) && Number(formData.quantity) > 0) {
-                    const purchasePayload = {
-                        supplier_id: newSupplier.id,
-                        product_id: formData.product_id || null,
-                        product_name: finalProductName,
-                        quantity: Number(formData.quantity),
-                        total_amount: Number(formData.total_amount),
-                        paid_amount: Number(formData.paid_amount || 0),
-                        purchase_date: formData.purchase_date,
-                        payment_method: actualPaymentMethod,
-                        cash_amount: splitCash,
-                        online_amount: splitOnline
-                    };
+                const updatePayload = {};
+                if (formData.add_payment && Number(formData.add_payment) > 0) {
+                    updatePayload.add_payment = Number(formData.add_payment);
+                    updatePayload.payment_method = actualPaymentMethod;
+                    updatePayload.cash_amount = splitCash;
+                    updatePayload.online_amount = splitOnline;
+                }
+                if (formData.new_total_amount && Number(formData.new_total_amount) >= 0) {
+                    updatePayload.new_total_amount = Number(formData.new_total_amount);
+                }
 
-                    await axios.post('/api/purchases', purchasePayload, {
+                if (Object.keys(updatePayload).length > 0) {
+                    updatePayload.date = formData.payment_date;
+                    await axios.put(`/api/purchases/${formData.txn_id}`, updatePayload, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                 }
             } else {
-                // UPDATE EXISTING SUPPLIER
-                await axios.put(`/api/suppliers/${formData.id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                let isCreatingPurchase = false;
+                let payloadProductName = finalProductName;
+                let payloadQuantity = Number(formData.quantity);
 
-                if (formData.txn_id) {
-                    let final_paid_amount = Number(formData.txn_paid_amount || 0);
-                    let final_total_amount = Number(formData.txn_total_amount || 0);
-
-                    if (formData.add_payment && Number(formData.add_payment) > 0) {
-                        final_paid_amount += Number(formData.add_payment);
-                    }
-                    if (formData.new_total_amount !== '' && Number(formData.new_total_amount) >= 0) {
-                        final_total_amount = Number(formData.new_total_amount);
-                    }
-
-                    if (final_paid_amount > final_total_amount) {
-                        notifyError("Total paid amount cannot exceed the total amount payable.");
-                        return;
-                    }
-                    if (final_paid_amount < 0 || final_total_amount < 0) {
-                        notifyError("Amounts cannot be negative.");
-                        return;
-                    }
-
-                    const updatePayload = {};
-                    if (formData.add_payment && Number(formData.add_payment) > 0) {
-                        updatePayload.add_payment = Number(formData.add_payment);
-                        updatePayload.payment_method = actualPaymentMethod;
-                        updatePayload.cash_amount = splitCash;
-                        updatePayload.online_amount = splitOnline;
-                    }
-                    if (formData.new_total_amount && Number(formData.new_total_amount) >= 0) {
-                        updatePayload.new_total_amount = Number(formData.new_total_amount);
-                    }
-
-                    if (Object.keys(updatePayload).length > 0) {
-                        updatePayload.date = formData.payment_date;
-                        await axios.put(`/api/purchases/${formData.txn_id}`, updatePayload, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
-                    }
+                if (!(formData.product_id || finalProductName) && Number(formData.total_amount) > 0) {
+                    isCreatingPurchase = true;
+                    payloadProductName = "Opening Balance";
+                    payloadQuantity = 1;
                 } else if ((formData.product_id || finalProductName) && Number(formData.quantity) > 0) {
+                    isCreatingPurchase = true;
+                }
+
+                if (isCreatingPurchase) {
                     if (Number(formData.paid_amount || 0) > Number(formData.total_amount)) {
                         notifyError("Paid amount cannot exceed total amount.");
                         return;
                     }
-                    if (Number(formData.paid_amount || 0) < 0 || Number(formData.total_amount) < 0 || Number(formData.quantity) <= 0) {
+                    if (Number(formData.paid_amount || 0) < 0 || Number(formData.total_amount) < 0 || payloadQuantity <= 0) {
                         notifyError("Amounts and quantity must be valid positive numbers.");
                         return;
                     }
@@ -462,8 +493,8 @@ const Suppliers = () => {
                     const purchasePayload = {
                         supplier_id: formData.id,
                         product_id: formData.product_id || null,
-                        product_name: finalProductName,
-                        quantity: Number(formData.quantity),
+                        product_name: payloadProductName,
+                        quantity: payloadQuantity,
                         total_amount: Number(formData.total_amount),
                         paid_amount: Number(formData.paid_amount || 0),
                         purchase_date: formData.purchase_date,
@@ -532,9 +563,16 @@ const Suppliers = () => {
             for (const item of pendingItems) {
                 try {
                     if (item.action === 'add') {
-                        await axios.post('/api/suppliers', item.data, {
+                        const supplierRes = await axios.post('/api/suppliers', item.data, {
                             headers: { Authorization: `Bearer ${token}` }
                         });
+                        const newSupplier = supplierRes.data.data?.[0];
+                        if (newSupplier && item.purchaseData) {
+                            item.purchaseData.supplier_id = newSupplier.id;
+                            await axios.post('/api/purchases', item.purchaseData, {
+                                headers: { Authorization: `Bearer ${token}` }
+                            });
+                        }
                         successCount++;
                     } else if (item.action === 'delete') {
                         await axios.delete(`/api/suppliers/${item.data.id}`, {
@@ -774,7 +812,7 @@ const Suppliers = () => {
 
                                     <div className="form-grid" style={{ marginTop: '8px' }}>
                                         <div className="input-group">
-                                            <label>Product</label>
+                                            <label>Product (Optional)</label>
                                             <div className="custom-searchable-dropdown">
                                                 <input type="text" className="input-field" placeholder="Search product..." value={productSearch}
                                                     onChange={(e) => { setProductSearch(e.target.value); setShowProductDropdown(true); }}
@@ -792,8 +830,8 @@ const Suppliers = () => {
                                             </div>
                                         </div>
                                         <div className="input-group">
-                                            <label>Qty</label>
-                                            <input type="number" className="input-field" name="quantity" value={formData.quantity} onChange={handleFormChange} min="1" />
+                                            <label>Qty (Optional)</label>
+                                            <input type="number" className="input-field" name="quantity" value={formData.quantity} onChange={handleFormChange} min="0" />
                                         </div>
                                     </div>
 
@@ -804,7 +842,7 @@ const Suppliers = () => {
                                         </div>
                                         <div className="input-group">
                                             <label>Total Amount (Rs)</label>
-                                            <input type="number" className="input-field" name="total_amount" value={formData.total_amount} readOnly style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-muted)' }} />
+                                            <input type="number" className="input-field" name="total_amount" value={formData.total_amount} onChange={handleFormChange} min="0" placeholder="0" />
                                         </div>
                                     </div>
 
