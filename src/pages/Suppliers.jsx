@@ -426,7 +426,7 @@ const Suppliers = () => {
 
             if (formData.id && formData.payment_amount) {
                 targetAmountForSplitValidation = Number(formData.payment_amount);
-            } else if (modalMode === 'add' || (!formData.txn_id && (formData.product_id || finalProductName))) {
+            } else if (modalMode === 'add' || (!formData.txn_id && (formData.product_id || finalProductName || Number(formData.total_amount) > 0))) {
                 targetAmountForSplitValidation = Number(formData.paid_amount || 0);
             } else if (formData.txn_id && formData.add_payment) {
                 targetAmountForSplitValidation = Number(formData.add_payment);
@@ -830,7 +830,12 @@ const Suppliers = () => {
                                             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                                                 {['Cash', 'Online', 'Split'].map(pm => (
                                                     <button key={pm} type="button"
-                                                        onClick={() => setFormData(prev => ({ ...prev, payment_method: pm, cash_amount: '', online_amount: '' }))}
+                                                        onClick={() => setFormData(prev => ({
+                                                            ...prev,
+                                                            payment_method: pm,
+                                                            cash_amount: pm === 'Split' ? Number(prev.payment_amount || 0) : '',
+                                                            online_amount: pm === 'Split' ? 0 : ''
+                                                        }))}
                                                         style={{
                                                             flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
                                                             background: formData.payment_method === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.15)' : pm === 'Online' ? 'rgba(56,189,248,0.15)' : 'rgba(251,191,36,0.15)') : 'var(--bg-secondary)',
@@ -920,7 +925,12 @@ const Suppliers = () => {
                                             <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                                                 {['Cash', 'Online', 'Split'].map(pm => (
                                                     <button key={pm} type="button"
-                                                        onClick={() => setFormData(prev => ({ ...prev, payment_method: pm, cash_amount: '', online_amount: '' }))}
+                                                        onClick={() => setFormData(prev => ({
+                                                            ...prev,
+                                                            payment_method: pm,
+                                                            cash_amount: pm === 'Split' ? Number(prev.paid_amount || 0) : '',
+                                                            online_amount: pm === 'Split' ? 0 : ''
+                                                        }))}
                                                         style={{
                                                             flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
                                                             background: formData.payment_method === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.15)' : pm === 'Online' ? 'rgba(56,189,248,0.15)' : 'rgba(251,191,36,0.15)') : 'var(--bg-secondary)',
