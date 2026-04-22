@@ -20,8 +20,14 @@ const Companies = () => {
     const [cashAmount, setCashAmount] = useState('');
     const [onlineAmount, setOnlineAmount] = useState('');
     const [paying, setPaying] = useState(false);
+    const [showPhones, setShowPhones] = useState({});
 
     useEffect(() => { fetchBuyers(); fetchSales(); }, []);
+
+    const togglePhone = (id, e) => {
+        e.stopPropagation();
+        setShowPhones(prev => ({ ...prev, [id]: !prev[id] }));
+    };
 
     const fetchBuyers = async () => {
         try {
@@ -402,7 +408,11 @@ const Companies = () => {
                                                                                 <span style={{ fontWeight: 500 }}>{txn.buyerName}</span>
                                                                             </div>
                                                                         </td>
-                                                                        <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{txn.buyerPhone || '-'}</td>
+                                                                        <td onClick={(e) => togglePhone(txn.id, e)} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                                                            {txn.buyerPhone 
+                                                                                ? (showPhones[txn.id] ? txn.buyerPhone : txn.buyerPhone.replace(/./g, '*')) 
+                                                                                : '-'}
+                                                                        </td>
                                                                         <td style={{ fontWeight: 500 }}>{txn.products?.name || `Product #${txn.product_id}`}</td>
                                                                         <td>{txn.quantity}</td>
                                                                         <td>Rs. {Number(txn.total_amount).toLocaleString()}</td>
