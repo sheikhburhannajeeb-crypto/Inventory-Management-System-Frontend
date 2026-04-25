@@ -115,7 +115,7 @@ const RecentSales = () => {
         [activeFilter]
     );
 
-    const { filteredSales, totalRevenue, totalPaid, totalPending } = useMemo(() => {
+    const { filteredGroups, filteredSales, totalRevenue, totalPaid, totalPending } = useMemo(() => {
         const threshold = getDateThreshold(activeFilter);
         
         let filtered = sales.filter(sale => {
@@ -139,11 +139,66 @@ const RecentSales = () => {
             return true;
         });
 
-        filtered.sort((a, b) => {
-            if (sortOption === 'date_desc') return new Date(b.purchase_date) - new Date(a.purchase_date);
-            if (sortOption === 'date_asc') return new Date(a.purchase_date) - new Date(b.purchase_date);
-            if (sortOption === 'amount_desc') return Number(b.total_amount || 0) - Number(a.total_amount || 0);
-            if (sortOption === 'amount_asc') return Number(a.total_amount || 0) - Number(b.total_amount || 0);
+        // 1. Sort strictly by date descending to group chronologically
+        filtered.sort((a, b) => new Date(b.purchase_date) - new Date(a.purchase_date));
+
+        // 2. Group adjacent sales into Invoices
+        const groups = [];
+        let currentGroup = null;
+
+        filtered.forEach(sale => {
+            const saleTime = new Date(sale.purchase_date).getTime();
+            const buyerName = sale.buyers?.name || 'Cash Sale';
+            const salesman = sale.users?.name || '-';
+            const phone = sale.buyers?.phone || '';
+            
+            if (!currentGroup) {
+                currentGroup = {
+                    id: sale.id, // Use smallest transaction ID as Invoice ID
+                    buyerName,
+                    phone,
+                    salesman,
+                    time: saleTime,
+                    date: sale.purchase_date,
+                    totalAmount: Number(sale.total_amount || 0),
+                    items: [sale]
+                };
+            } else {
+                const timeDiff = Math.abs(currentGroup.time - saleTime);
+                const isSameBuyer = currentGroup.buyerName === buyerName;
+                const isSameSalesman = currentGroup.salesman === salesman;
+                
+                // Group if same buyer, same salesman, and within 2 minutes (120000 ms)
+                if (isSameBuyer && isSameSalesman && timeDiff < 120000) {
+                    currentGroup.items.push(sale);
+                    currentGroup.totalAmount += Number(sale.total_amount || 0);
+                    // Retain the smallest ID as the invoice ID
+                    if (sale.id < currentGroup.id) {
+                        currentGroup.id = sale.id;
+                    }
+                } else {
+                    groups.push(currentGroup);
+                    currentGroup = {
+                        id: sale.id,
+                        buyerName,
+                        phone,
+                        salesman,
+                        time: saleTime,
+                        date: sale.purchase_date,
+                        totalAmount: Number(sale.total_amount || 0),
+                        items: [sale]
+                    };
+                }
+            }
+        });
+        if (currentGroup) groups.push(currentGroup);
+
+        // 3. Apply user sort option to the GROUPS
+        groups.sort((a, b) => {
+            if (sortOption === 'date_desc') return b.time - a.time;
+            if (sortOption === 'date_asc') return a.time - b.time;
+            if (sortOption === 'amount_desc') return b.totalAmount - a.totalAmount;
+            if (sortOption === 'amount_asc') return a.totalAmount - b.totalAmount;
             return 0;
         });
 
@@ -152,6 +207,7 @@ const RecentSales = () => {
         const pend = rev - paid;
 
         return {
+            filteredGroups: groups,
             filteredSales: filtered,
             totalRevenue: rev,
             totalPaid: paid,
@@ -164,8 +220,8 @@ const RecentSales = () => {
         setCurrentPage(1);
     }, [searchQuery, activeFilter, sortOption, filterOption]);
 
-    const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
-    const paginatedSales = filteredSales.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredGroups.length / ITEMS_PER_PAGE);
+    const paginatedGroups = filteredGroups.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     return (
         <div className="page-container recent-sales-page">
@@ -304,73 +360,86 @@ const RecentSales = () => {
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Product ID</th>
                                 <th>Invoice ID</th>
+                                <th>Customer</th>
                                 <th>Date</th>
                                 <th>Product</th>
                                 <th>Price</th>
-                                <th>Supplier</th>
-                                <th>Customer</th>
                                 <th>Qty</th>
                                 <th>Total Amount</th>
                                 <th>Paid</th>
                                 <th>Method</th>
                                 <th>Pending</th>
-                                <th>Salesman</th>
                                 <th>Action</th>
+                                <th>Salesman</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedSales.map((sale, idx) => {
-                                const pending = Number(sale.total_amount || 0) - Number(sale.paid_amount || 0);
-                                const itemIndex = (currentPage - 1) * ITEMS_PER_PAGE + idx + 1;
-                                return (
-                                    <tr key={sale.id} className="animate-fade-in">
-                                        <td>{itemIndex}</td>
-                                        <td style={{ fontFamily: 'monospace', fontWeight: 500 }}>{formatProductId(sale.product_id) || '-'}</td>
-                                        <td style={{ fontFamily: 'monospace', color: 'var(--accent-primary)', fontWeight: 600 }}>#{sale.id}</td>
-                                        <td>{sale.purchase_date ? new Date(sale.purchase_date).toLocaleDateString() : '-'}</td>
-                                        <td>
-                                            <div className="font-medium">{sale.products?.name || '-'}</div>
-                                        </td>
-                                        <td>Rs. {Number(sale.products?.price || 0).toLocaleString()}</td>
-                                        <td>{sale.products?.purchased_from || '-'}</td>
-                                        <td>
-                                            <div>{sale.buyers?.name || 'Cash Sale'}</div>
-                                            {sale.buyers?.phone && <div style={{ fontSize: '0.8em', color: '#888', marginTop: '2px' }}>{sale.buyers.phone}</div>}
-                                        </td>
-                                        <td>{sale.quantity} {sale.products?.quantity_unit ? `\n(${sale.products.quantity_unit})` : ''}</td>
-                                        <td>Rs. {Number(sale.total_amount).toLocaleString()}</td>
-                                        <td style={{ color: '#22c55e' }}>Rs. {Number(sale.paid_amount).toLocaleString()}</td>
-                                        <td>
-                                            <span style={{ 
-                                                fontSize: '0.75em', padding: '3px 6px', borderRadius: '4px', fontWeight: 600,
-                                                background: sale.payment_method === 'Online' ? '#e0f2fe' : (sale.payment_method === 'Split' ? '#fef08a' : '#dcfce3'),
-                                                color: sale.payment_method === 'Online' ? '#0369a1' : (sale.payment_method === 'Split' ? '#854d0e' : '#166534')
-                                            }}>{sale.payment_method || 'Cash'}</span>
-                                            {sale.payment_method === 'Split' && (
-                                                <div style={{ fontSize: '0.65em', color: '#666', marginTop: '4px' }}>
-                                                    C: {sale.cash_amount} | O: {sale.online_amount}
-                                                </div>
+                            {paginatedGroups.map((group) => {
+                                const rowSpan = group.items.length;
+                                return group.items.map((sale, tIdx) => {
+                                    const pending = Number(sale.total_amount || 0) - Number(sale.paid_amount || 0);
+                                    const rowStyle = tIdx === rowSpan - 1 ? { borderBottom: '3px solid var(--border-color)' } : { borderBottom: '1px solid rgba(255,255,255,0.05)' };
+                                    
+                                    return (
+                                        <tr key={sale.id} className="animate-fade-in" style={rowStyle}>
+                                            {tIdx === 0 && (
+                                                <>
+                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', borderRight: '1px solid var(--border-color)' }}>
+                                                        <span style={{ fontFamily: 'monospace', color: 'var(--accent-primary)', fontWeight: 600 }}>INV-{group.id}</span>
+                                                    </td>
+                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', borderRight: '1px solid var(--border-color)' }}>
+                                                        <div className="font-medium">{group.buyerName}</div>
+                                                        {group.phone && <div style={{ fontSize: '0.8em', color: '#888', marginTop: '2px' }}>{group.phone}</div>}
+                                                    </td>
+                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', borderRight: '1px solid var(--border-color)' }}>
+                                                        {group.date ? new Date(group.date).toLocaleDateString() : '-'}
+                                                    </td>
+                                                </>
                                             )}
-                                        </td>
-                                        <td style={{ color: pending > 0 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>
-                                            {pending > 0 ? `Rs. ${pending.toLocaleString()}` : '✓ Paid'}
-                                        </td>
-                                        <td>{sale.users?.name || '-'}</td>
-                                        <td>
-                                            <button 
-                                                className="icon-btn-danger" 
-                                                style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'flex', gap: '4px', alignItems: 'center', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                                                onClick={() => handleReturnSale(sale)}
-                                                title="Full or partial return; credit sirf is line ke hisaab se"
-                                            >
-                                                Return
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
+                                            
+                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div className="font-medium">{sale.products?.name || '-'}</div>
+                                                <div style={{ fontFamily: 'monospace', fontSize: '0.75em', color: 'var(--text-muted)' }}>ID: {formatProductId(sale.product_id) || '-'}</div>
+                                            </td>
+                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>Rs. {Number(sale.products?.price || 0).toLocaleString()}</td>
+                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>{sale.quantity} {sale.products?.quantity_unit ? `\n(${sale.products.quantity_unit})` : ''}</td>
+                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>Rs. {Number(sale.total_amount).toLocaleString()}</td>
+                                            <td style={{ color: '#22c55e', borderRight: '1px solid rgba(255,255,255,0.05)' }}>Rs. {Number(sale.paid_amount).toLocaleString()}</td>
+                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <span style={{ 
+                                                    fontSize: '0.75em', padding: '3px 6px', borderRadius: '4px', fontWeight: 600,
+                                                    background: sale.payment_method === 'Online' ? '#e0f2fe' : (sale.payment_method === 'Split' ? '#fef08a' : '#dcfce3'),
+                                                    color: sale.payment_method === 'Online' ? '#0369a1' : (sale.payment_method === 'Split' ? '#854d0e' : '#166534')
+                                                }}>{sale.payment_method || 'Cash'}</span>
+                                                {sale.payment_method === 'Split' && (
+                                                    <div style={{ fontSize: '0.65em', color: '#666', marginTop: '4px' }}>
+                                                        C: {sale.cash_amount} | O: {sale.online_amount}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td style={{ color: pending > 0 ? '#ef4444' : '#22c55e', fontWeight: 600, borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+                                                {pending > 0 ? `Rs. ${pending.toLocaleString()}` : '✓ Paid'}
+                                            </td>
+                                            <td style={{ borderRight: '1px solid var(--border-color)' }}>
+                                                <button 
+                                                    className="icon-btn-danger" 
+                                                    style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'flex', gap: '4px', alignItems: 'center', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                                    onClick={() => handleReturnSale(sale)}
+                                                    title="Full or partial return; credit sirf is line ke hisaab se"
+                                                >
+                                                    Return
+                                                </button>
+                                            </td>
+
+                                            {tIdx === 0 && (
+                                                <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                    {group.salesman}
+                                                </td>
+                                            )}
+                                        </tr>
+                                    );
+                                });
                             })}
                         </tbody>
                     </table>
@@ -380,7 +449,7 @@ const RecentSales = () => {
                 {!loading && totalPages > 1 && (
                     <div className="pagination-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderTop: '1px solid var(--border-color)', marginTop: 'auto' }}>
                         <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredSales.length)} of {filteredSales.length} entries
+                            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredGroups.length)} of {filteredGroups.length} invoices
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                             <button 
