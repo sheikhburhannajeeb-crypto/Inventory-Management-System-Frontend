@@ -385,8 +385,14 @@ const RecentSales = () => {
                         <tbody>
                             {paginatedGroups.map((group) => {
                                 const rowSpan = group.items.length;
+                                const groupTotalAmount = group.items.reduce((s, item) => s + Number(item.total_amount || 0), 0);
+                                const groupPaidAmount = group.items.reduce((s, item) => s + Number(item.paid_amount || 0), 0);
+                                const groupPending = groupTotalAmount - groupPaidAmount;
+                                const groupMethod = group.items[0]?.payment_method || 'Cash';
+                                const groupCash = group.items.reduce((s, item) => s + Number(item.cash_amount || 0), 0);
+                                const groupOnline = group.items.reduce((s, item) => s + Number(item.online_amount || 0), 0);
+
                                 return group.items.map((sale, tIdx) => {
-                                    const pending = Number(sale.total_amount || 0) - Number(sale.paid_amount || 0);
                                     const rowStyle = tIdx === rowSpan - 1 ? { borderBottom: '3px solid var(--border-color)' } : { borderBottom: '1px solid rgba(255,255,255,0.05)' };
                                     
                                     return (
@@ -411,24 +417,33 @@ const RecentSales = () => {
                                                 <div style={{ fontFamily: 'monospace', fontSize: '0.75em', color: 'var(--text-muted)' }}>ID: {formatProductId(sale.product_id) || '-'}</div>
                                             </td>
                                             <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>Rs. {Number(sale.products?.price || 0).toLocaleString()}</td>
-                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>{sale.quantity} {sale.products?.quantity_unit ? `\n(${sale.products.quantity_unit})` : ''}</td>
-                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>Rs. {Number(sale.total_amount).toLocaleString()}</td>
-                                            <td style={{ color: '#22c55e', borderRight: '1px solid rgba(255,255,255,0.05)' }}>Rs. {Number(sale.paid_amount).toLocaleString()}</td>
-                                            <td style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
-                                                <span style={{ 
-                                                    fontSize: '0.75em', padding: '3px 6px', borderRadius: '4px', fontWeight: 600,
-                                                    background: sale.payment_method === 'Online' ? '#e0f2fe' : (sale.payment_method === 'Split' ? '#fef08a' : '#dcfce3'),
-                                                    color: sale.payment_method === 'Online' ? '#0369a1' : (sale.payment_method === 'Split' ? '#854d0e' : '#166534')
-                                                }}>{sale.payment_method || 'Cash'}</span>
-                                                {sale.payment_method === 'Split' && (
-                                                    <div style={{ fontSize: '0.65em', color: '#666', marginTop: '4px' }}>
-                                                        C: {sale.cash_amount} | O: {sale.online_amount}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td style={{ color: pending > 0 ? '#ef4444' : '#22c55e', fontWeight: 600, borderRight: '1px solid rgba(255,255,255,0.05)' }}>
-                                                {pending > 0 ? `Rs. ${pending.toLocaleString()}` : '✓ Paid'}
-                                            </td>
+                                            <td style={{ borderRight: '1px solid var(--border-color)' }}>{sale.quantity} {sale.products?.quantity_unit ? `\n(${sale.products.quantity_unit})` : ''}</td>
+                                            
+                                            {tIdx === 0 && (
+                                                <>
+                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', borderRight: '1px solid var(--border-color)' }}>
+                                                        Rs. {groupTotalAmount.toLocaleString()}
+                                                    </td>
+                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', color: '#22c55e', borderRight: '1px solid var(--border-color)' }}>
+                                                        Rs. {groupPaidAmount.toLocaleString()}
+                                                    </td>
+                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', borderRight: '1px solid var(--border-color)' }}>
+                                                        <span style={{ 
+                                                            fontSize: '0.75em', padding: '3px 6px', borderRadius: '4px', fontWeight: 600,
+                                                            background: groupMethod === 'Online' ? '#e0f2fe' : (groupMethod === 'Split' ? '#fef08a' : '#dcfce3'),
+                                                            color: groupMethod === 'Online' ? '#0369a1' : (groupMethod === 'Split' ? '#854d0e' : '#166534')
+                                                        }}>{groupMethod}</span>
+                                                        {groupMethod === 'Split' && (
+                                                            <div style={{ fontSize: '0.65em', color: '#666', marginTop: '4px' }}>
+                                                                C: {groupCash} | O: {groupOnline}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', color: groupPending > 0 ? '#ef4444' : '#22c55e', fontWeight: 600, borderRight: '1px solid var(--border-color)' }}>
+                                                        {groupPending > 0 ? `Rs. ${groupPending.toLocaleString()}` : '✓ Paid'}
+                                                    </td>
+                                                </>
+                                            )}
                                             <td style={{ borderRight: '1px solid var(--border-color)' }}>
                                                 <button 
                                                     className="icon-btn-danger" 
