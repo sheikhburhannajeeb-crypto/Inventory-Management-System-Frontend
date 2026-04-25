@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Search, Plus, MoreVertical, CreditCard, Edit, Trash2, X } from 'lucide-react';
 import ProductSideList from '../components/ProductSideList';
@@ -163,7 +163,6 @@ const Buyers = () => {
     };
 
     const openEditModal = (row) => {
-        const { txn } = row;
         setModalMode('edit');
         setFormData({
             id: row.id,
@@ -171,9 +170,9 @@ const Buyers = () => {
             phone: row.phone || '',
             address: row.address || '',
             company_name: row.company_name || '',
-            txn_id: txn ? txn.id : null,
+            txn_id: null,
             add_payment: '',
-            remaining_amount: txn ? (Number(txn.total_amount || 0) - Number(txn.paid_amount || 0)) : 0,
+            remaining_amount: row.remainingAmount || 0,
             payment_date: new Date().toISOString().split('T')[0],
             payment_method: 'Cash',
             cash_amount: '',
@@ -284,7 +283,7 @@ const Buyers = () => {
 
             if (modalMode === 'add' && (formData.product_id || finalProductName)) {
                 targetAmountForSplitValidation = Number(formData.paid_amount || 0);
-            } else if (modalMode === 'edit' && formData.txn_id && formData.add_payment) {
+            } else if (modalMode === 'edit' && formData.add_payment) {
                 targetAmountForSplitValidation = Number(formData.add_payment);
             }
 
@@ -302,21 +301,17 @@ const Buyers = () => {
             }
 
             if (modalMode === 'edit') {
-                if (formData.txn_id && formData.add_payment && Number(formData.add_payment) > 0) {
+                if (formData.add_payment && Number(formData.add_payment) > 0) {
                     if (Number(formData.add_payment) > Number(formData.remaining_amount)) {
                         notifyError("Cannot pay more than remaining credit amount.");
                         return;
                     }
-                    // Update the transaction parallel to buyer update
-                    await axios.put(`/api/sales/${formData.txn_id}`, {
-                        add_payment: Number(formData.add_payment),
-                        date: formData.payment_date,
-                        payment_method: actualPaymentMethod,
-                        cash_amount: splitCash,
-                        online_amount: splitOnline
-                    }, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    // The backend `updateBuyer` handles the payment FIFO logic automatically
+                    payload.payment_amount = Number(formData.add_payment);
+                    payload.date = formData.payment_date;
+                    payload.payment_method = actualPaymentMethod;
+                    payload.cash_amount = splitCash;
+                    payload.online_amount = splitOnline;
                 }
 
                 await axios.put(`/api/buyers/${formData.id}`, payload, {
@@ -419,56 +414,60 @@ const Buyers = () => {
         }
     };
 
-    const flattenedData = useMemo(() => {
+    const groupedData = useMemo(() => {
         let filtered = buyers.filter(buyer =>
             buyer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (buyer.company_name && buyer.company_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
             String(buyer.id).includes(searchQuery)
         );
 
-        let flattened = [];
-        filtered.forEach(buyer => {
-            if (buyer.buyer_transactions && buyer.buyer_transactions.length > 0) {
-                buyer.buyer_transactions.forEach(txn => {
-                    flattened.push({ ...buyer, txn });
-                });
-            } else {
-                flattened.push({ ...buyer, txn: null });
+        let enhancedBuyers = filtered.map(buyer => {
+            const txns = buyer.buyer_transactions || [];
+            const totalAmount = txns.reduce((sum, t) => sum + Number(t.total_amount || 0), 0);
+            const paidAmount = txns.reduce((sum, t) => sum + Number(t.paid_amount || 0), 0);
+            const remainingAmount = Math.max(0, totalAmount - paidAmount);
+            
+            const methods = new Set(txns.map(t => t.payment_method).filter(Boolean));
+            let mergedMethod = 'Cash';
+            if (methods.has('Split') || (methods.has('Cash') && methods.has('Online'))) {
+                mergedMethod = 'Split';
+            } else if (methods.has('Online')) {
+                mergedMethod = 'Online';
             }
+
+            return {
+                ...buyer,
+                totalAmount,
+                paidAmount,
+                remainingAmount,
+                mergedMethod
+            };
         });
 
         // Apply Category/Filter
         if (filterOption !== 'all') {
-            flattened = flattened.filter(row => {
-                const remaining = row.txn ? (Number(row.txn.total_amount || 0) - Number(row.txn.paid_amount || 0)) : 0;
-                if (filterOption === 'pending_udhar') return remaining > 0;
-                if (filterOption === 'cleared') return remaining <= 0 && row.txn;
-                if (filterOption === 'method_cash') return row.txn && row.txn.payment_method === 'Cash';
-                if (filterOption === 'method_online') return row.txn && row.txn.payment_method === 'Online';
-                if (filterOption === 'method_split') return row.txn && row.txn.payment_method === 'Split';
+            enhancedBuyers = enhancedBuyers.filter(row => {
+                if (filterOption === 'pending_udhar') return row.remainingAmount > 0;
+                if (filterOption === 'cleared') return row.remainingAmount <= 0 && row.totalAmount > 0;
+                if (filterOption === 'method_cash') return row.mergedMethod === 'Cash' && row.totalAmount > 0;
+                if (filterOption === 'method_online') return row.mergedMethod === 'Online' && row.totalAmount > 0;
+                if (filterOption === 'method_split') return row.mergedMethod === 'Split' && row.totalAmount > 0;
                 return true;
             });
         }
 
         // Apply Sort
-        flattened.sort((a, b) => {
+        enhancedBuyers.sort((a, b) => {
             if (sortOption === 'name_asc') return a.name.localeCompare(b.name);
             if (sortOption === 'name_desc') return b.name.localeCompare(a.name);
-            if (sortOption === 'udhar_desc' || sortOption === 'udhar_asc') {
-                const remA = a.txn ? (Number(a.txn.total_amount || 0) - Number(a.txn.paid_amount || 0)) : 0;
-                const remB = b.txn ? (Number(b.txn.total_amount || 0) - Number(b.txn.paid_amount || 0)) : 0;
-                return sortOption === 'udhar_desc' ? remB - remA : remA - remB;
-            }
-            if (sortOption === 'date_asc' || sortOption === 'date_desc') {
-                const dateA = a.txn?.date ? new Date(a.txn.date).getTime() : 0;
-                const dateB = b.txn?.date ? new Date(b.txn.date).getTime() : 0;
-                if (dateA === 0 && dateB === 0) return sortOption === 'date_desc' ? b.id - a.id : a.id - b.id; // fallback to ID
-                return sortOption === 'date_desc' ? dateB - dateA : dateA - dateB;
-            }
+            if (sortOption === 'udhar_desc') return b.remainingAmount - a.remainingAmount;
+            if (sortOption === 'udhar_asc') return a.remainingAmount - b.remainingAmount;
+            if (sortOption === 'date_asc') return a.id - b.id;
+            if (sortOption === 'date_desc') return b.id - a.id;
             return 0;
         });
 
-        return flattened;
+        return enhancedBuyers;
     }, [buyers, searchQuery, filterOption, sortOption]);
 
     return (
@@ -564,100 +563,122 @@ const Buyers = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {flattenedData.map((row, idx) => {
-                                    const { txn } = row;
-                                    const remainingAmount = txn ? (Number(txn.total_amount || 0) - Number(txn.paid_amount || 0)) : 0;
+                                {groupedData.map((row, idx) => {
+                                    const txns = row.buyer_transactions && row.buyer_transactions.length > 0 
+                                                 ? row.buyer_transactions 
+                                                 : [null];
+                                    const rowSpan = txns.length;
+
                                     return (
-                                        <tr key={txn ? `txn-${txn.id}` : `buyer-${row.id}`} className="animate-fade-in">
-                                            <td>{row.id}</td>
-                                            <td>
-                                                <div className="buyer-name-cell">
-                                                    <div className="buyer-avatar">
-                                                        {row.name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                    <span className="font-medium text-primary">{row.name}</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {row.company_name ? (
-                                                    <span style={{ backgroundColor: 'rgba(56,189,248,0.1)', color: '#38bdf8', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
-                                                        🏢 {row.company_name}
-                                                    </span>
-                                                ) : '-'}
-                                            </td>
-                                            <td onClick={(e) => togglePhone(row.id, e)} style={{ cursor: 'pointer' }}>
-                                                <span className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    {row.phone 
-                                                        ? (showPhones[row.id] ? row.phone : row.phone.replace(/./g, '*')) 
-                                                        : '-'}
-                                                </span>
-                                            </td>
-                                            <td><span className="text-secondary">{row.address || '-'}</span></td>
+                                        <React.Fragment key={`buyer-${row.id}`}>
+                                            {txns.map((txn, tIdx) => (
+                                                <tr key={`buyer-${row.id}-txn-${tIdx}`} className="animate-fade-in" style={tIdx === txns.length - 1 ? { borderBottom: '3px solid var(--border-color)' } : { borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    {tIdx === 0 && (
+                                                        <>
+                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>{row.id}</td>
+                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                <div className="buyer-name-cell">
+                                                                    <div className="buyer-avatar">
+                                                                        {row.name.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                    <span className="font-medium text-primary">{row.name}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                {row.company_name ? (
+                                                                    <span style={{ backgroundColor: 'rgba(56,189,248,0.1)', color: '#38bdf8', padding: '3px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                                        🏢 {row.company_name}
+                                                                    </span>
+                                                                ) : '-'}
+                                                            </td>
+                                                            <td rowSpan={rowSpan} onClick={(e) => togglePhone(row.id, e)} style={{ cursor: 'pointer', verticalAlign: 'middle' }}>
+                                                                <span className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                    {row.phone 
+                                                                        ? (showPhones[row.id] ? row.phone : row.phone.replace(/./g, '*')) 
+                                                                        : '-'}
+                                                                </span>
+                                                            </td>
+                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}><span className="text-secondary">{row.address || '-'}</span></td>
+                                                        </>
+                                                    )}
 
-                                            {txn ? (
-                                                <>
-                                                    <td><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
-                                                    <td>{txn.quantity}</td>
-                                                    <td>Rs. {txn.total_amount}</td>
-                                                    <td>Rs. {txn.paid_amount}</td>
-                                                    <td>
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                            <span style={{ 
-                                                                fontSize: '0.8em', padding: '2px 6px', borderRadius: '4px', fontWeight: 600, width: 'fit-content',
-                                                                background: txn.payment_method === 'Online' ? 'rgba(56,189,248,0.15)' : (txn.payment_method === 'Split' ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)'),
-                                                                color: txn.payment_method === 'Online' ? '#38bdf8' : (txn.payment_method === 'Split' ? '#facc15' : '#4ade80')
-                                                            }}>{txn.payment_method || 'Cash'}</span>
-                                                            {txn.payment_method === 'Split' && (
-                                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(C:{txn.cash_amount} O:{txn.online_amount})</span>
+                                                    {/* Transaction specific columns */}
+                                                    {txn ? (
+                                                        <>
+                                                            <td><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
+                                                            <td>{txn.quantity}</td>
+                                                            <td>Rs. {txn.total_amount}</td>
+                                                        </>
+                                                    ) : (
+                                                        <td colSpan="3" className="text-secondary text-center italic">No transactions</td>
+                                                    )}
+
+                                                    {tIdx === 0 && (
+                                                        <>
+                                                            {row.totalAmount > 0 ? (
+                                                                <>
+                                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                                                                            Rs. {row.paidAmount.toLocaleString()}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                        <span style={{ 
+                                                                            fontSize: '0.8em', padding: '4px 10px', borderRadius: '6px', fontWeight: 600, width: 'fit-content',
+                                                                            background: row.mergedMethod === 'Online' ? 'rgba(56,189,248,0.15)' : (row.mergedMethod === 'Split' ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)'),
+                                                                            color: row.mergedMethod === 'Online' ? '#38bdf8' : (row.mergedMethod === 'Split' ? '#facc15' : '#4ade80')
+                                                                        }}>{row.mergedMethod}</span>
+                                                                    </td>
+                                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                        <span style={{
+                                                                            padding: '6px 10px',
+                                                                            borderRadius: '6px',
+                                                                            fontSize: '0.9em',
+                                                                            fontWeight: 'bold',
+                                                                            display: 'inline-flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '4px',
+                                                                            backgroundColor: row.remainingAmount > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(34, 197, 94, 0.12)',
+                                                                            color: row.remainingAmount > 0 ? '#ef4444' : '#22c55e',
+                                                                            border: `1px solid ${row.remainingAmount > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`
+                                                                        }}>
+                                                                            {row.remainingAmount > 0 ? `⚠️ Rs. ${row.remainingAmount.toLocaleString()}` : '✅ Cleared'}
+                                                                        </span>
+                                                                    </td>
+                                                                </>
+                                                            ) : (
+                                                                <td colSpan="3" rowSpan={rowSpan} className="text-secondary text-center italic" style={{ verticalAlign: 'middle' }}>No transactions</td>
                                                             )}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <span style={{
-                                                            padding: '4px 8px',
-                                                            borderRadius: '6px',
-                                                            fontSize: '0.85em',
-                                                            fontWeight: 'bold',
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px',
-                                                            backgroundColor: remainingAmount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
-                                                            color: remainingAmount > 0 ? '#ef4444' : '#22c55e',
-                                                            border: `1px solid ${remainingAmount > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`
-                                                        }}>
-                                                            {remainingAmount > 0 ? `⚠️ Rs. ${remainingAmount.toLocaleString()} Pending` : '✅ Cleared'}
-                                                        </span>
-                                                    </td>
-                                                </>
-                                            ) : (
-                                                <td colSpan="5" className="text-secondary text-center italic">No transactions</td>
-                                            )}
 
-                                            <td>
-                                                <div className="action-buttons flex gap-2">
-                                                    <button
-                                                        className="icon-btn-small text-accent"
-                                                        title="Edit / Add Payment"
-                                                        onClick={() => openEditModal(row)}
-                                                    >
-                                                        <Edit size={16} />
-                                                    </button>
-                                                    <button
-                                                        className="icon-btn-small text-danger"
-                                                        title="Delete Customer"
-                                                        onClick={() => handleDelete(row.id)}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                <div className="action-buttons flex gap-2">
+                                                                    <button
+                                                                        className="icon-btn-small text-accent"
+                                                                        title="Edit / Add Payment"
+                                                                        onClick={() => openEditModal(row)}
+                                                                    >
+                                                                        <Edit size={16} />
+                                                                    </button>
+                                                                    <button
+                                                                        className="icon-btn-small text-danger"
+                                                                        title="Delete Customer"
+                                                                        onClick={() => handleDelete(row.id)}
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </>
+                                                    )}
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
                                     );
                                 })}
 
-                                {flattenedData.length === 0 && (
+                                {groupedData.length === 0 && (
                                     <tr>
-                                        <td colSpan="11" className="text-center py-8 text-muted">
+                                        <td colSpan="12" className="text-center py-8 text-muted">
                                             No customers or Credit records found.
                                         </td>
                                     </tr>
@@ -774,7 +795,7 @@ const Buyers = () => {
                             )}
 
                             {/* Edit Mode: Update payment */}
-                            {modalMode === 'edit' && formData.txn_id && (
+                            {modalMode === 'edit' && formData.remaining_amount > 0 && (
                                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '4px' }}>
                                     <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--text-muted)', fontWeight: 700 }}>
                                         💳 Make Payment — Due: Rs. {Number(formData.remaining_amount || 0).toLocaleString()}
