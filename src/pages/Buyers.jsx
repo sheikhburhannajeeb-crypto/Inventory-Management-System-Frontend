@@ -435,12 +435,27 @@ const Buyers = () => {
                 mergedMethod = 'Online';
             }
 
+            let totalCash = 0;
+            let totalOnline = 0;
+            txns.forEach(t => {
+                if (t.payment_method === 'Split') {
+                    totalCash += Number(t.cash_amount || 0);
+                    totalOnline += Number(t.online_amount || 0);
+                } else if (t.payment_method === 'Online') {
+                    totalOnline += Number(t.paid_amount || 0);
+                } else {
+                    totalCash += Number(t.paid_amount || 0);
+                }
+            });
+
             return {
                 ...buyer,
                 totalAmount,
                 paidAmount,
                 remainingAmount,
-                mergedMethod
+                mergedMethod,
+                totalCash,
+                totalOnline
             };
         });
 
@@ -623,11 +638,16 @@ const Buyers = () => {
                                                                         </span>
                                                                     </td>
                                                                     <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
-                                                                        <span style={{ 
-                                                                            fontSize: '0.8em', padding: '4px 10px', borderRadius: '6px', fontWeight: 600, width: 'fit-content',
-                                                                            background: row.mergedMethod === 'Online' ? 'rgba(56,189,248,0.15)' : (row.mergedMethod === 'Split' ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)'),
-                                                                            color: row.mergedMethod === 'Online' ? '#38bdf8' : (row.mergedMethod === 'Split' ? '#facc15' : '#4ade80')
-                                                                        }}>{row.mergedMethod}</span>
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                                                                            <span style={{ 
+                                                                                fontSize: '0.8em', padding: '4px 10px', borderRadius: '6px', fontWeight: 600, width: 'fit-content',
+                                                                                background: row.mergedMethod === 'Online' ? 'rgba(56,189,248,0.15)' : (row.mergedMethod === 'Split' ? 'rgba(234,179,8,0.15)' : 'rgba(34,197,94,0.15)'),
+                                                                                color: row.mergedMethod === 'Online' ? '#38bdf8' : (row.mergedMethod === 'Split' ? '#facc15' : '#4ade80')
+                                                                            }}>{row.mergedMethod}</span>
+                                                                            {row.mergedMethod === 'Split' && (
+                                                                                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(C:{row.totalCash} O:{row.totalOnline})</span>
+                                                                            )}
+                                                                        </div>
                                                                     </td>
                                                                     <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
                                                                         <span style={{
