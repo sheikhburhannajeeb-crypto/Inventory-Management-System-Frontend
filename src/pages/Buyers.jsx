@@ -572,7 +572,7 @@ const Buyers = () => {
                                     return (
                                         <React.Fragment key={`buyer-${row.id}`}>
                                             {txns.map((txn, tIdx) => (
-                                                <tr key={`buyer-${row.id}-txn-${tIdx}`} className="animate-fade-in" style={tIdx === txns.length - 1 ? { borderBottom: '3px solid var(--border-color)' } : { borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <tr key={`buyer-${row.id}-txn-${tIdx}`} className="animate-fade-in" style={{ borderBottom: tIdx === txns.length - 1 ? '3px solid var(--border-color)' : '1px solid var(--border-color)' }}>
                                                     {tIdx === 0 && (
                                                         <>
                                                             <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>{row.id}</td>
@@ -607,10 +607,10 @@ const Buyers = () => {
                                                         <>
                                                             <td><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
                                                             <td>{txn.quantity}</td>
-                                                            <td>Rs. {txn.total_amount}</td>
+                                                            <td style={{ borderRight: '1px solid var(--border-color)' }}>Rs. {txn.total_amount}</td>
                                                         </>
                                                     ) : (
-                                                        <td colSpan="3" className="text-secondary text-center italic">No transactions</td>
+                                                        <td colSpan="3" className="text-secondary text-center italic" style={{ borderRight: '1px solid var(--border-color)' }}>No transactions</td>
                                                     )}
 
                                                     {tIdx === 0 && (
