@@ -23,18 +23,27 @@ const Billing = () => {
     const [showProductDropdown, setShowProductDropdown] = useState(false);
     const [skipFocus, setSkipFocus] = useState(false);
 
-    const generateUniqueInvoiceId = () => {
+    const getNextInvoiceIdPreview = () => {
         const now = new Date();
         const yy = String(now.getFullYear()).slice(-2);
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
-        const hh = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        const ss = String(now.getSeconds()).padStart(2, '0');
-        return `${yy}${mm}${dd}-${hh}${min}${ss}`;
+        const datePrefix = `${yy}${mm}${dd}`;
+
+        const storedDate = localStorage.getItem('invoice_date_prefix');
+        let counter = 1;
+
+        if (storedDate === datePrefix) {
+            const storedCounter = localStorage.getItem('invoice_daily_counter');
+            if (storedCounter) {
+                counter = parseInt(storedCounter, 10) + 1;
+            }
+        }
+
+        return `${datePrefix}-${String(counter).padStart(3, '0')}`;
     };
 
-    const [currentInvoiceId, setCurrentInvoiceId] = useState(generateUniqueInvoiceId);
+    const [currentInvoiceId, setCurrentInvoiceId] = useState(getNextInvoiceIdPreview);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -144,10 +153,10 @@ const Billing = () => {
                 setCashAmount(draft.cashAmount || '');
                 setOnlineAmount(draft.onlineAmount || '');
                 setIsEditingGeneratedBill(draft.isEditingGeneratedBill || false);
-                
+
                 setTimeout(() => { skipAutosave.current = false; }, 500);
-            } catch (e) { 
-                console.error('Failed to parse draft', e); 
+            } catch (e) {
+                console.error('Failed to parse draft', e);
                 skipAutosave.current = false;
             }
         }
@@ -156,7 +165,7 @@ const Billing = () => {
     // Continuously auto-save the active draft (debounced slightly by React batching)
     useEffect(() => {
         if (skipAutosave.current) return;
-        
+
         const draftObj = {
             cart,
             customerName,
@@ -169,7 +178,7 @@ const Billing = () => {
             onlineAmount,
             isEditingGeneratedBill
         };
-        
+
         if (cart.length > 0 || customerName) {
             localStorage.setItem('current_billing_draft', JSON.stringify(draftObj));
         } else {
@@ -251,7 +260,7 @@ const Billing = () => {
         setPaidAmount('0');
         setCashAmount('');
         setOnlineAmount('');
-        setCurrentInvoiceId(generateUniqueInvoiceId());
+        setCurrentInvoiceId(getNextInvoiceIdPreview());
         localStorage.removeItem('current_billing_draft');
         setTimeout(() => { skipAutosave.current = false; }, 500);
     };
@@ -348,7 +357,7 @@ const Billing = () => {
                 let itemPaidAmount;
                 if (billType === 'credit') {
                     const ratio = total > 0 ? (itemTotal / total) : 0;
-                    itemPaidAmount = isLastItem 
+                    itemPaidAmount = isLastItem
                         ? (userPaid - cart.slice(0, i).reduce((s, it) => s + Math.round((it.price * it.quantity / total) * userPaid), 0))
                         : Math.round(ratio * userPaid);
                 } else {
@@ -358,15 +367,15 @@ const Billing = () => {
                 let thisCash = 0;
                 let thisOnline = 0;
                 if (paymentMethod === 'Split') {
-                     const ratio = targetPaidAmount > 0 ? (itemPaidAmount / targetPaidAmount) : 0;
-                     thisCash = isLastItem ? currentCashPool : Math.round(ratio * finalCashAmount);
-                     thisOnline = isLastItem ? currentOnlinePool : Math.round(ratio * finalOnlineAmount);
-                     currentCashPool -= thisCash;
-                     currentOnlinePool -= thisOnline;
+                    const ratio = targetPaidAmount > 0 ? (itemPaidAmount / targetPaidAmount) : 0;
+                    thisCash = isLastItem ? currentCashPool : Math.round(ratio * finalCashAmount);
+                    thisOnline = isLastItem ? currentOnlinePool : Math.round(ratio * finalOnlineAmount);
+                    currentCashPool -= thisCash;
+                    currentOnlinePool -= thisOnline;
                 } else if (paymentMethod === 'Cash') {
-                     thisCash = itemPaidAmount;
+                    thisCash = itemPaidAmount;
                 } else if (paymentMethod === 'Online') {
-                     thisOnline = itemPaidAmount;
+                    thisOnline = itemPaidAmount;
                 }
 
                 const saleData = {
@@ -413,6 +422,15 @@ const Billing = () => {
                 }, 500);
             }
 
+            // Increment the daily counter in local storage since the bill is now officially saved
+            if (generatedInvoiceId && generatedInvoiceId.includes('-')) {
+                const parts = generatedInvoiceId.split('-');
+                if (parts.length === 2) {
+                    localStorage.setItem('invoice_date_prefix', parts[0]);
+                    localStorage.setItem('invoice_daily_counter', parseInt(parts[1], 10).toString());
+                }
+            }
+
             // Save the successfully captured final bill to Local Storage
             const savedBillObj = {
                 cart: generatedCartItems, // with txn_ids!
@@ -442,14 +460,14 @@ const Billing = () => {
     const canProceed = (() => {
         // Basic validation
         if (cart.length === 0) return false;
-        
+
         // Credit bill validation - allow partial payments
         if (billType === 'credit') {
             if (!customerName.trim() || !buyerPhone.trim()) return false;
             if (!paidAmount || Number(paidAmount) < 0) return false;
             if (Number(paidAmount) > total) return false;
         }
-        
+
         // Split payment validation - different logic for credit vs regular bills
         if (paymentMethod === 'Split') {
             if (billType === 'credit') {
@@ -457,7 +475,7 @@ const Billing = () => {
                 const cash = Number(cashAmount || 0);
                 const online = Number(onlineAmount || 0);
                 const totalPaid = cash + online;
-                
+
                 if (totalPaid !== Number(paidAmount || 0)) return false;
                 if (cash < 0 || online < 0) return false;
             } else {
@@ -465,22 +483,22 @@ const Billing = () => {
                 const cash = Number(cashAmount || 0);
                 const online = Number(onlineAmount || 0);
                 const totalPaid = cash + online;
-                
+
                 if (totalPaid !== total) return false;
                 if (cash < 0 || online < 0) return false;
             }
         }
-        
+
         // Cash payment validation
         if (paymentMethod === 'Cash' && billType !== 'credit') {
             // For cash bills, no additional validation needed
         }
-        
+
         // Online payment validation
         if (paymentMethod === 'Online' && billType !== 'credit') {
             // For online bills, no additional validation needed
         }
-        
+
         return true;
     })();
 
@@ -491,15 +509,15 @@ const Billing = () => {
                 <div className="panel-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            {isEditingGeneratedBill ? <span style={{color: '#f59e0b'}}>Editing Printed Bill</span> : 'Generate Bill'}
+                            {isEditingGeneratedBill ? <span style={{ color: '#f59e0b' }}>Editing Printed Bill</span> : 'Generate Bill'}
                         </h1>
                         <p className="page-subtitle">
                             {isEditingGeneratedBill ? 'Changes will completely replace the previous bill' : 'Create a new invoice for customer'}
                         </p>
                     </div>
                     {isEditingGeneratedBill && (
-                        <button 
-                            className="btn-danger" 
+                        <button
+                            className="btn-danger"
                             style={{ padding: '8px 16px', fontSize: '0.9rem' }}
                             onClick={() => {
                                 setIsEditingGeneratedBill(false);
@@ -752,8 +770,8 @@ const Billing = () => {
                                                     onMouseDown={() => {
                                                         setSelectedProduct(p.id);
                                                         setProductSearchTerm(`${p.name} - Rs. ${p.price}`);
-                                                        const unitToSet = p.quantity_unit 
-                                                            ? (p.quantity_unit.toLowerCase().startsWith('per ') ? p.quantity_unit : `Per ${p.quantity_unit}`) 
+                                                        const unitToSet = p.quantity_unit
+                                                            ? (p.quantity_unit.toLowerCase().startsWith('per ') ? p.quantity_unit : `Per ${p.quantity_unit}`)
                                                             : 'Per Piece';
                                                         setSelectedUnit(unitToSet);
                                                         setShowProductDropdown(false);
@@ -1046,8 +1064,8 @@ const Billing = () => {
                     </div>
 
                     <div className="flex gap-2 mt-auto bill-actions-container" style={{ flexWrap: 'wrap', marginTop: '20px' }}>
-                        <button 
-                            className="btn-secondary flex-1" 
+                        <button
+                            className="btn-secondary flex-1"
                             onClick={handleDownloadPdf}
                             disabled={!canProceed || loading}
                             style={{ opacity: (!canProceed || loading) ? 0.5 : 1, cursor: (!canProceed || loading) ? 'not-allowed' : 'pointer' }}
@@ -1118,6 +1136,9 @@ const Billing = () => {
                                     setCashAmount(recentGeneratedBill.cashAmount || '');
                                     setOnlineAmount(recentGeneratedBill.onlineAmount || '');
                                     setIsEditingGeneratedBill(true);
+                                    if (recentGeneratedBill.cart && recentGeneratedBill.cart.length > 0 && recentGeneratedBill.cart[0].invoice_id) {
+                                        setCurrentInvoiceId(recentGeneratedBill.cart[0].invoice_id);
+                                    }
                                     setTimeout(() => { skipAutosave.current = false; }, 500);
                                     alertSuccess('Recovered', 'Recent bill loaded into editor!');
                                 }}
