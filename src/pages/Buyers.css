@@ -67,13 +67,23 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px solid var(--glass-border);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.custom-table th:last-child {
+    border-right: none;
 }
 
 .custom-table td {
     padding: 0.8rem 1rem;
     border-bottom: 1px solid var(--glass-border);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
     font-size: 0.85rem;
     vertical-align: middle;
+}
+
+.custom-table td:last-child {
+    border-right: none;
 }
 
 .custom-table tbody tr {
