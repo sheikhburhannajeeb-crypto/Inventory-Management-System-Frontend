@@ -169,8 +169,9 @@ const RecentSales = () => {
                 const isSameBuyer = currentGroup.buyerName === buyerName;
                 const isSameSalesman = currentGroup.salesman === salesman;
                 
-                // Group if same buyer, same salesman, and within 2 minutes (120000 ms)
-                if (isSameBuyer && isSameSalesman && timeDiff < 120000) {
+                // Group if same buyer, same salesman, and within 5 seconds (5000 ms)
+                // This prevents separate bills created back-to-back from merging
+                if (isSameBuyer && isSameSalesman && timeDiff <= 5000) {
                     currentGroup.items.push(sale);
                     currentGroup.totalAmount += Number(sale.total_amount || 0);
                     // Retain the smallest ID as the invoice ID

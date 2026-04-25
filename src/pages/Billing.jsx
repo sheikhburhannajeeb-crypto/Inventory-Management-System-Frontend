@@ -319,6 +319,7 @@ const Billing = () => {
             const actualBillType = billType === 'credit' ? 'CREDIT' : 'REAL';
             const userPaid = billType === 'credit' ? Number(paidAmount || 0) : null;
             const lowStockAlerts = [];
+            const billTimestamp = new Date().toISOString();
 
             let currentCashPool = finalCashAmount;
             let currentOnlinePool = finalOnlineAmount;
@@ -364,7 +365,8 @@ const Billing = () => {
                     quantity_unit: item.cart_unit,
                     payment_method: paymentMethod,
                     cash_amount: thisCash,
-                    online_amount: thisOnline
+                    online_amount: thisOnline,
+                    purchase_date: billTimestamp
                 };
 
                 const res = await axios.post('/api/sales', saleData, {
