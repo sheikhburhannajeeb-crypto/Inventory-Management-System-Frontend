@@ -171,10 +171,10 @@ const RecentSales = () => {
                 const isSameBuyer = currentGroup.buyerName === buyerName;
                 const isSameSalesman = currentGroup.salesman === salesman;
                 
-                // Strictly group by invoice_id if it exists, otherwise fallback to heuristic
+                // Strictly group by invoice_id if it exists, otherwise fallback to heuristic (2 mins for old data)
                 const shouldGroup = (sale.invoice_id && currentGroup.invoice_id)
                     ? (sale.invoice_id === currentGroup.invoice_id)
-                    : (isSameBuyer && isSameSalesman && timeDiff <= 5000);
+                    : (isSameBuyer && isSameSalesman && timeDiff <= 120000);
                 
                 if (shouldGroup) {
                     currentGroup.items.push(sale);
