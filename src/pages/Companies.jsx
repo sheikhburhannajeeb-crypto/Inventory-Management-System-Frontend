@@ -304,7 +304,68 @@ const Companies = () => {
                             const { txns } = companyData;
                             const totals = getCompanyTotals(txns);
                             const isOpen = selectedCompany === companyName;
-                            const uniqueCustomers = new Set(txns.map(t => t.buyerName).filter(Boolean)).size;
+                            
+                            // Group txns by customer
+                            const customerMap = {};
+                            txns.forEach(txn => {
+                                const key = txn.buyer_id || txn.buyerName || 'unknown';
+                                if (!customerMap[key]) {
+                                    customerMap[key] = {
+                                        id: txn.buyer_id || key,
+                                        name: txn.buyerName || '—',
+                                        phone: txn.buyerPhone || '—',
+                                        txns: []
+                                    };
+                                }
+                                customerMap[key].txns.push(txn);
+                            });
+
+                            const groupedCustomers = Object.values(customerMap).map(customer => {
+                                let totalAmount = 0;
+                                let paidAmount = 0;
+                                let totalCash = 0;
+                                let totalOnline = 0;
+                                const methods = new Set();
+
+                                customer.txns.forEach(t => {
+                                    totalAmount += Number(t.total_amount || 0);
+                                    paidAmount += Number(t.paid_amount || 0);
+                                    if (t.payment_method) methods.add(t.payment_method);
+                                    
+                                    if (t.payment_method === 'Split') {
+                                        totalCash += Number(t.cash_amount || 0);
+                                        totalOnline += Number(t.online_amount || 0);
+                                    } else if (t.payment_method === 'Online') {
+                                        totalOnline += Number(t.paid_amount || 0);
+                                    } else if (t.payment_method === 'Company Payment') {
+                                        // Usually company payment is bulk cash or check, we map it to Cash bucket for simplicity
+                                        totalCash += Number(t.paid_amount || 0);
+                                    } else {
+                                        totalCash += Number(t.paid_amount || 0);
+                                    }
+                                });
+
+                                let mergedMethod = 'Cash';
+                                if (methods.has('Split') || (methods.has('Cash') && methods.has('Online'))) {
+                                    mergedMethod = 'Split';
+                                } else if (methods.has('Online')) {
+                                    mergedMethod = 'Online';
+                                } else if (methods.has('Company Payment')) {
+                                    mergedMethod = 'Company Payment';
+                                }
+                                
+                                return {
+                                    ...customer,
+                                    totalAmount,
+                                    paidAmount,
+                                    remainingAmount: totalAmount - paidAmount,
+                                    mergedMethod,
+                                    totalCash,
+                                    totalOnline
+                                };
+                            });
+
+                            const uniqueCustomers = groupedCustomers.length;
 
                             return (
                                 <div key={companyName} className="glass-panel" style={{ borderRadius: '12px', overflow: 'hidden' }}>
@@ -379,66 +440,117 @@ const Companies = () => {
                                                     <table className="data-table">
                                                         <thead>
                                                             <tr>
-                                                                <th>Customer</th>
+                                                                <th>Customer ID</th>
+                                                                <th>Name</th>
                                                                 <th>Phone</th>
+                                                                <th>Date</th>
                                                                 <th>Product</th>
+                                                                <th>Price</th>
                                                                 <th>Qty</th>
-                                                                <th>Total</th>
-                                                                <th>Paid</th>
+                                                                <th>Total Amount</th>
+                                                                <th>Paid Amount</th>
                                                                 <th>Method</th>
                                                                 <th>Remaining</th>
-                                                                <th>Date</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            {txns.map(txn => {
-                                                                const rem = Number(txn.total_amount || 0) - Number(txn.paid_amount || 0);
-                                                                return (
-                                                                    <tr key={txn.id} className="animate-fade-in">
-                                                                        <td>
-                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                                <div style={{
-                                                                                    width: 28, height: 28, borderRadius: '50%',
-                                                                                    background: 'rgba(139,92,246,0.2)',
-                                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                                    fontSize: '0.75rem', fontWeight: 700, color: '#a78bfa'
-                                                                                }}>
-                                                                                    {txn.buyerName?.charAt(0).toUpperCase()}
-                                                                                </div>
-                                                                                <span style={{ fontWeight: 500 }}>{txn.buyerName}</span>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td onClick={(e) => togglePhone(txn.id, e)} style={{ cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                                                            {txn.buyerPhone 
-                                                                                ? (showPhones[txn.id] ? txn.buyerPhone : txn.buyerPhone.replace(/./g, '*')) 
-                                                                                : '-'}
-                                                                        </td>
-                                                                        <td style={{ fontWeight: 500 }}>{txn.products?.name || `Product #${txn.product_id}`}</td>
-                                                                        <td>{txn.quantity}</td>
-                                                                        <td>Rs. {Number(txn.total_amount).toLocaleString()}</td>
-                                                                        <td style={{ color: '#4ade80' }}>Rs. {Number(txn.paid_amount).toLocaleString()}</td>
-                                                                            <td>
-                                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                                <span style={{ 
-                                                                                    fontSize: '0.75em', padding: '2px 5px', borderRadius: '4px', fontWeight: 600, width: 'fit-content',
-                                                                                    background: txn.payment_method === 'Online' ? 'rgba(56,189,248,0.2)' : (txn.payment_method === 'Split' ? 'rgba(234,179,8,0.2)' : (txn.payment_method === 'Company Payment' ? 'rgba(168,85,247,0.2)' : 'rgba(74,222,128,0.2)')),
-                                                                                    color: txn.payment_method === 'Online' ? '#38bdf8' : (txn.payment_method === 'Split' ? '#facc15' : (txn.payment_method === 'Company Payment' ? '#a855f7' : '#4ade80'))
-                                                                                }}>{txn.payment_method || 'Cash'}</span>
-                                                                                {txn.payment_method === 'Split' && (
-                                                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(C:{txn.cash_amount} O:{txn.online_amount})</span>
-                                                                                )}
-                                                                            </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            <span className={`qty-badge ${rem > 0 ? 'low-stock' : 'in-stock'}`}>
-                                                                                Rs. {rem.toLocaleString()}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                                                                            {txn.purchase_date ? new Date(txn.purchase_date).toLocaleDateString() : '-'}
-                                                                        </td>
-                                                                    </tr>
-                                                                );
+                                                            {groupedCustomers.map(customer => {
+                                                                const txnsArray = customer.txns.length > 0 ? customer.txns : [null];
+                                                                const rowSpan = txnsArray.length;
+
+                                                                return txnsArray.map((txn, tIdx) => {
+                                                                    const rowStyle = tIdx === rowSpan - 1 ? { borderBottom: '3px solid var(--border-color)' } : {};
+
+                                                                    return (
+                                                                        <tr key={`${customer.id}-${txn ? txn.id : 'empty'}-${tIdx}`} className="animate-fade-in" style={rowStyle}>
+                                                                            {tIdx === 0 && (
+                                                                                <>
+                                                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle', borderRight: '1px solid var(--border-color)' }}>
+                                                                                        <span className="font-bold text-accent">#{customer.id || 'N/A'}</span>
+                                                                                    </td>
+                                                                                    <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#a78bfa' }}>
+                                                                                                {customer.name?.charAt(0).toUpperCase()}
+                                                                                            </div>
+                                                                                            <span className="font-medium text-primary">{customer.name}</span>
+                                                                                        </div>
+                                                                                    </td>
+                                                                                    <td rowSpan={rowSpan} onClick={(e) => togglePhone(customer.id, e)} style={{ cursor: 'pointer', verticalAlign: 'middle', borderRight: '1px solid var(--border-color)' }}>
+                                                                                        <span className="text-secondary" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                                            {customer.phone 
+                                                                                                ? (showPhones[customer.id] ? customer.phone : customer.phone.replace(/./g, '*')) 
+                                                                                                : '-'}
+                                                                                        </span>
+                                                                                    </td>
+                                                                                </>
+                                                                            )}
+
+                                                                            {/* Transaction specific columns */}
+                                                                            {txn ? (
+                                                                                <>
+                                                                                    <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                                                                                        {txn.purchase_date ? new Date(txn.purchase_date).toLocaleDateString() : '-'}
+                                                                                    </td>
+                                                                                    <td><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
+                                                                                    <td>Rs. {Number(txn.total_amount).toLocaleString()}</td>
+                                                                                    <td style={{ borderRight: '1px solid var(--border-color)' }}>{txn.quantity}</td>
+                                                                                </>
+                                                                            ) : (
+                                                                                <td colSpan="4" className="text-secondary text-center italic" style={{ borderRight: '1px solid var(--border-color)' }}>No transactions</td>
+                                                                            )}
+
+                                                                            {tIdx === 0 && (
+                                                                                <>
+                                                                                    {customer.totalAmount > 0 ? (
+                                                                                        <>
+                                                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                                                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                                                                                                    Rs. {customer.totalAmount.toLocaleString()}
+                                                                                                </span>
+                                                                                            </td>
+                                                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                                                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                                                                                                    Rs. {customer.paidAmount.toLocaleString()}
+                                                                                                </span>
+                                                                                            </td>
+                                                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                                                                                                    <span style={{ 
+                                                                                                        fontSize: '0.8em', padding: '4px 10px', borderRadius: '6px', fontWeight: 600, width: 'fit-content',
+                                                                                                        background: customer.mergedMethod === 'Online' ? 'rgba(56,189,248,0.15)' : (customer.mergedMethod === 'Split' ? 'rgba(234,179,8,0.15)' : (customer.mergedMethod === 'Company Payment' ? 'rgba(168,85,247,0.15)' : 'rgba(34,197,94,0.15)')),
+                                                                                                        color: customer.mergedMethod === 'Online' ? '#38bdf8' : (customer.mergedMethod === 'Split' ? '#facc15' : (customer.mergedMethod === 'Company Payment' ? '#a855f7' : '#4ade80'))
+                                                                                                    }}>{customer.mergedMethod}</span>
+                                                                                                    {customer.mergedMethod === 'Split' && (
+                                                                                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(C:{customer.totalCash} O:{customer.totalOnline})</span>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </td>
+                                                                                            <td rowSpan={rowSpan} style={{ verticalAlign: 'middle' }}>
+                                                                                                <span style={{
+                                                                                                    padding: '6px 10px',
+                                                                                                    borderRadius: '6px',
+                                                                                                    fontSize: '0.9em',
+                                                                                                    fontWeight: 'bold',
+                                                                                                    display: 'inline-flex',
+                                                                                                    alignItems: 'center',
+                                                                                                    gap: '4px',
+                                                                                                    backgroundColor: customer.remainingAmount > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(34, 197, 94, 0.12)',
+                                                                                                    color: customer.remainingAmount > 0 ? '#ef4444' : '#22c55e',
+                                                                                                    border: `1px solid ${customer.remainingAmount > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`
+                                                                                                }}>
+                                                                                                    {customer.remainingAmount > 0 ? `⚠️ Rs. ${customer.remainingAmount.toLocaleString()}` : '✅ Cleared'}
+                                                                                                </span>
+                                                                                            </td>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <td colSpan="4" rowSpan={rowSpan} className="text-secondary text-center italic" style={{ verticalAlign: 'middle' }}>No transactions</td>
+                                                                                    )}
+                                                                                </>
+                                                                            )}
+                                                                        </tr>
+                                                                    );
+                                                                });
                                                             })}
                                                         </tbody>
                                                     </table>
