@@ -15,7 +15,7 @@ const Buyers = () => {
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [sortOption, setSortOption] = useState('date_desc');
-    const [filterOption, setFilterOption] = useState('all');
+    const [filterOption, setFilterOption] = useState('has_transactions');
     const [totalOutstanding, setTotalOutstanding] = useState(0);
 
     // Side List State
@@ -462,6 +462,8 @@ const Buyers = () => {
         // Apply Category/Filter
         if (filterOption !== 'all') {
             enhancedBuyers = enhancedBuyers.filter(row => {
+                if (filterOption === 'has_transactions') return row.totalAmount > 0;
+                if (filterOption === 'no_transactions') return row.totalAmount === 0;
                 if (filterOption === 'pending_udhar') return row.remainingAmount > 0;
                 if (filterOption === 'cleared') return row.remainingAmount <= 0 && row.totalAmount > 0;
                 if (filterOption === 'method_cash') return row.mergedMethod === 'Cash' && row.totalAmount > 0;
@@ -532,12 +534,14 @@ const Buyers = () => {
                             value={filterOption} 
                             onChange={(e) => setFilterOption(e.target.value)}
                             options={[
+                                { value: "has_transactions", label: "With Transactions" },
                                 { value: "all", label: "All Customers" },
                                 { value: "pending_udhar", label: "Pending Udhar" },
                                 { value: "cleared", label: "Cleared" },
                                 { value: "method_cash", label: "Paid in Cash" },
                                 { value: "method_online", label: "Paid in Online" },
-                                { value: "method_split", label: "Split Payment" }
+                                { value: "method_split", label: "Split Payment" },
+                                { value: "no_transactions", label: "No Transactions (Ghost)" }
                             ]}
                         />
                         <CustomDropdown 

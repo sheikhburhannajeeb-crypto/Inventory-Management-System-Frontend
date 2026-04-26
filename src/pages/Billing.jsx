@@ -349,64 +349,86 @@ const Billing = () => {
             let currentCashPool = finalCashAmount;
             let currentOnlinePool = finalOnlineAmount;
 
-            for (let i = 0; i < cart.length; i++) {
-                const item = cart[i];
-                const itemTotal = item.price * item.quantity;
-                const isLastItem = i === cart.length - 1;
+            // Track created sale IDs for rollback if partial failure
+            const createdSaleIds = [];
 
-                let itemPaidAmount;
-                if (billType === 'credit') {
-                    const ratio = total > 0 ? (itemTotal / total) : 0;
-                    itemPaidAmount = isLastItem
-                        ? (userPaid - cart.slice(0, i).reduce((s, it) => s + Math.round((it.price * it.quantity / total) * userPaid), 0))
-                        : Math.round(ratio * userPaid);
-                } else {
-                    itemPaidAmount = itemTotal;
+            try {
+                for (let i = 0; i < cart.length; i++) {
+                    const item = cart[i];
+                    const itemTotal = item.price * item.quantity;
+                    const isLastItem = i === cart.length - 1;
+
+                    let itemPaidAmount;
+                    if (billType === 'credit') {
+                        const ratio = total > 0 ? (itemTotal / total) : 0;
+                        itemPaidAmount = isLastItem
+                            ? (userPaid - cart.slice(0, i).reduce((s, it) => s + Math.round((it.price * it.quantity / total) * userPaid), 0))
+                            : Math.round(ratio * userPaid);
+                    } else {
+                        itemPaidAmount = itemTotal;
+                    }
+
+                    let thisCash = 0;
+                    let thisOnline = 0;
+                    if (paymentMethod === 'Split') {
+                        const ratio = targetPaidAmount > 0 ? (itemPaidAmount / targetPaidAmount) : 0;
+                        thisCash = isLastItem ? currentCashPool : Math.round(ratio * finalCashAmount);
+                        thisOnline = isLastItem ? currentOnlinePool : Math.round(ratio * finalOnlineAmount);
+                        currentCashPool -= thisCash;
+                        currentOnlinePool -= thisOnline;
+                    } else if (paymentMethod === 'Cash') {
+                        thisCash = itemPaidAmount;
+                    } else if (paymentMethod === 'Online') {
+                        thisOnline = itemPaidAmount;
+                    }
+
+                    const saleData = {
+                        product_id: item.id,
+                        quantity: item.quantity,
+                        total_amount: itemTotal,
+                        bill_type: actualBillType,
+                        buyer_id: buyerId,
+                        buyer_name: customerName || 'Cash Walk-in Customer',
+                        company_name: companyName || null,
+                        paid_amount: itemPaidAmount,
+                        quantity_unit: item.cart_unit,
+                        payment_method: paymentMethod,
+                        cash_amount: thisCash,
+                        online_amount: thisOnline,
+                        purchase_date: billTimestamp,
+                        invoice_id: generatedInvoiceId
+                    };
+
+                    const res = await axios.post('/api/sales', saleData, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+
+                    const newSaleId = res.data.data?.id;
+                    if (newSaleId) createdSaleIds.push(newSaleId);
+
+                    // Attach ID to item for future recovery/editing
+                    generatedCartItems[i].txn_id = newSaleId;
+
+                    const newRemaining = item.remaining_quantity - item.quantity;
+                    const threshold = item.low_stock_threshold !== undefined && item.low_stock_threshold !== null ? item.low_stock_threshold : 10;
+                    if (newRemaining <= threshold) {
+                        lowStockAlerts.push(`${item.name} (${newRemaining} left)`);
+                    }
                 }
-
-                let thisCash = 0;
-                let thisOnline = 0;
-                if (paymentMethod === 'Split') {
-                    const ratio = targetPaidAmount > 0 ? (itemPaidAmount / targetPaidAmount) : 0;
-                    thisCash = isLastItem ? currentCashPool : Math.round(ratio * finalCashAmount);
-                    thisOnline = isLastItem ? currentOnlinePool : Math.round(ratio * finalOnlineAmount);
-                    currentCashPool -= thisCash;
-                    currentOnlinePool -= thisOnline;
-                } else if (paymentMethod === 'Cash') {
-                    thisCash = itemPaidAmount;
-                } else if (paymentMethod === 'Online') {
-                    thisOnline = itemPaidAmount;
+            } catch (saleErr) {
+                // ── ROLLBACK: undo any sales already created ──
+                for (const saleId of createdSaleIds) {
+                    try {
+                        await axios.delete(`/api/sales/${saleId}`, { headers: { Authorization: `Bearer ${token}` } });
+                    } catch (_) { /* best-effort */ }
                 }
-
-                const saleData = {
-                    product_id: item.id,
-                    quantity: item.quantity,
-                    total_amount: itemTotal,
-                    bill_type: actualBillType,
-                    buyer_id: buyerId,
-                    buyer_name: customerName || 'Cash Walk-in Customer',
-                    company_name: companyName || null,
-                    paid_amount: itemPaidAmount,
-                    quantity_unit: item.cart_unit,
-                    payment_method: paymentMethod,
-                    cash_amount: thisCash,
-                    online_amount: thisOnline,
-                    purchase_date: billTimestamp,
-                    invoice_id: generatedInvoiceId
-                };
-
-                const res = await axios.post('/api/sales', saleData, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                // Attach ID to item for future recovery/editing
-                generatedCartItems[i].txn_id = res.data.data?.id;
-
-                const newRemaining = item.remaining_quantity - item.quantity;
-                const threshold = item.low_stock_threshold !== undefined && item.low_stock_threshold !== null ? item.low_stock_threshold : 10;
-                if (newRemaining <= threshold) {
-                    lowStockAlerts.push(`${item.name} (${newRemaining} left)`);
+                // ── ROLLBACK: delete the orphaned buyer (prevents "No transactions" ghost) ──
+                if (buyerId) {
+                    try {
+                        await axios.delete(`/api/buyers/${buyerId}`, { headers: { Authorization: `Bearer ${token}` } });
+                    } catch (_) { /* best-effort */ }
                 }
+                throw saleErr; // re-throw to outer catch
             }
 
             if (billType === 'credit') {
@@ -452,6 +474,7 @@ const Billing = () => {
             setLoading(false);
         }
     };
+
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const total = subtotal;
