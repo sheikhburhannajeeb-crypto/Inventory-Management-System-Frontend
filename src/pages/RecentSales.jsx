@@ -141,56 +141,35 @@ const RecentSales = () => {
             return true;
         });
 
-        // 1. Sort strictly by date descending to group chronologically (fallback to ID descending)
+        // 1. Sort strictly by date descending (fallback to ID descending)
         filtered.sort((a, b) => {
             const diff = new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime();
             if (diff === 0) return b.id - a.id;
             return diff;
         });
 
-        // 2. Group adjacent sales into Invoices
-        const groups = [];
-        let currentGroup = null;
+        // 2. Group by invoice_id (Map-based — handles non-adjacent rows with same invoice_id)
+        //    For legacy records without invoice_id, fall back to 2-minute + same buyer/salesman heuristic.
+        const groupMap = new Map();   // invoice_id  → group object
+        const groupOrder = [];        // preserves first-seen order for sorting
 
         filtered.forEach(sale => {
             const saleTime = new Date(sale.purchase_date).getTime();
             const buyerName = sale.buyers?.name || 'Cash Sale';
             const salesman = sale.users?.name || '-';
             const phone = sale.buyers?.phone || '';
-            
-            if (!currentGroup) {
-                currentGroup = {
-                    id: sale.invoice_id || sale.id, // Use explicit invoice_id if available
-                    invoice_id: sale.invoice_id,
-                    buyerName,
-                    phone,
-                    salesman,
-                    time: saleTime,
-                    date: sale.purchase_date,
-                    totalAmount: Number(sale.total_amount || 0),
-                    items: [sale]
-                };
-            } else {
-                const timeDiff = Math.abs(currentGroup.time - saleTime);
-                const isSameBuyer = currentGroup.buyerName === buyerName;
-                const isSameSalesman = currentGroup.salesman === salesman;
-                
-                // Strictly group by invoice_id if it exists, otherwise fallback to heuristic (2 mins for old data)
-                const shouldGroup = (sale.invoice_id && currentGroup.invoice_id)
-                    ? (sale.invoice_id === currentGroup.invoice_id)
-                    : (isSameBuyer && isSameSalesman && timeDiff <= 120000);
-                
-                if (shouldGroup) {
-                    currentGroup.items.push(sale);
-                    currentGroup.totalAmount += Number(sale.total_amount || 0);
-                    // Retain the smallest ID as a fallback, but keep invoice_id
-                    if (!currentGroup.invoice_id && sale.id < currentGroup.id) {
-                        currentGroup.id = sale.id;
-                    }
+
+            if (sale.invoice_id) {
+                // ── Keyed path: always group by invoice_id ──
+                if (groupMap.has(sale.invoice_id)) {
+                    const grp = groupMap.get(sale.invoice_id);
+                    grp.items.push(sale);
+                    grp.totalAmount += Number(sale.total_amount || 0);
+                    // Keep the earliest time so sorting stays stable
+                    if (saleTime > grp.time) grp.time = saleTime;
                 } else {
-                    groups.push(currentGroup);
-                    currentGroup = {
-                        id: sale.invoice_id || sale.id,
+                    const grp = {
+                        id: sale.invoice_id,
                         invoice_id: sale.invoice_id,
                         buyerName,
                         phone,
@@ -200,10 +179,40 @@ const RecentSales = () => {
                         totalAmount: Number(sale.total_amount || 0),
                         items: [sale]
                     };
+                    groupMap.set(sale.invoice_id, grp);
+                    groupOrder.push(grp);
+                }
+            } else {
+                // ── Heuristic path for legacy records (no invoice_id) ──
+                // Try to attach to the last heuristic group within 2 minutes
+                const lastHeuristic = groupOrder.length > 0 ? groupOrder[groupOrder.length - 1] : null;
+                const timeDiff = lastHeuristic ? Math.abs(lastHeuristic.time - saleTime) : Infinity;
+                const isSameBuyer = lastHeuristic?.buyerName === buyerName;
+                const isSameSalesman = lastHeuristic?.salesman === salesman;
+                const isHeuristic = !lastHeuristic?.invoice_id;
+
+                if (lastHeuristic && isHeuristic && isSameBuyer && isSameSalesman && timeDiff <= 120000) {
+                    lastHeuristic.items.push(sale);
+                    lastHeuristic.totalAmount += Number(sale.total_amount || 0);
+                    if (sale.id < lastHeuristic.id) lastHeuristic.id = sale.id;
+                } else {
+                    const grp = {
+                        id: sale.id,
+                        invoice_id: null,
+                        buyerName,
+                        phone,
+                        salesman,
+                        time: saleTime,
+                        date: sale.purchase_date,
+                        totalAmount: Number(sale.total_amount || 0),
+                        items: [sale]
+                    };
+                    groupOrder.push(grp);
                 }
             }
         });
-        if (currentGroup) groups.push(currentGroup);
+
+        const groups = groupOrder;
 
         // 3. Apply user sort option to the GROUPS
         groups.sort((a, b) => {
