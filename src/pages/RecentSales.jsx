@@ -330,7 +330,7 @@ const RecentSales = () => {
             </div>
 
             {/* Search */}
-            <div className="controls-bar glass-panel" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="controls-bar glass-panel" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', position: 'relative', zIndex: 50 }}>
                 <div className="search-wrapper" style={{ flex: '1', minWidth: '300px' }}>
                     <Search className="search-icon" size={20} />
                     <input
