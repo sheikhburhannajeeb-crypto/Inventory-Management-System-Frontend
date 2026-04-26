@@ -408,8 +408,15 @@ const RecentSales = () => {
                                 const groupPaidAmount = group.items.reduce((s, item) => s + Number(item.paid_amount || 0), 0);
                                 const groupPending = groupTotalAmount - groupPaidAmount;
                                 const groupMethod = group.items[0]?.payment_method || 'Cash';
+                                // Sum cash/online across items — each item stores its own allocated portion
+                                // These are correct proportional splits so summing gives invoice-level totals
                                 const groupCash = group.items.reduce((s, item) => s + Number(item.cash_amount || 0), 0);
                                 const groupOnline = group.items.reduce((s, item) => s + Number(item.online_amount || 0), 0);
+                                // Sanity-check: if C+O exceeds groupPaidAmount, data was stored redundantly → fallback to first item
+                                const splitTotal = groupCash + groupOnline;
+                                const displayCash   = splitTotal > groupPaidAmount + 1 ? Number(group.items[0]?.cash_amount   || 0) : groupCash;
+                                const displayOnline = splitTotal > groupPaidAmount + 1 ? Number(group.items[0]?.online_amount || 0) : groupOnline;
+
 
                                 return group.items.map((sale, tIdx) => {
                                     const rowStyle = tIdx === rowSpan - 1 ? { borderBottom: '3px solid var(--border-color)' } : { borderBottom: '1px solid rgba(255,255,255,0.05)' };
@@ -454,7 +461,7 @@ const RecentSales = () => {
                                                         }}>{groupMethod}</span>
                                                         {groupMethod === 'Split' && (
                                                             <div style={{ fontSize: '0.65em', color: '#666', marginTop: '4px' }}>
-                                                                C: {groupCash} | O: {groupOnline}
+                                                                C: {displayCash.toLocaleString()} | O: {displayOnline.toLocaleString()}
                                                             </div>
                                                         )}
                                                     </td>
