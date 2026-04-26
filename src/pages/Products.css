@@ -2,7 +2,7 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    height: 100%;
+    /* height managed by global index.css — never clip content */
 }
 
 .page-header {
