@@ -6,6 +6,7 @@ import CustomDatePicker from '../components/CustomDatePicker';
 import ProductSideList from '../components/ProductSideList';
 import ScrollableTable from '../components/ScrollableTable';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 import './Products.css';
 
 const Products = () => {
@@ -474,10 +475,13 @@ const Products = () => {
 
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
-            const query = searchQuery.toLowerCase();
-            const matchesSearch = product.name.toLowerCase().includes(query) ||
-                String(product.id).includes(query) ||
-                formatProductId(product.id).toLowerCase().includes(query);
+            const matchesSearch =
+                fuzzyMatch(searchQuery, product.name) ||
+                fuzzyMatch(searchQuery, String(product.id)) ||
+                fuzzyMatch(searchQuery, formatProductId(product.id)) ||
+                fuzzyMatch(searchQuery, product.category) ||
+                fuzzyMatch(searchQuery, product.color) ||
+                fuzzyMatch(searchQuery, product.purchased_from);
 
             let matchesCategory = true;
             const remaining = Number(product.remaining_quantity || 0);

@@ -5,6 +5,7 @@ import CustomDropdown from '../components/CustomDropdown';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
 import ScrollableTable from '../components/ScrollableTable';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 import './Expenses.css';
 
 const API_URL = '/api/expenses';
@@ -103,8 +104,9 @@ const Expenses = () => {
 
     const { filteredExpenses, totalExpenses } = useMemo(() => {
         let filtered = expenses.filter(exp => {
-            const matchesSearch = exp.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (exp.description && exp.description.toLowerCase().includes(searchTerm.toLowerCase()));
+            const matchesSearch =
+                fuzzyMatch(searchTerm, exp.category) ||
+                fuzzyMatch(searchTerm, exp.description);
             
             if (!matchesSearch) return false;
             if (filterCategory !== 'all' && exp.category !== filterCategory) return false;

@@ -5,6 +5,7 @@ import { notifySuccess, notifyError, confirmAction } from '../utils/notification
 import ExpandableSupplierCard from '../components/ExpandableSupplierCard';
 import CustomDropdown from '../components/CustomDropdown';
 import ProductSideList from '../components/ProductSideList';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 import './Suppliers.css';
 
 const Suppliers = () => {
@@ -104,11 +105,13 @@ const Suppliers = () => {
 
     const filteredSuppliers = suppliers
         .filter(supplier => {
-            const matchesSearch = supplier.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (supplier.company_name && supplier.company_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                (supplier.phone && supplier.phone.includes(searchQuery));
-            
-            if(!matchesSearch) return false;
+            const matchesSearch =
+                fuzzyMatch(searchQuery, supplier.name) ||
+                fuzzyMatch(searchQuery, supplier.company_name) ||
+                fuzzyMatch(searchQuery, supplier.phone) ||
+                fuzzyMatch(searchQuery, supplier.category);
+
+            if (!matchesSearch) return false;
 
             const remaining = (supplier.supplier_transactions || []).reduce((acc, t) => acc + (Number(t.total_amount || 0) - Number(t.paid_amount || 0)), 0);
 
@@ -880,10 +883,10 @@ const Suppliers = () => {
                                                     onClick={() => setShowProductDropdown(true)} />
                                                 {showProductDropdown && (
                                                     <div className="dropdown-options glass-panel">
-                                                        {productsList.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).map(p => (
+                                                        {productsList.filter(p => fuzzyMatch(productSearch, p.name)).map(p => (
                                                             <div key={p.id} className="dropdown-option" onClick={() => handleProductSelect(p)}>{p.name}</div>
                                                         ))}
-                                                        {productsList.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                                                        {productsList.filter(p => fuzzyMatch(productSearch, p.name)).length === 0 && (
                                                             <div className="dropdown-option text-muted">No products found</div>
                                                         )}
                                                     </div>

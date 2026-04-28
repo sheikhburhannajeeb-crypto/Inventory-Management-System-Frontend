@@ -6,6 +6,7 @@ import CustomDatePicker from '../components/CustomDatePicker';
 import CustomDropdown from '../components/CustomDropdown';
 import { notifySuccess, notifyError, confirmAction } from '../utils/notifications';
 import ScrollableTable from '../components/ScrollableTable';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 import './Buyers.css';
 
 const Buyers = () => {
@@ -416,9 +417,11 @@ const Buyers = () => {
 
     const groupedData = useMemo(() => {
         let filtered = buyers.filter(buyer =>
-            buyer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (buyer.company_name && buyer.company_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            String(buyer.id).includes(searchQuery)
+            fuzzyMatch(searchQuery, buyer.name) ||
+            fuzzyMatch(searchQuery, buyer.company_name) ||
+            fuzzyMatch(searchQuery, String(buyer.id)) ||
+            fuzzyMatch(searchQuery, buyer.phone) ||
+            fuzzyMatch(searchQuery, buyer.address)
         );
 
         let enhancedBuyers = filtered.map(buyer => {
@@ -791,12 +794,12 @@ const Buyers = () => {
                                                     onClick={() => setShowProductDropdown(true)} />
                                                 {showProductDropdown && (
                                                     <div className="dropdown-options glass-panel">
-                                                        {productsList.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).map(p => (
+                                                        {productsList.filter(p => fuzzyMatch(productSearch, p.name)).map(p => (
                                                             <div key={p.id} className="dropdown-option" onClick={() => handleProductSelect(p)}>
                                                                 {p.name} <span style={{ fontSize: '0.8em', color: 'var(--text-muted)' }}>(Qty: {p.remaining_quantity})</span>
                                                             </div>
                                                         ))}
-                                                        {productsList.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                                                        {productsList.filter(p => fuzzyMatch(productSearch, p.name)).length === 0 && (
                                                             <div className="dropdown-option text-muted">No products found</div>
                                                         )}
                                                     </div>

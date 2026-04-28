@@ -4,6 +4,7 @@ import { Search, Building2, CreditCard, ChevronDown, ChevronUp, X } from 'lucide
 import { notifySuccess, notifyError } from '../utils/notifications';
 import ScrollableTable from '../components/ScrollableTable';
 import CustomDropdown from '../components/CustomDropdown';
+import { fuzzyMatch } from '../utils/fuzzySearch';
 import './Companies.css';
 
 const Companies = () => {
@@ -17,6 +18,7 @@ const Companies = () => {
     const [payModal, setPayModal] = useState(null);
     const [payAmount, setPayAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('Company Payment');
+    const [paymentDate, setPaymentDate] = useState(new Date().toISOString().split('T')[0]);
     const [cashAmount, setCashAmount] = useState('');
     const [onlineAmount, setOnlineAmount] = useState('');
     const [paying, setPaying] = useState(false);
@@ -92,7 +94,7 @@ const Companies = () => {
 
         const list = Object.entries(cMap)
             .filter(([name, data]) => {
-                if (!name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+                if (!fuzzyMatch(searchQuery, name)) return false;
                 if (filterOption === 'all') return true;
 
                 const totals = data.txns.reduce((acc, txn) => {
@@ -161,6 +163,7 @@ const Companies = () => {
     const openPayModal = (companyName, companyData) => {
         setPayAmount('');
         setPaymentMethod('Company Payment');
+        setPaymentDate(new Date().toISOString().split('T')[0]);
         setCashAmount('');
         setOnlineAmount('');
         setPayModal({ companyName, companyData, isCompanyPayment: true });
@@ -201,7 +204,7 @@ const Companies = () => {
             await axios.post('/api/buyers/company-payment', {
                 company_name: payModal.companyName,
                 payment_amount: amt,
-                date: new Date().toISOString().split('T')[0],
+                date: paymentDate,
                 payment_method: paymentMethod,
                 cash_amount: Number(cashAmount || 0),
                 online_amount: Number(onlineAmount || 0)
@@ -606,29 +609,41 @@ const Companies = () => {
                                 </p>
                             </div>
 
-                            <div className="input-group">
-                                <label>Payment Amount (Rs) *</label>
-                                <input
-                                    type="number"
-                                    className="input-field"
-                                    placeholder="Enter amount received..."
-                                    min="1"
-                                    max={payModal.companyData.total_remaining}
-                                    value={payAmount}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setPayAmount(val);
-                                        if (paymentMethod === 'Split') {
-                                            setCashAmount(val);
-                                            setOnlineAmount('0');
-                                        }
-                                    }}
-                                    autoFocus
-                                    required
-                                />
-                                <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
-                                    Maximum amount: Rs. {payModal.companyData.total_remaining.toLocaleString()}
-                                </small>
+                            <div className="input-group" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label>Payment Amount (Rs) *</label>
+                                    <input
+                                        type="number"
+                                        className="input-field"
+                                        placeholder="Enter amount received..."
+                                        min="1"
+                                        max={payModal.companyData.total_remaining}
+                                        value={payAmount}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setPayAmount(val);
+                                            if (paymentMethod === 'Split') {
+                                                setCashAmount(val);
+                                                setOnlineAmount('0');
+                                            }
+                                        }}
+                                        autoFocus
+                                        required
+                                    />
+                                    <small style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '4px', display: 'block' }}>
+                                        Max: Rs. {payModal.companyData.total_remaining.toLocaleString()}
+                                    </small>
+                                </div>
+                                <div style={{ width: '160px' }}>
+                                    <label>Payment Date *</label>
+                                    <input
+                                        type="date"
+                                        className="input-field"
+                                        value={paymentDate}
+                                        onChange={(e) => setPaymentDate(e.target.value)}
+                                        required
+                                    />
+                                </div>
                             </div>
 
                             <div className="input-group" style={{ marginTop: '16px' }}>
