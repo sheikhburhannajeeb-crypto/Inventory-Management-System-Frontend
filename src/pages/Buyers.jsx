@@ -219,7 +219,14 @@ const Buyers = () => {
                         const onlineVal = Math.min(Math.max(Math.round(Number(value)) || 0, 0), totalPaid);
                         newData.online_amount = onlineVal;
                         newData.cash_amount = totalPaid - onlineVal;
+                    } else if (name === 'add_payment' || name === 'paid_amount') {
+                        // Payment amount changed — reset split to full cash
+                        newData.cash_amount = totalPaid;
+                        newData.online_amount = 0;
                     }
+                } else {
+                    newData.cash_amount = '';
+                    newData.online_amount = '';
                 }
             }
 
@@ -921,7 +928,19 @@ const Buyers = () => {
                                     <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                                         {['Cash', 'Online', 'Split'].map(pm => (
                                             <button key={pm} type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, payment_method: pm, cash_amount: '', online_amount: '' }))}
+                                                onClick={() => {
+                                                    const totalPaid = Math.round(
+                                                        Number(formData.add_payment) > 0
+                                                            ? Number(formData.add_payment)
+                                                            : Number(formData.paid_amount) || 0
+                                                    );
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        payment_method: pm,
+                                                        cash_amount: pm === 'Split' ? totalPaid : '',
+                                                        online_amount: pm === 'Split' ? 0 : ''
+                                                    }));
+                                                }}
                                                 style={{
                                                     flex: 1, padding: '7px 0', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
                                                     background: formData.payment_method === pm ? (pm === 'Cash' ? 'rgba(74,222,128,0.15)' : pm === 'Online' ? 'rgba(56,189,248,0.15)' : 'rgba(251,191,36,0.15)') : 'var(--bg-secondary)',
@@ -937,11 +956,11 @@ const Buyers = () => {
                                         <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                                             <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
                                                 <label>Cash (Rs)</label>
-                                                <input type="number" className="input-field" name="cash_amount" min="0" value={formData.cash_amount} onChange={handleFormChange} placeholder="0" />
+                                                <input type="number" className="input-field" name="cash_amount" min="0" step="1" value={formData.cash_amount} onChange={handleFormChange} placeholder="0" />
                                             </div>
                                             <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
                                                 <label>Online (Rs)</label>
-                                                <input type="number" className="input-field" name="online_amount" min="0" value={formData.online_amount} onChange={handleFormChange} placeholder="0" />
+                                                <input type="number" className="input-field" name="online_amount" min="0" step="1" value={formData.online_amount} onChange={handleFormChange} placeholder="0" />
                                             </div>
                                         </div>
                                     )}

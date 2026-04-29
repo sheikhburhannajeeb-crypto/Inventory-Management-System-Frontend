@@ -667,8 +667,8 @@ const Companies = () => {
                                             const val = e.target.value;
                                             setPayAmount(val);
                                             if (paymentMethod === 'Split') {
-                                                setCashAmount(val);
-                                                setOnlineAmount('0');
+                                                setCashAmount(Math.round(Number(val)) || '');
+                                                setOnlineAmount(0);
                                             }
                                         }}
                                         autoFocus
@@ -714,17 +714,15 @@ const Companies = () => {
                                             className="input-field"
                                             placeholder="Enter cash amount"
                                             min="0"
+                                            step="1"
                                             value={cashAmount}
                                             onChange={(e) => {
-                                                const val = e.target.value;
-                                                setCashAmount(val);
-                                                const numericVal = Number(val) || 0;
-                                                const total = Number(payAmount) || 0;
-                                                if (total > 0 && numericVal <= total) {
-                                                    setOnlineAmount(String(total - numericVal));
-                                                } else if (numericVal > total) {
-                                                    setOnlineAmount('0');
-                                                }
+                                                const cashVal = Math.min(
+                                                    Math.max(Math.round(Number(e.target.value)) || 0, 0),
+                                                    Math.round(Number(payAmount)) || 0
+                                                );
+                                                setCashAmount(cashVal);
+                                                setOnlineAmount((Math.round(Number(payAmount)) || 0) - cashVal);
                                             }}
                                         />
                                     </div>
@@ -735,17 +733,15 @@ const Companies = () => {
                                             className="input-field"
                                             placeholder="Enter online amount"
                                             min="0"
+                                            step="1"
                                             value={onlineAmount}
                                             onChange={(e) => {
-                                                const val = e.target.value;
-                                                setOnlineAmount(val);
-                                                const numericVal = Number(val) || 0;
-                                                const total = Number(payAmount) || 0;
-                                                if (total > 0 && numericVal <= total) {
-                                                    setCashAmount(String(total - numericVal));
-                                                } else if (numericVal > total) {
-                                                    setCashAmount('0');
-                                                }
+                                                const onlineVal = Math.min(
+                                                    Math.max(Math.round(Number(e.target.value)) || 0, 0),
+                                                    Math.round(Number(payAmount)) || 0
+                                                );
+                                                setOnlineAmount(onlineVal);
+                                                setCashAmount((Math.round(Number(payAmount)) || 0) - onlineVal);
                                             }}
                                         />
                                     </div>
