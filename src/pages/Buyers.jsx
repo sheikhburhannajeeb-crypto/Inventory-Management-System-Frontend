@@ -440,6 +440,34 @@ const Buyers = () => {
 
             let totalCash = 0;
             let totalOnline = 0;
+            
+            // Combine txns and grouped payments
+            const combinedTxns = [];
+            txns.forEach(txn => {
+                combinedTxns.push({ type: 'sale', ...txn, sortDate: new Date(txn.purchase_date || 0).getTime() });
+            });
+            
+            const groupedPayments = {};
+            (buyer.buyer_payment_history || []).forEach(pay => {
+                const pDate = pay.date || new Date().toISOString().split('T')[0];
+                const key = `${pDate}_${pay.payment_method || 'Cash'}`;
+                if (!groupedPayments[key]) {
+                    groupedPayments[key] = {
+                        type: 'payment',
+                        date: pDate,
+                        payment_method: pay.payment_method || 'Cash',
+                        amount_paid: 0,
+                        sortDate: new Date(pDate).getTime()
+                    };
+                }
+                groupedPayments[key].amount_paid += Number(pay.amount_paid || 0);
+            });
+            Object.values(groupedPayments).forEach(pay => {
+                if (pay.amount_paid > 0) combinedTxns.push(pay);
+            });
+            
+            combinedTxns.sort((a, b) => (a.sortDate || 0) - (b.sortDate || 0));
+
             txns.forEach(t => {
                 if (t.payment_method === 'Split') {
                     totalCash += Number(t.cash_amount || 0);
@@ -453,6 +481,7 @@ const Buyers = () => {
 
             return {
                 ...buyer,
+                combined_txns: combinedTxns,
                 totalAmount,
                 paidAmount,
                 remainingAmount,
@@ -575,6 +604,7 @@ const Buyers = () => {
                                     <th>Company</th>
                                     <th>Contact</th>
                                     <th>Address</th>
+                                    <th>Date</th>
                                     <th>Product</th>
                                     <th>Qty</th>
                                     <th>Price</th>
@@ -587,8 +617,8 @@ const Buyers = () => {
                             </thead>
                             <tbody>
                                 {groupedData.map((row, idx) => {
-                                    const txns = row.buyer_transactions && row.buyer_transactions.length > 0 
-                                                 ? row.buyer_transactions 
+                                    const txns = row.combined_txns && row.combined_txns.length > 0 
+                                                 ? row.combined_txns 
                                                  : [null];
                                     const rowSpan = txns.length;
 
@@ -627,13 +657,30 @@ const Buyers = () => {
 
                                                     {/* Transaction specific columns */}
                                                     {txn ? (
-                                                        <>
-                                                            <td><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
-                                                            <td>{txn.quantity}</td>
-                                                            <td style={{ borderRight: '1px solid var(--border-color)' }}>Rs. {txn.total_amount}</td>
-                                                        </>
+                                                        txn.type === 'payment' ? (
+                                                            <>
+                                                                <td style={{ color: 'var(--success)' }}>
+                                                                    {txn.date ? new Date(txn.date).toLocaleDateString() : '-'}
+                                                                </td>
+                                                                <td colSpan="2" style={{ color: 'var(--success)' }}>
+                                                                    <span className="font-medium">💰 Payment Received ({txn.payment_method || 'Cash'})</span>
+                                                                </td>
+                                                                <td style={{ borderRight: '1px solid var(--border-color)', color: 'var(--success)' }}>
+                                                                    + Rs. {Number(txn.amount_paid).toLocaleString()}
+                                                                </td>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <td style={{ color: 'var(--text-muted)' }}>
+                                                                    {txn.purchase_date ? new Date(txn.purchase_date).toLocaleDateString() : '-'}
+                                                                </td>
+                                                                <td><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
+                                                                <td>{txn.quantity}</td>
+                                                                <td style={{ borderRight: '1px solid var(--border-color)' }}>Rs. {txn.total_amount}</td>
+                                                            </>
+                                                        )
                                                     ) : (
-                                                        <td colSpan="3" className="text-secondary text-center italic" style={{ borderRight: '1px solid var(--border-color)' }}>No transactions</td>
+                                                        <td colSpan="4" className="text-secondary text-center italic" style={{ borderRight: '1px solid var(--border-color)' }}>No transactions</td>
                                                     )}
 
                                                     {tIdx === 0 && (

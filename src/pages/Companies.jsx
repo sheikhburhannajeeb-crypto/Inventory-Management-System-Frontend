@@ -69,25 +69,53 @@ const Companies = () => {
             cMap[company].buyers.push(buyer);
             (buyer.buyer_transactions || []).forEach(txn => {
                 cMap[company].txns.push({
+                    type: 'sale',
                     ...txn,
                     buyer_id: buyer.id,
                     buyerName: buyer.name,
-                    buyerPhone: buyer.phone
+                    buyerPhone: buyer.phone,
+                    sortDate: new Date(txn.purchase_date || 0).getTime()
                 });
+            });
+            
+            const groupedPayments = {};
+            (buyer.buyer_payment_history || []).forEach(pay => {
+                const pDate = pay.date || new Date().toISOString().split('T')[0];
+                const key = `${pDate}_${pay.payment_method || 'Cash'}`;
+                if (!groupedPayments[key]) {
+                    groupedPayments[key] = {
+                        type: 'payment',
+                        date: pDate,
+                        payment_method: pay.payment_method || 'Cash',
+                        amount_paid: 0,
+                        buyer_id: buyer.id,
+                        buyerName: buyer.name,
+                        buyerPhone: buyer.phone,
+                        sortDate: new Date(pDate).getTime()
+                    };
+                }
+                groupedPayments[key].amount_paid += Number(pay.amount_paid || 0);
+            });
+            Object.values(groupedPayments).forEach(pay => {
+                if (pay.amount_paid > 0) {
+                    cMap[company].txns.push(pay);
+                }
             });
         });
 
         allSales.forEach(sale => {
             const company = sale.company_name?.trim();
             if (!company) return;
-            const alreadyAdded = cMap[company]?.txns.some(t => t.id === sale.id);
+            const alreadyAdded = cMap[company]?.txns.some(t => t.id === sale.id && t.type !== 'payment');
             if (!cMap[company]) cMap[company] = { buyers: [], txns: [] };
             if (!alreadyAdded) {
                 cMap[company].txns.push({
+                    type: 'sale',
                     ...sale,
                     products: sale.products,
                     buyerName: sale.buyers?.name || sale.buyer_name || '—',
-                    buyerPhone: sale.buyers?.phone || '—'
+                    buyerPhone: sale.buyers?.phone || '—',
+                    sortDate: new Date(sale.purchase_date || 0).getTime()
                 });
             }
         });
@@ -331,7 +359,10 @@ const Companies = () => {
                                 let totalOnline = 0;
                                 const methods = new Set();
 
+                                customer.txns.sort((a, b) => (a.sortDate || 0) - (b.sortDate || 0));
+
                                 customer.txns.forEach(t => {
+                                    if (t.type === 'payment') return;
                                     totalAmount += Number(t.total_amount || 0);
                                     paidAmount += Number(t.paid_amount || 0);
                                     if (t.payment_method) methods.add(t.payment_method);
@@ -342,7 +373,6 @@ const Companies = () => {
                                     } else if (t.payment_method === 'Online') {
                                         totalOnline += Number(t.paid_amount || 0);
                                     } else if (t.payment_method === 'Company Payment') {
-                                        // Usually company payment is bulk cash or check, we map it to Cash bucket for simplicity
                                         totalCash += Number(t.paid_amount || 0);
                                     } else {
                                         totalCash += Number(t.paid_amount || 0);
@@ -468,8 +498,8 @@ const Companies = () => {
                                                                     // Check for date change to add a separator border
                                                                     let dateChanged = false;
                                                                     if (tIdx > 0 && txn && txnsArray[tIdx - 1]) {
-                                                                        const prevDate = new Date(txnsArray[tIdx - 1].purchase_date).toLocaleDateString();
-                                                                        const currDate = new Date(txn.purchase_date).toLocaleDateString();
+                                                                        const prevDate = new Date(txnsArray[tIdx - 1].date || txnsArray[tIdx - 1].purchase_date || 0).toLocaleDateString();
+                                                                        const currDate = new Date(txn.date || txn.purchase_date || 0).toLocaleDateString();
                                                                         if (prevDate !== currDate) dateChanged = true;
                                                                     }
 
@@ -502,14 +532,28 @@ const Companies = () => {
 
                                                                             {/* Transaction specific columns */}
                                                                             {txn ? (
-                                                                                <>
-                                                                                    <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem', ...dateSeparatorStyle }}>
-                                                                                        {txn.purchase_date ? new Date(txn.purchase_date).toLocaleDateString() : '-'}
-                                                                                    </td>
-                                                                                    <td style={dateSeparatorStyle}><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
-                                                                                    <td style={dateSeparatorStyle}>Rs. {Number(txn.total_amount).toLocaleString()}</td>
-                                                                                    <td style={{ borderRight: '1px solid var(--border-color)', ...dateSeparatorStyle }}>{txn.quantity}</td>
-                                                                                </>
+                                                                                txn.type === 'payment' ? (
+                                                                                    <>
+                                                                                        <td style={{ color: 'var(--success)', fontSize: '0.82rem', ...dateSeparatorStyle }}>
+                                                                                            {txn.date ? new Date(txn.date).toLocaleDateString() : '-'}
+                                                                                        </td>
+                                                                                        <td colSpan="2" style={{ color: 'var(--success)', ...dateSeparatorStyle }}>
+                                                                                            <span className="font-medium">💰 Payment Received ({txn.payment_method || 'Cash'})</span>
+                                                                                        </td>
+                                                                                        <td style={{ borderRight: '1px solid var(--border-color)', color: 'var(--success)', ...dateSeparatorStyle }}>
+                                                                                            + Rs. {Number(txn.amount_paid).toLocaleString()}
+                                                                                        </td>
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem', ...dateSeparatorStyle }}>
+                                                                                            {txn.purchase_date ? new Date(txn.purchase_date).toLocaleDateString() : '-'}
+                                                                                        </td>
+                                                                                        <td style={dateSeparatorStyle}><span className="font-medium">{txn.products?.name || `Product ID: ${txn.product_id}`}</span></td>
+                                                                                        <td style={dateSeparatorStyle}>Rs. {Number(txn.total_amount).toLocaleString()}</td>
+                                                                                        <td style={{ borderRight: '1px solid var(--border-color)', ...dateSeparatorStyle }}>{txn.quantity}</td>
+                                                                                    </>
+                                                                                )
                                                                             ) : (
                                                                                 <td colSpan="4" className="text-secondary text-center italic" style={{ borderRight: '1px solid var(--border-color)' }}>No transactions</td>
                                                                             )}
