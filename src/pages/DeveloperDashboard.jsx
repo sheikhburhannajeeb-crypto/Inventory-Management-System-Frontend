@@ -7,6 +7,32 @@ import {
 } from 'lucide-react';
 import './DeveloperDashboard.css';
 
+// ── Defined OUTSIDE to keep stable identity across renders (prevents focus loss) ──
+const StatusMsg = ({ msg }) => {
+    if (!msg.text) return null;
+    return (
+        <div className={`status-message ${msg.type}`}>
+            {msg.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+            <span>{msg.text}</span>
+        </div>
+    );
+};
+
+const PwdInput = ({ value, onChange, show, onToggle, placeholder = '••••••••' }) => (
+    <div className="pwd-wrapper">
+        <input
+            type={show ? 'text' : 'password'}
+            className="input-field"
+            placeholder={placeholder}
+            value={value}
+            onChange={onChange}
+        />
+        <button type="button" className="pwd-toggle" onClick={onToggle} tabIndex={-1}>
+            {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+    </div>
+);
+
 const DeveloperDashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('create');
@@ -182,32 +208,6 @@ const DeveloperDashboard = () => {
             setSmLoading(false);
         }
     };
-
-    // ── Helpers ────────────────────────────────────────────────────────────
-    const StatusMsg = ({ msg }) => {
-        if (!msg.text) return null;
-        return (
-            <div className={`status-message ${msg.type}`}>
-                {msg.type === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
-                <span>{msg.text}</span>
-            </div>
-        );
-    };
-
-    const PwdInput = ({ value, onChange, show, onToggle, placeholder = '••••••••' }) => (
-        <div className="pwd-wrapper">
-            <input
-                type={show ? 'text' : 'password'}
-                className="input-field"
-                placeholder={placeholder}
-                value={value}
-                onChange={onChange}
-            />
-            <button type="button" className="pwd-toggle" onClick={onToggle} tabIndex={-1}>
-                {show ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-        </div>
-    );
 
     return (
         <div className="dev-dashboard-container">
