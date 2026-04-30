@@ -114,10 +114,10 @@ const DeveloperDashboard = () => {
                 name: csName, email: csEmail, password: csPassword
             }, { headers: { Authorization: `Bearer ${token}` } });
 
-            setCsMessage({ type: 'success', text: `Salesman "${response.data.salesman.name}" successfully bana diya gaya!` });
+            setCsMessage({ type: 'success', text: `Salesman account for "${response.data.salesman.name}" created successfully!` });
             setCsName(''); setCsEmail(''); setCsPassword('');
         } catch (error) {
-            setCsMessage({ type: 'error', text: error.response?.data?.error || 'Salesman account banane mein error aayi.' });
+            setCsMessage({ type: 'error', text: error.response?.data?.error || 'Failed to create salesman account.' });
         } finally {
             setCsLoading(false);
         }
@@ -144,9 +144,9 @@ const DeveloperDashboard = () => {
             localStorage.setItem('inventory_user', JSON.stringify(updated));
             setUser(updated);
             setMyPassword('');
-            setMyMessage({ type: 'success', text: 'Apki credentials kamiyabi se update ho gayi!' });
+            setMyMessage({ type: 'success', text: 'Your credentials have been updated successfully!' });
         } catch (error) {
-            setMyMessage({ type: 'error', text: error.response?.data?.error || 'Credentials update karne mein error aayi.' });
+            setMyMessage({ type: 'error', text: error.response?.data?.error || 'Failed to update credentials.' });
         } finally {
             setMyLoading(false);
         }
@@ -156,7 +156,7 @@ const DeveloperDashboard = () => {
     const handleUpdateSalesmanCredentials = async (e) => {
         e.preventDefault();
         if (!selectedSalesmanId) {
-            setSmMessage({ type: 'error', text: 'Pehle koi salesman select karein.' });
+            setSmMessage({ type: 'error', text: 'Please select a salesman first.' });
             return;
         }
         setSmLoading(true);
@@ -175,9 +175,9 @@ const DeveloperDashboard = () => {
             // Refresh list
             await fetchSalesmen();
             setSmPassword('');
-            setSmMessage({ type: 'success', text: 'Salesman ki credentials kamiyabi se update ho gayi!' });
+            setSmMessage({ type: 'success', text: 'Salesman credentials updated successfully!' });
         } catch (error) {
-            setSmMessage({ type: 'error', text: error.response?.data?.error || 'Salesman credentials update karne mein error aayi.' });
+            setSmMessage({ type: 'error', text: error.response?.data?.error || 'Failed to update salesman credentials.' });
         } finally {
             setSmLoading(false);
         }
@@ -235,7 +235,7 @@ const DeveloperDashboard = () => {
             <main className="dev-main-content">
                 <div className="dev-header">
                     <h1 className="page-title">Manage System Access</h1>
-                    <p className="page-subtitle">Salesman accounts banayein aur credentials update karein</p>
+                    <p className="page-subtitle">Create salesman accounts and manage credentials</p>
                 </div>
 
                 {/* Tab Bar */}
@@ -244,13 +244,13 @@ const DeveloperDashboard = () => {
                         className={`dev-tab ${activeTab === 'create' ? 'active' : ''}`}
                         onClick={() => setActiveTab('create')}
                     >
-                        <UserPlus size={17} /> Salesman Banayein
+                        <UserPlus size={17} /> Create Salesman
                     </button>
                     <button
                         className={`dev-tab ${activeTab === 'my-creds' ? 'active' : ''}`}
                         onClick={() => setActiveTab('my-creds')}
                     >
-                        <ShieldCheck size={17} /> Meri Credentials
+                        <ShieldCheck size={17} /> My Credentials
                     </button>
                     <button
                         className={`dev-tab ${activeTab === 'salesman' ? 'active' : ''}`}
@@ -270,15 +270,15 @@ const DeveloperDashboard = () => {
                                     <div className="icon-wrapper" style={{ background: 'rgba(56,189,248,0.15)', color: '#38bdf8' }}>
                                         <UserPlus size={24} />
                                     </div>
-                                    <h2>Naya Salesman Register Karein</h2>
+                                    <h2>Register New Salesman</h2>
                                 </div>
-                                <p className="card-desc">Neeche details bhar ker naya salesman account banayein. Woh فوری login kar sakay ga.</p>
+                                <p className="card-desc">Fill in the details below to create a new salesman account. They will be able to log in to the system immediately.</p>
 
                                 <StatusMsg msg={csMessage} />
 
                                 <form onSubmit={handleCreateSalesman} className="dev-form">
                                     <div className="form-group">
-                                        <label>Poora Naam</label>
+                                        <label>Full Name</label>
                                         <input type="text" className="input-field" placeholder="Ali Khan"
                                             value={csName} onChange={e => setCsName(e.target.value)} required />
                                     </div>
@@ -291,10 +291,10 @@ const DeveloperDashboard = () => {
                                         <label>Password</label>
                                         <PwdInput value={csPassword} onChange={e => setCsPassword(e.target.value)}
                                             show={csShowPwd} onToggle={() => setCsShowPwd(p => !p)} />
-                                        <span className="password-hint">Mazboot password dein.</span>
+                                        <span className="password-hint">Provide a strong, secure password.</span>
                                     </div>
                                     <button type="submit" className="btn-primary create-btn" disabled={csLoading}>
-                                        {csLoading ? 'Ban raha hai...' : 'Salesman Account Banayein'}
+                                        {csLoading ? 'Creating Account...' : 'Create Salesman Account'}
                                         {!csLoading && <UserPlus size={18} />}
                                     </button>
                                 </form>
@@ -304,9 +304,9 @@ const DeveloperDashboard = () => {
                                 <div className="info-content">
                                     <h3>System Information</h3>
                                     <ul className="info-list">
-                                        <li><strong>Salesman Access:</strong> Salesman products, customers, suppliers, aur billing manage kar sakta hai.</li>
-                                        <li><strong>Developer Role:</strong> Developer sirf system access manage kar sakta hai.</li>
-                                        <li><strong>Data Isolation:</strong> Har Salesman ka apna data alag hota hai.</li>
+                                        <li><strong>Salesman Access:</strong> Salesmen can manage products, customers, suppliers, and billing.</li>
+                                        <li><strong>Developer Role:</strong> Developers can only manage system access and cannot interact with inventory data.</li>
+                                        <li><strong>Data Isolation:</strong> Each salesman's data is securely isolated.</li>
                                     </ul>
                                     <div className="system-stats">
                                         <div className="stat-box">
@@ -327,31 +327,31 @@ const DeveloperDashboard = () => {
                                     <div className="icon-wrapper" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>
                                         <ShieldCheck size={24} />
                                     </div>
-                                    <h2>Meri Credentials Update Karein</h2>
+                                    <h2>Update My Credentials</h2>
                                 </div>
-                                <p className="card-desc">Apna naam, email ya password update karein. Sirf woh fields bharein jo change karne hain.</p>
+                                <p className="card-desc">Update your name, email or password. Only fill in the fields you want to change.</p>
 
                                 <StatusMsg msg={myMessage} />
 
                                 <form onSubmit={handleUpdateMyCredentials} className="dev-form">
                                     <div className="form-group">
-                                        <label>Naam</label>
-                                        <input type="text" className="input-field" placeholder="Apna naam"
+                                        <label>Name</label>
+                                        <input type="text" className="input-field" placeholder="Your name"
                                             value={myName} onChange={e => setMyName(e.target.value)} />
                                     </div>
                                     <div className="form-group">
                                         <label>Email</label>
-                                        <input type="email" className="input-field" placeholder="Apni email"
+                                        <input type="email" className="input-field" placeholder="Your email"
                                             value={myEmail} onChange={e => setMyEmail(e.target.value)} />
                                     </div>
                                     <div className="form-group">
-                                        <label>Naya Password <span className="optional-tag">(agar change karna hai)</span></label>
+                                        <label>New Password <span className="optional-tag">(leave blank to keep current)</span></label>
                                         <PwdInput value={myPassword} onChange={e => setMyPassword(e.target.value)}
                                             show={myShowPwd} onToggle={() => setMyShowPwd(p => !p)}
-                                            placeholder="Naya password (optional)" />
+                                            placeholder="New password (optional)" />
                                     </div>
                                     <button type="submit" className="btn-primary create-btn" style={{ background: 'linear-gradient(135deg,#7c3aed,#a78bfa)' }} disabled={myLoading}>
-                                        {myLoading ? 'Update ho raha hai...' : 'Meri Credentials Save Karein'}
+                                        {myLoading ? 'Saving...' : 'Save My Credentials'}
                                         {!myLoading && <KeyRound size={18} />}
                                     </button>
                                 </form>
@@ -361,9 +361,9 @@ const DeveloperDashboard = () => {
                                 <div className="info-content">
                                     <h3>Security Tips</h3>
                                     <ul className="info-list">
-                                        <li><strong>Mazboot Password:</strong> Kam az kam 8 characters, numbers aur symbols zaroor shamil karein.</li>
-                                        <li><strong>Email Change:</strong> Email change karne ke baad agli dafa login mein naya email use karein.</li>
-                                        <li><strong>Password Change:</strong> Password update hone ke baad current session mehfooz rahega.</li>
+                                        <li><strong>Strong Password:</strong> Use at least 8 characters including numbers and symbols.</li>
+                                        <li><strong>Email Change:</strong> After changing your email, use the new email on your next login.</li>
+                                        <li><strong>Password Change:</strong> Your current session will remain active after a password update.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -378,19 +378,19 @@ const DeveloperDashboard = () => {
                                     <div className="icon-wrapper" style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80' }}>
                                         <Users size={24} />
                                     </div>
-                                    <h2>Salesman Credentials Update Karein</h2>
+                                    <h2>Update Salesman Credentials</h2>
                                 </div>
-                                <p className="card-desc">Pehle koi salesman select karein, phir uski details update karein.</p>
+                                <p className="card-desc">Select a salesman from the list below, then update their details.</p>
 
                                 <StatusMsg msg={smMessage} />
 
                                 {/* Salesman Selector */}
                                 <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                                    <label>Salesman Select Karein</label>
+                                    <label>Select Salesman</label>
                                     {smListLoading ? (
-                                        <p className="loading-text">Salesmen load ho rahe hain...</p>
+                                        <p className="loading-text">Loading salesmen...</p>
                                     ) : salesmen.length === 0 ? (
-                                        <p className="no-data-text">Koi salesman nahi mila. Pehle ek banayein.</p>
+                                        <p className="no-data-text">No salesman accounts found. Create one first.</p>
                                     ) : (
                                         <div className="salesman-list">
                                             {salesmen.map(s => (
@@ -418,23 +418,23 @@ const DeveloperDashboard = () => {
                                             <span>Editing: <strong>{salesmen.find(s => s.id === selectedSalesmanId)?.name}</strong></span>
                                         </div>
                                         <div className="form-group">
-                                            <label>Naam</label>
-                                            <input type="text" className="input-field" placeholder="Salesman ka naam"
+                                            <label>Name</label>
+                                            <input type="text" className="input-field" placeholder="Salesman's name"
                                                 value={smName} onChange={e => setSmName(e.target.value)} />
                                         </div>
                                         <div className="form-group">
                                             <label>Email</label>
-                                            <input type="email" className="input-field" placeholder="Salesman ki email"
+                                            <input type="email" className="input-field" placeholder="Salesman's email"
                                                 value={smEmail} onChange={e => setSmEmail(e.target.value)} />
                                         </div>
                                         <div className="form-group">
-                                            <label>Naya Password <span className="optional-tag">(agar change karna hai)</span></label>
+                                            <label>New Password <span className="optional-tag">(leave blank to keep current)</span></label>
                                             <PwdInput value={smPassword} onChange={e => setSmPassword(e.target.value)}
                                                 show={smShowPwd} onToggle={() => setSmShowPwd(p => !p)}
-                                                placeholder="Naya password (optional)" />
+                                                placeholder="New password (optional)" />
                                         </div>
                                         <button type="submit" className="btn-primary create-btn" style={{ background: 'linear-gradient(135deg,#16a34a,#4ade80)' }} disabled={smLoading}>
-                                            {smLoading ? 'Update ho raha hai...' : 'Salesman Credentials Save Karein'}
+                                            {smLoading ? 'Saving...' : 'Save Salesman Credentials'}
                                             {!smLoading && <KeyRound size={18} />}
                                         </button>
                                     </form>
@@ -445,9 +445,9 @@ const DeveloperDashboard = () => {
                                 <div className="info-content">
                                     <h3>Salesman Management</h3>
                                     <ul className="info-list">
-                                        <li><strong>Email Uniqueness:</strong> Har salesman ka email unique hona chahiye.</li>
-                                        <li><strong>Password Reset:</strong> Agar salesman apna password bhool jaye to aap yahan reset kar saktay hain.</li>
-                                        <li><strong>Naam Change:</strong> Naam change karne se salesman ka data متاثر nahi hoga.</li>
+                                        <li><strong>Unique Email:</strong> Each salesman must have a unique email address.</li>
+                                        <li><strong>Password Reset:</strong> If a salesman forgets their password, you can reset it here.</li>
+                                        <li><strong>Name Change:</strong> Updating a salesman's name will not affect their existing data.</li>
                                     </ul>
                                 </div>
                             </div>
