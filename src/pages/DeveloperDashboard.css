@@ -90,6 +90,13 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Glow orbs are decorative only — never intercept clicks */
+.dev-dashboard-container .glow-orb {
+    pointer-events: none;
 }
 
 .dev-header {
