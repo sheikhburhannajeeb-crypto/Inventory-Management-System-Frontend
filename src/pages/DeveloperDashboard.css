@@ -521,4 +521,80 @@
     font-size: 0.9rem;
     color: var(--text-muted);
     padding: 0.75rem 0;
+}
+
+/* ─── Auto-Logout Countdown Badge ────────────────────────────────────────── */
+.dev-countdown {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: rgba(15, 23, 42, 0.88);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    border-radius: 50px;
+    color: #a78bfa;
+    font-size: 0.85rem;
+    font-weight: 600;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    transition: all 0.3s ease;
+    animation: badge-in 0.3s ease;
+}
+
+@keyframes badge-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.dev-countdown.countdown-warning {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #f87171;
+    animation: warn-pulse-dev 1s ease-in-out infinite;
+}
+
+@keyframes warn-pulse-dev {
+    0%, 100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35); }
+    50%       { box-shadow: 0 4px 24px rgba(239, 68, 68, 0.45); }
+}
+
+.logout-now-btn {
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 20px;
+    color: #a78bfa;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 4px;
+}
+
+.logout-now-btn:hover {
+    background: rgba(139, 92, 246, 0.4);
+    color: #fff;
+}
+
+.dev-countdown.countdown-warning .logout-now-btn {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.dev-countdown.countdown-warning .logout-now-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #fff;
+}
+
+@media (max-width: 480px) {
+    .dev-countdown {
+        bottom: 16px;
+        right: 16px;
+        font-size: 0.78rem;
+        padding: 7px 12px;
+    }
 }

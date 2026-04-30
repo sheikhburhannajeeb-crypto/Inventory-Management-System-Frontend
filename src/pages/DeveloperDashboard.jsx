@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
     LayoutDashboard, UserPlus, LogOut, CheckCircle, AlertCircle,
-    KeyRound, Users, ShieldCheck, Eye, EyeOff
+    KeyRound, Users, ShieldCheck, Eye, EyeOff, Clock
 } from 'lucide-react';
 import './DeveloperDashboard.css';
+
+// Auto-logout after 3 minutes
+const AUTO_LOGOUT_MS = 3 * 60 * 1000;
 
 // ── Defined OUTSIDE to keep stable identity across renders (prevents focus loss) ──
 const StatusMsg = ({ msg }) => {
@@ -37,6 +40,10 @@ const DeveloperDashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('create');
     const [user, setUser] = useState({ name: 'Developer', email: '' });
+    const [timeLeft, setTimeLeft] = useState(AUTO_LOGOUT_MS);
+
+    const logoutTimer    = useRef(null);
+    const countdownTimer = useRef(null);
 
     // ── Create Salesman state ──────────────────────────────────────────────
     const [csName, setCsName] = useState('');
@@ -65,6 +72,28 @@ const DeveloperDashboard = () => {
     const [smMessage, setSmMessage] = useState({ type: '', text: '' });
     const [smListLoading, setSmListLoading] = useState(false);
 
+    // ── Auto-logout handlers (declared BEFORE useEffect that uses them) ────
+    const handleLogout = useCallback(() => {
+        clearTimeout(logoutTimer.current);
+        clearInterval(countdownTimer.current);
+        localStorage.removeItem('inventory_token');
+        localStorage.removeItem('inventory_user');
+        navigate('/login', { replace: true });
+    }, [navigate]);
+
+    /* ── start 3-min countdown ── */
+    const startAutoLogout = useCallback(() => {
+        clearTimeout(logoutTimer.current);
+        clearInterval(countdownTimer.current);
+        setTimeLeft(AUTO_LOGOUT_MS);
+
+        logoutTimer.current = setTimeout(() => handleLogout(), AUTO_LOGOUT_MS);
+
+        countdownTimer.current = setInterval(() => {
+            setTimeLeft(prev => (prev <= 1000 ? 0 : prev - 1000));
+        }, 1000);
+    }, [handleLogout]);
+
     // ── Auth guard + load developer info ──────────────────────────────────
     useEffect(() => {
         const storedUser = localStorage.getItem('inventory_user');
@@ -76,6 +105,8 @@ const DeveloperDashboard = () => {
                 setMyEmail(parsedUser.email || '');
                 if (parsedUser.role !== 'developer') {
                     navigate('/products', { replace: true });
+                } else {
+                    startAutoLogout(); // ← start countdown after auth confirmed
                 }
             } catch (e) {
                 console.error('Error parsing user data', e);
@@ -83,7 +114,15 @@ const DeveloperDashboard = () => {
         } else {
             navigate('/login', { replace: true });
         }
-    }, [navigate]);
+    }, [navigate, startAutoLogout]);
+
+    /* ── cleanup on unmount ── */
+    useEffect(() => {
+        return () => {
+            clearTimeout(logoutTimer.current);
+            clearInterval(countdownTimer.current);
+        };
+    }, []);
 
     // ── Load salesmen when that tab is opened ──────────────────────────────
     useEffect(() => {
@@ -121,12 +160,6 @@ const DeveloperDashboard = () => {
             setSmEmail('');
             setSmPassword('');
         }
-    };
-
-    const handleLogout = () => {
-        localStorage.removeItem('inventory_token');
-        localStorage.removeItem('inventory_user');
-        navigate('/login', { replace: true });
     };
 
     // ── Create Salesman ────────────────────────────────────────────────────
@@ -207,6 +240,14 @@ const DeveloperDashboard = () => {
         } finally {
             setSmLoading(false);
         }
+    };
+
+    /* ── format countdown mm:ss ── */
+    const formatTime = (ms) => {
+        const total = Math.ceil(ms / 1000);
+        const m = Math.floor(total / 60);
+        const s = total % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -459,6 +500,16 @@ const DeveloperDashboard = () => {
 
                 </div>
             </main>
+
+            {/* ── COUNTDOWN BADGE ── */}
+            <div className={`dev-countdown ${timeLeft <= 30000 ? 'countdown-warning' : ''}`}>
+                <Clock size={14} />
+                <span>Auto-logout: {formatTime(timeLeft)}</span>
+                <button type="button" className="logout-now-btn" onClick={handleLogout}>
+                    Logout Now
+                </button>
+            </div>
+
         </div>
     );
 };
