@@ -241,18 +241,21 @@ const DeveloperDashboard = () => {
                 {/* Tab Bar */}
                 <div className="dev-tabs">
                     <button
+                        type="button"
                         className={`dev-tab ${activeTab === 'create' ? 'active' : ''}`}
                         onClick={() => setActiveTab('create')}
                     >
                         <UserPlus size={17} /> Create Salesman
                     </button>
                     <button
+                        type="button"
                         className={`dev-tab ${activeTab === 'my-creds' ? 'active' : ''}`}
                         onClick={() => setActiveTab('my-creds')}
                     >
                         <ShieldCheck size={17} /> My Credentials
                     </button>
                     <button
+                        type="button"
                         className={`dev-tab ${activeTab === 'salesman' ? 'active' : ''}`}
                         onClick={() => setActiveTab('salesman')}
                     >
